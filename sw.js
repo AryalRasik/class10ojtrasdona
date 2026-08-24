@@ -1,12 +1,12 @@
-const CACHE_NAME = 'saraswati-library-v3';
+const CACHE_NAME = 'saraswati-library-v4';
 const ASSETS = [
-    '/',
-    '/css/variables.css',
-    '/css/main.css',
-    '/css/animations.css',
-    '/css/components.css',
-    '/css/pages.css',
-    '/css/responsive.css'
+    './',
+    './css/variables.css',
+    './css/main.css',
+    './css/animations.css',
+    './css/components.css',
+    './css/pages.css',
+    './css/responsive.css'
 ];
 
 self.addEventListener('install', (e) => {
@@ -45,7 +45,7 @@ self.addEventListener('fetch', (e) => {
             }
             return resp;
         }).catch(() =>
-            caches.match(e.request).then(r => r || caches.match('/'))
+            caches.match(e.request).then(r => r || caches.match('./'))
         )
     );
 });
