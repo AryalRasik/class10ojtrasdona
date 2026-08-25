@@ -1,5 +1,8 @@
 {
     "outputDirectory": ".",
+    "installCommand": "echo skipping",
+    "buildCommand": "echo skipping",
+    "framework": null,
     "headers": [
         {
             "source": "/sw.js",
