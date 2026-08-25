@@ -403,29 +403,20 @@ const LoginPage = {
     } else {
       this.setLoading('signin-btn', true);
       try {
-        const response = await fetch('/api/auth/signin', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.user && data.accessToken) {
-            // Store server JWT for session validation
-            AppState.setUser(data.user, data.accessToken);
-            Toast.success(`Welcome, ${data.user.name}!`);
-            App.updateUserInfo();
-            App.buildSidebar();
-            window.location.hash = (data.user.role === 'admin' || data.user.role === 'librarian') ? '#/dashboard' : '#/';
-            return;
-          }
-        } else {
-          const err = await response.json().catch(() => ({}));
-          Toast.error(err.error || 'Invalid email or password');
+        const storedUsers = this.getStoredUsers();
+        const user = storedUsers.find(u => u.email === email && u.password === password);
+        if (user) {
+          const { password: _, ...safeUser } = user;
+          AppState.setUser(safeUser);
+          Toast.success(`Welcome, ${safeUser.name}!`);
+          App.updateUserInfo();
+          App.buildSidebar();
+          window.location.hash = (safeUser.role === 'admin' || safeUser.role === 'librarian') ? '#/dashboard' : '#/';
+          return;
         }
+        Toast.error('Invalid email or password');
       } catch (e) {
-        Toast.error('Server unavailable. Please try again.');
+        Toast.error('Sign in failed. Please try again.');
       }
       this.setLoading('signin-btn', false);
     }
@@ -500,28 +491,20 @@ const LoginPage = {
     } else {
       this.setLoading('signup-btn', true);
       try {
-        const response = await fetch('/api/auth/signup', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, password, role, userId, extra })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.user && data.accessToken) {
-            AppState.setUser(data.user, data.accessToken);
-            Toast.success('Account created! Welcome to Saraswati Sec School Library.');
-            App.updateUserInfo();
-            App.buildSidebar();
-            window.location.hash = '#/';
-            return;
-          }
-        } else {
-          const err = await response.json().catch(() => ({}));
-          Toast.error(err.error || 'Sign up failed');
+        const storedUsers = this.getStoredUsers();
+        if (storedUsers.find(u => u.email === email)) {
+          Toast.error('Email already registered');
+          this.setLoading('signup-btn', false);
+          return;
         }
+        const newUser = { ...userData, password, createdAt: new Date().toISOString(), borrowCount: 0, readingStreak: 0 };
+        storedUsers.push(newUser);
+        localStorage.setItem('library_users', JSON.stringify(storedUsers));
+        Toast.success('Account created! Please sign in.');
+        this.setMode('signin');
+        return;
       } catch (e) {
-        Toast.error('Server unavailable. Please try again.');
+        Toast.error('Sign up failed. Please try again.');
       }
       this.setLoading('signup-btn', false);
     }
@@ -549,39 +532,32 @@ const LoginPage = {
     } else {
       this.setLoading('forgot-btn', true);
       try {
-        await fetch('/api/auth/forgot-password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email })
-        });
-      } catch (e) {
-        // Expected to fail if no API
-      }
+        const storedUsers = this.getStoredUsers();
+        const user = storedUsers.find(u => u.email === email);
 
-      const storedUsers = this.getStoredUsers();
-      const user = storedUsers.find(u => u.email === email);
+        if (user) {
+          const token = btoa(email + ':' + Date.now());
+          const resetTokens = JSON.parse(localStorage.getItem('library_reset_tokens') || '{}');
+          resetTokens[token] = { email, createdAt: Date.now() };
+          localStorage.setItem('library_reset_tokens', JSON.stringify(resetTokens));
+        }
 
-      if (user) {
-        const token = btoa(email + ':' + Date.now());
-        const resetTokens = JSON.parse(localStorage.getItem('library_reset_tokens') || '{}');
-        resetTokens[token] = { email, createdAt: Date.now() };
-        localStorage.setItem('library_reset_tokens', JSON.stringify(resetTokens));
-      }
-
-      const formEl = emailEl?.closest('div[style]');
-      const formContainer = document.querySelector('.card > div:last-child');
-      if (formContainer) {
-        const formGroups = formContainer.querySelectorAll('.form-group');
-        formGroups.forEach(g => g.style.display = 'none');
-        const btn = document.getElementById('forgot-btn');
-        if (btn) btn.style.display = 'none';
-        const confirmation = document.getElementById('forgot-confirmation');
-        const emailDisplay = document.getElementById('forgot-email-display');
-        if (confirmation) {
-          confirmation.style.display = 'block';
-          if (emailDisplay) emailDisplay.textContent = email;
+        const formContainer = document.querySelector('.card > div:last-child');
+        if (formContainer) {
+          const formGroups = formContainer.querySelectorAll('.form-group');
+          formGroups.forEach(g => g.style.display = 'none');
+          const btn = document.getElementById('forgot-btn');
+          if (btn) btn.style.display = 'none';
+          const confirmation = document.getElementById('forgot-confirmation');
+          const emailDisplay = document.getElementById('forgot-email-display');
+          if (confirmation) {
+            confirmation.style.display = 'block';
+            if (emailDisplay) emailDisplay.textContent = email;
+          }
         }
         Toast.success('If an account exists with this email, a reset link has been sent.');
+      } catch (e) {
+        Toast.info('If an account exists with this email, a reset link has been sent.');
       }
       this.setLoading('forgot-btn', false);
     }
@@ -659,25 +635,19 @@ const LoginPage = {
     const user = demos[role];
 
     try {
-      const response = await fetch('/api/auth/signin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: user.email, password: demoPasswords[role] })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.user && data.accessToken) {
-          AppState.setUser(data.user, data.accessToken);
-          Toast.success(`Welcome, ${data.user.name}!`);
-          App.updateUserInfo();
-          App.buildSidebar();
-          window.location.hash = (data.user.role === 'admin' || data.user.role === 'librarian') ? '#/dashboard' : '#/';
-          return;
-        }
+      if (AppState.isSupabaseConnected) {
+        const { user: authUser, profile } = await Api.signIn(user.email, demoPasswords[role]);
+        AppState.currentUser = Api.mapProfile(profile);
+        AppState.isLoggedIn = true;
+        await AppState.loadFromSupabase();
+        Toast.success(`Welcome, ${AppState.currentUser.name}!`);
+        App.updateUserInfo();
+        App.buildSidebar();
+        window.location.hash = (AppState.currentUser.role === 'admin' || AppState.currentUser.role === 'librarian') ? '#/dashboard' : '#/';
+        return;
       }
     } catch (e) {
-      // Server not available — use client-side demo mode
+      // Supabase not available — use client-side demo mode
     }
 
     AppState.setUser(user);
