@@ -1,9 +1,6 @@
 node_modules/
 .env
 .git/
-package.json
-package-lock.json
-server.js
 supabase/
 *.docx
 PENDING-TASKS.md
