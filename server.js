@@ -487,8 +487,13 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Saraswati Sec School Library running at http://localhost:${PORT}`);
-  console.log(`Security: Helmet, CORS, Rate Limiting, JWT, CSRF enabled`);
-  console.log(`Demo accounts seeded: 2 students, 2 teachers, 1 librarian, 1 admin`);
-});
+// Only listen when running directly (not on Vercel)
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Saraswati Sec School Library running at http://localhost:${PORT}`);
+    console.log(`Security: Helmet, CORS, Rate Limiting, JWT, CSRF enabled`);
+    console.log(`Demo accounts seeded: 2 students, 2 teachers, 1 librarian, 1 admin`);
+  });
+}
+
+module.exports = app;
