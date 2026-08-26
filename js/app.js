@@ -53,6 +53,7 @@ const App = {
         Router.add('/', HomePage);
         Router.add('/books', BooksPage);
         Router.add('/book/:id', BookDetailPage);
+        Router.add('/my-books', MyBooksPage);
         Router.add('/digital-library', DigitalLibraryPage);
         Router.add('/study-materials', StudyMaterialsPage);
         Router.add('/profile', ProfilePage);
