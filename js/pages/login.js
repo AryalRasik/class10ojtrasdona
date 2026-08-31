@@ -435,6 +435,7 @@ const LoginPage = {
         }
         AppState.currentUser = Api.mapProfile(profile);
         AppState.isLoggedIn = true;
+        await AppState.persistSession(Api.mapProfile(profile));
         await AppState.loadFromSupabase();
         Toast.success(`Welcome, ${AppState.currentUser.name}!`);
         const role = AppState.currentUser.role;
@@ -507,6 +508,7 @@ const LoginPage = {
         }
         AppState.currentUser = Api.mapProfile(profile);
         AppState.isLoggedIn = true;
+        await AppState.persistSession(Api.mapProfile(profile));
         await AppState.loadFromSupabase();
         Toast.success(`Welcome, ${AppState.currentUser.name}!`);
         App.updateUserInfo();

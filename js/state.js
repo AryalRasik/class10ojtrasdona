@@ -103,6 +103,10 @@ const AppState = {
                     this.isLoggedIn = true;
                     this.isSupabaseConnected = true;
                     this.isDemoMode = false;
+                    if (session.access_token) {
+                        localStorage.setItem('library_currentUser', JSON.stringify(this.currentUser));
+                        localStorage.setItem('library_access_token', session.access_token);
+                    }
                     await this.loadFromSupabase();
                     this._startSessionManagement();
                     return;
@@ -348,6 +352,22 @@ const AppState = {
             // Store JWT token for session validation
             const jwt = token || this._generateDemoJWT(user);
             localStorage.setItem('library_access_token', jwt);
+        }
+        this._lastActivityTime = Date.now();
+        this._addAuditLog('user_login', `User ${user ? user.name : 'logged out'}`);
+    },
+
+    async persistSession(user) {
+        this.currentUser = user;
+        this.isLoggedIn = !!user;
+        localStorage.setItem('library_currentUser', JSON.stringify(user));
+        try {
+            const s = await Api.getSession();
+            if (s && s.access_token) {
+                localStorage.setItem('library_access_token', s.access_token);
+            }
+        } catch (e) {
+            localStorage.removeItem('library_access_token');
         }
         this._lastActivityTime = Date.now();
         this._addAuditLog('user_login', `User ${user ? user.name : 'logged out'}`);

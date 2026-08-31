@@ -113,26 +113,34 @@ const App = {
                 const cleanPath = path.split('?')[0].split('#')[0];
 
                 if (protectedRoutes.includes(cleanPath)) {
-                    // Verify JWT token is valid and not expired
-                    const token = localStorage.getItem('library_access_token');
-                    const userStr = localStorage.getItem('library_currentUser');
-                    let user = null;
-
-                    try { user = JSON.parse(userStr); } catch (e) { user = null; }
-
-                    // Block if no token OR no valid user OR token expired
-                    if (!token || !user || !AppState.isLoggedIn) {
+                    // Supabase mode is authoritative on isLoggedIn (restored from the
+                    // real GoTrue session at init); demo mode relies on a stored token.
+                    if (!AppState.isLoggedIn || !AppState.currentUser) {
                         Toast.warning('Please sign in to access this page');
                         Router.go('/login');
                         return false;
                     }
 
-                    // Validate token expiry from JWT payload
-                    try {
-                        const payload = JSON.parse(atob(token.split('.')[1]));
-                        const now = Math.floor(Date.now() / 1000);
-                        if (payload.exp && payload.exp < now) {
-                            Toast.error('Session expired. Please sign in again.');
+                    // Demo mode only: validate the stored JWT (base64url) is present & not expired.
+                    const token = localStorage.getItem('library_access_token');
+                    if (token && !AppState.isSupabaseConnected) {
+                        try {
+                            let payloadB64 = token.split('.')[1] || '';
+                            payloadB64 = payloadB64.replace(/-/g, '+').replace(/_/g, '/');
+                            while (payloadB64.length % 4) payloadB64 += '=';
+                            const payload = JSON.parse(atob(payloadB64));
+                            const now = Math.floor(Date.now() / 1000);
+                            if (payload.exp && payload.exp < now) {
+                                Toast.error('Session expired. Please sign in again.');
+                                AppState.currentUser = null;
+                                AppState.isLoggedIn = false;
+                                localStorage.removeItem('library_currentUser');
+                                localStorage.removeItem('library_access_token');
+                                Router.go('/login');
+                                return false;
+                            }
+                        } catch (e) {
+                            Toast.error('Invalid session. Please sign in again.');
                             AppState.currentUser = null;
                             AppState.isLoggedIn = false;
                             localStorage.removeItem('library_currentUser');
@@ -140,15 +148,6 @@ const App = {
                             Router.go('/login');
                             return false;
                         }
-                    } catch (e) {
-                        // If token can't be decoded, block access
-                        Toast.error('Invalid session. Please sign in again.');
-                        AppState.currentUser = null;
-                        AppState.isLoggedIn = false;
-                        localStorage.removeItem('library_currentUser');
-                        localStorage.removeItem('library_access_token');
-                        Router.go('/login');
-                        return false;
                     }
                 }
 
