@@ -83,26 +83,39 @@ const AppState = {
         }
         document.documentElement.setAttribute('data-theme', this.theme);
 
+        let sbAvailable = false;
         try {
-            SupabaseClient.init(
-                window.SUPABASE_URL || '',
-                window.SUPABASE_ANON_KEY || ''
-            );
-            Api.init();
-            const session = await Api.getSession();
-
-            if (session && session.user) {
-                const profile = await Api.getProfile(session.user.id);
-                this.currentUser = Api.mapProfile(profile);
-                this.isLoggedIn = true;
-                this.isSupabaseConnected = true;
-                this.isDemoMode = false;
-                await this.loadFromSupabase();
-                this._startSessionManagement();
-                return;
+            if (window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+                SupabaseClient.init(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+                Api.init();
+                sbAvailable = true;
             }
         } catch (e) {
             console.warn('Supabase init failed, using demo mode:', e);
+        }
+
+        if (sbAvailable) {
+            try {
+                const session = await Api.getSession();
+                if (session && session.user) {
+                    const profile = await Api.getProfile(session.user.id);
+                    this.currentUser = Api.mapProfile(profile);
+                    this.isLoggedIn = true;
+                    this.isSupabaseConnected = true;
+                    this.isDemoMode = false;
+                    await this.loadFromSupabase();
+                    this._startSessionManagement();
+                    return;
+                }
+                this.isSupabaseConnected = true;
+                this.isDemoMode = false;
+                this._startSessionManagement();
+                return;
+            } catch (e) {
+                console.warn('Supabase available but session load failed:', e);
+                this.isSupabaseConnected = true;
+                this.isDemoMode = false;
+            }
         }
 
         this.initDemoMode();
