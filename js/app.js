@@ -9,6 +9,17 @@ const App = {
     async init() {
         this.showLoading();
 
+        // Convert clean staff URLs (e.g. /admin or /librarian) into hash routes.
+        // Vercel rewrites these paths to index.html; here we detect them and
+        // redirect to the corresponding hash-based SPA route with a clean URL.
+        try {
+            const cleanPath = (window.location.pathname || '').replace(/\/+$/, '');
+            if ((cleanPath === '/admin' || cleanPath === '/librarian') && !window.location.hash) {
+                window.history.replaceState(null, '', '/');
+                window.location.hash = '#' + cleanPath;
+            }
+        } catch (e) { }
+
         try {
             await AppState.init();
         } catch (e) {

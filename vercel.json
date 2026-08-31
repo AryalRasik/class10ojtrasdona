@@ -6,6 +6,10 @@
         }
     ],
     "outputDirectory": ".",
+    "rewrites": [
+        { "source": "/admin", "destination": "/index.html" },
+        { "source": "/librarian", "destination": "/index.html" }
+    ],
     "headers": [
         {
             "source": "/sw.js",
