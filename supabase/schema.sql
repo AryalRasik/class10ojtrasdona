@@ -24,21 +24,30 @@ create table if not exists profiles (
   department text default '',
   phone text default '',
   address text default '',
+  approved boolean default false,
   membership_status text default 'active',
   membership_expiry timestamptz,
   created_at timestamptz default now()
 );
 
 -- Auto-create profile on signup via trigger
+-- Admin and librarian are auto-approved; students/teachers require approval
 create or replace function public.handle_new_user()
 returns trigger as $$
+declare
+  user_role text;
+  auto_approve boolean;
 begin
-  insert into public.profiles (id, name, email, role)
+  user_role := coalesce(new.raw_user_meta_data->>'role', 'student');
+  auto_approve := user_role in ('admin', 'librarian');
+
+  insert into public.profiles (id, name, email, role, approved)
   values (
     new.id,
     coalesce(new.raw_user_meta_data->>'name', new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
     new.email,
-    coalesce(new.raw_user_meta_data->>'role', 'student')
+    user_role,
+    auto_approve
   );
   return new;
 end;
@@ -424,13 +433,91 @@ create index if not exists idx_sessions_expires on sessions(expires_at);
 create index if not exists idx_profiles_membership on profiles(membership_status);
 
 -- ============================================================
--- ROW LEVEL SECURITY
+-- Row Level Security
 -- ============================================================
+-- (defined below in the RLS section; adding admin helper functions)
 
--- Profiles: users can read all, update only their own
+-- Admin helper: create a staff account (auth user + profile), approved automatically
+create or replace function public.add_staff_account(
+  p_email text,
+  p_password text,
+  p_name text,
+  p_role text default 'librarian',
+  p_department text default ''
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user_id uuid;
+begin
+  if not exists (select 1 from profiles where id = auth.uid() and role = 'admin') then
+    raise exception 'Only administrators can add staff accounts';
+  end if;
+
+  if p_role not in ('librarian', 'admin') then
+    raise exception 'Invalid staff role';
+  end if;
+
+  v_user_id := (select id from auth.users where email = p_email limit 1);
+
+  if v_user_id is null then
+    v_user_id := extensions.uuid_generate_v4();
+    insert into auth.users (
+      instance_id, id, aud, role, email, encrypted_password,
+      email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+    ) values (
+      '00000000-0000-0000-0000-000000000000',
+      v_user_id,
+      'authenticated',
+      'authenticated',
+      p_email,
+      crypt(p_password, gen_salt('bf')),
+      now(),
+      '{"provider":"email","providers":["email"]}',
+      jsonb_build_object('name', p_name, 'role', p_role),
+      now(), now()
+    );
+  end if;
+
+  insert into public.profiles (id, name, email, role, department, approved)
+  values (v_user_id, p_name, p_email, p_role, p_department, true)
+  on conflict (id) do update
+    set name = excluded.name,
+        role = excluded.role,
+        department = excluded.department,
+        approved = true,
+        email = excluded.email;
+
+  return v_user_id;
+end;
+$$;
+
+-- Admin helper: delete a user account (auth user + profile cascade)
+create or replace function public.delete_account(p_user_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not exists (select 1 from profiles where id = auth.uid() and role = 'admin') then
+    raise exception 'Only administrators can delete accounts';
+  end if;
+  delete from auth.users where id = p_user_id;
+end;
+$$;
+
+-- Profiles: users can read all, update own or admin can update all
 alter table profiles enable row level security;
 create policy "profiles_select_all" on profiles for select using (true);
-create policy "profiles_update_own" on profiles for update using (auth.uid() = id);
+create policy "profiles_update_own" on profiles for update
+  using (
+    auth.uid() = id
+    or exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian'))
+  );
 create policy "profiles_insert_own" on profiles for insert with check (auth.uid() = id);
 
 -- Books: everyone can read, only admins can modify
@@ -465,12 +552,18 @@ create policy "borrow_insert_own" on borrow_requests for insert
 create policy "borrow_update_admin" on borrow_requests for update
   using (exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian')));
 
--- Notifications: users see own only
+-- Notifications: users see own, admins see all, admins can insert for anyone
 alter table notifications enable row level security;
 create policy "notifications_select_own" on notifications for select
-  using (auth.uid() = user_id);
+  using (
+    auth.uid() = user_id
+    or exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian'))
+  );
 create policy "notifications_insert_own" on notifications for insert
-  with check (auth.uid() = user_id);
+  with check (
+    auth.uid() = user_id
+    or exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian'))
+  );
 create policy "notifications_update_own" on notifications for update
   using (auth.uid() = user_id);
 create policy "notifications_delete_own" on notifications for delete

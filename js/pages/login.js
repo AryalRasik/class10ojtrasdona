@@ -2,6 +2,7 @@ const LoginPage = {
   mode: 'signin',
   selectedRole: 'student',
   signupRole: 'student',
+  staffRole: null,
   loading: false,
   passwordVisible: false,
   confirmPasswordVisible: false,
@@ -15,21 +16,31 @@ const LoginPage = {
       this.mode = params.mode;
     }
 
+    if (this.mode === 'staff' && params && params.page) {
+      this.staffRole = params.page === 'admin' ? 'admin' : 'librarian';
+    }
+
     const subtitles = {
       signin: 'Sign in to your account',
       signup: 'Create a new account',
       forgot: 'Reset your password',
-      reset: 'Set a new password'
+      reset: 'Set a new password',
+      staff: this.staffRole === 'admin' ? 'Admin Sign In' : 'Librarian Sign In'
     };
+
+    const isStaff = this.mode === 'staff';
+    const staffIcon = this.staffRole === 'admin' ? 'shield' : 'book-open';
+    const staffTitle = this.staffRole === 'admin' ? 'System Admin' : 'Library Staff';
+    const icon = isStaff && this.mode === 'staff' ? Utils.getIcon(staffIcon, 36) : Utils.getIcon('book-open', 36);
 
     return `
       <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg-secondary);padding:2rem;">
         <div class="card" style="width:100%;max-width:460px;overflow:hidden;">
-          <div style="padding:2.5rem 2rem 1.5rem;text-align:center;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;">
+          <div style="padding:2.5rem 2rem 1.5rem;text-align:center;background:${isStaff ? 'linear-gradient(135deg,#4338ca,var(--primary-dark))' : 'linear-gradient(135deg,var(--primary),var(--primary-dark))'};color:#fff;">
             <div style="width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.2);margin:0 auto 1rem;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,0.3);">
-              ${Utils.getIcon('book-open', 36)}
+              ${icon}
             </div>
-            <h1 style="margin:0;color:#fff;font-size:1.5rem;">Saraswati Sec School Library</h1>
+            <h1 style="margin:0;color:#fff;font-size:1.5rem;">${isStaff ? staffTitle + ' Portal' : 'Saraswati Sec School Library'}</h1>
             <p style="margin:0.25rem 0 0;opacity:0.85;font-size:0.9rem;">${subtitles[this.mode]}</p>
           </div>
           <div style="padding:2rem;">
@@ -45,8 +56,42 @@ const LoginPage = {
       case 'signup': return this.renderSignUp();
       case 'forgot': return this.renderForgot();
       case 'reset': return this.renderReset();
+      case 'staff': return this.renderStaffSignIn();
       default: return this.renderSignIn();
     }
+  },
+
+  renderStaffSignIn() {
+    const role = this.staffRole === 'admin' ? 'admin' : 'librarian';
+    const roleLabel = this.staffRole === 'admin' ? 'Admin' : 'Librarian';
+    return `
+      <div class="form-group">
+        <label class="form-label">${roleLabel} Email</label>
+        <div style="position:relative;">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-tertiary);pointer-events:none;">${Utils.getIcon('mail', 16)}</span>
+          <input class="form-input" type="email" id="login-email" placeholder="${roleLabel.toLowerCase()}@yourlibrary.com" style="padding-left:38px;" autocomplete="email">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div style="position:relative;">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-tertiary);pointer-events:none;">${Utils.getIcon('lock', 16)}</span>
+          <input class="form-input" type="password" id="login-password" placeholder="Enter your password" style="padding-left:38px;padding-right:2.5rem;" autocomplete="current-password">
+          <button type="button" class="btn btn-ghost btn-sm" style="position:absolute;right:0.25rem;top:50%;transform:translateY(-50%);padding:4px;" onclick="LoginPage.togglePassword('login-password')" aria-label="Toggle password visibility">
+            ${this.passwordVisible ? Utils.getIcon('eye-off', 16) : Utils.getIcon('eye', 16)}
+          </button>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-lg" id="signin-btn" style="width:100%;margin-bottom:1rem;" onclick="LoginPage.staffLogin()">
+        ${Utils.getIcon('log-in', 16)} Sign In as ${roleLabel}
+      </button>
+
+      <div style="text-align:center;border-top:1px solid var(--border-color);padding-top:1rem;">
+        <a href="javascript:void(0)" onclick="LoginPage.setMode('signin')" style="font-size:0.85rem;color:var(--text-secondary);text-decoration:none;font-weight:500;display:inline-flex;align-items:center;gap:4px;">
+          ${Utils.getIcon('arrow-left', 14)} Back to user sign in
+        </a>
+      </div>`;
   },
 
   renderSignIn() {
@@ -78,14 +123,6 @@ const LoginPage = {
       <button class="btn btn-primary btn-lg" id="signin-btn" style="width:100%;margin-bottom:1rem;" onclick="LoginPage.login()">
         ${Utils.getIcon('log-in', 16)} Sign In
       </button>
-
-      <div style="text-align:center;margin-bottom:1rem;"><span style="color:var(--text-secondary);font-size:0.85rem;">Or try a demo account</span></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1.5rem;">
-        <button class="btn btn-outline btn-sm" onclick="LoginPage.demoLogin('student')">${Utils.getIcon('graduation-cap', 14)} Student</button>
-        <button class="btn btn-outline btn-sm" onclick="LoginPage.demoLogin('teacher')">${Utils.getIcon('briefcase', 14)} Teacher</button>
-        <button class="btn btn-outline btn-sm" onclick="LoginPage.demoLogin('librarian')">${Utils.getIcon('book-open', 14)} Librarian</button>
-        <button class="btn btn-outline btn-sm" onclick="LoginPage.demoLogin('admin')">${Utils.getIcon('shield', 14)} Admin</button>
-      </div>
 
       <div style="text-align:center;border-top:1px solid var(--border-color);padding-top:1rem;">
         <span style="font-size:0.85rem;color:var(--text-tertiary);">Don't have an account? </span>
@@ -264,7 +301,6 @@ const LoginPage = {
     this.resetConfirmPasswordVisible = false;
     this.refresh();
   },
-
   refresh() {
     const content = document.getElementById('pageContent');
     if (content) {
@@ -387,6 +423,16 @@ const LoginPage = {
       this.setLoading('signin-btn', true);
       try {
         const { user, profile } = await Api.signIn(email, password);
+        if (profile.approved === false) {
+          Toast.error('Your account is pending approval. Please wait for admin/librarian to approve your registration.');
+          await Api.signOut();
+          return;
+        }
+        if (profile.role === 'admin' || profile.role === 'librarian') {
+          Toast.error('Please use the ' + (profile.role === 'admin' ? '#/admin' : '#/librarian') + ' portal to sign in.');
+          await Api.signOut();
+          return;
+        }
         AppState.currentUser = Api.mapProfile(profile);
         AppState.isLoggedIn = true;
         await AppState.loadFromSupabase();
@@ -394,7 +440,7 @@ const LoginPage = {
         const role = AppState.currentUser.role;
         App.updateUserInfo();
         App.buildSidebar();
-        window.location.hash = (role === 'admin' || role === 'librarian') ? '#/dashboard' : '#/';
+        window.location.hash = '#/';
       } catch (e) {
         Toast.error(e.message || 'Sign in failed. Please check your credentials.');
       } finally {
@@ -406,15 +452,86 @@ const LoginPage = {
         const storedUsers = this.getStoredUsers();
         const user = storedUsers.find(u => u.email === email && u.password === password);
         if (user) {
+          if (user.approved === false) {
+            Toast.error('Your account is pending approval. Please wait for admin/librarian to approve your registration.');
+            this.setLoading('signin-btn', false);
+            return;
+          }
+          if (user.role === 'admin' || user.role === 'librarian') {
+            Toast.error('Please use the ' + (user.role === 'admin' ? '#/admin' : '#/librarian') + ' portal to sign in.');
+            this.setLoading('signin-btn', false);
+            return;
+          }
           const { password: _, ...safeUser } = user;
           AppState.setUser(safeUser);
           Toast.success(`Welcome, ${safeUser.name}!`);
           App.updateUserInfo();
           App.buildSidebar();
-          window.location.hash = (safeUser.role === 'admin' || safeUser.role === 'librarian') ? '#/dashboard' : '#/';
+          window.location.hash = '#/';
           return;
         }
         Toast.error('Invalid email or password');
+      } catch (e) {
+        Toast.error('Sign in failed. Please try again.');
+      }
+      this.setLoading('signin-btn', false);
+    }
+  },
+
+  async staffLogin() {
+    if (this.loading) return;
+    const expectedRole = this.staffRole === 'admin' ? 'admin' : 'librarian';
+
+    const emailEl = document.getElementById('login-email');
+    const passwordEl = document.getElementById('login-password');
+    const email = emailEl ? emailEl.value.trim() : '';
+    const password = passwordEl ? passwordEl.value.trim() : '';
+
+    if (!email) { Toast.error('Please enter your email'); emailEl && emailEl.focus(); return; }
+    if (!this.validateEmail(email)) { Toast.error('Please enter a valid email address'); emailEl && emailEl.focus(); return; }
+    if (!password) { Toast.error('Please enter your password'); passwordEl && passwordEl.focus(); return; }
+
+    if (AppState.isSupabaseConnected) {
+      this.setLoading('signin-btn', true);
+      try {
+        const { user, profile } = await Api.signIn(email, password);
+        if (profile.approved === false) {
+          Toast.error('Your account is pending approval.');
+          await Api.signOut();
+          return;
+        }
+        if (profile.role !== expectedRole) {
+          Toast.error('Access denied: This login is only for ' + (expectedRole === 'admin' ? 'Admin accounts.' : 'Librarian accounts.') + ' Please use the correct portal.');
+          await Api.signOut();
+          return;
+        }
+        AppState.currentUser = Api.mapProfile(profile);
+        AppState.isLoggedIn = true;
+        await AppState.loadFromSupabase();
+        Toast.success(`Welcome, ${AppState.currentUser.name}!`);
+        App.updateUserInfo();
+        App.buildSidebar();
+        window.location.hash = '#/dashboard';
+      } catch (e) {
+        Toast.error(e.message || 'Sign in failed. Please check your credentials.');
+      } finally {
+        this.setLoading('signin-btn', false);
+      }
+    } else {
+      this.setLoading('signin-btn', true);
+      try {
+        const storedUsers = this.getStoredUsers();
+        const user = storedUsers.find(u => u.email === email && u.password === password);
+        if (user && user.approved !== false && user.role === expectedRole) {
+          const { password: _, ...safeUser } = user;
+          AppState.setUser(safeUser);
+          Toast.success(`Welcome, ${safeUser.name}!`);
+          App.updateUserInfo();
+          App.buildSidebar();
+          window.location.hash = '#/dashboard';
+          return;
+        }
+        Toast.error('Access denied. Invalid credentials or wrong portal for your role.');
       } catch (e) {
         Toast.error('Sign in failed. Please try again.');
       }
@@ -475,13 +592,31 @@ const LoginPage = {
     if (AppState.isSupabaseConnected) {
       this.setLoading('signup-btn', true);
       try {
-        await Api.signUp(email, password, {
+        const { data } = await Api.signUp(email, password, {
           name,
           role,
           user_id: userId,
           ...(role === 'student' ? { grade: extra } : { department: extra })
         });
-        Toast.success('Account created! Please check your email to verify, then sign in.');
+
+        if (data && data.user) {
+          const staffList = await Api.getAdminAndLibrarians();
+          const notifPromises = staffList.map(staff =>
+            Api.createNotification({
+              user_id: staff.id,
+              type: 'info',
+              title: 'New Registration Request',
+              message: `${name} (${role}) has registered and is awaiting approval. Email: ${email}`,
+              icon: 'user-plus',
+              read: false,
+              time: new Date().toISOString(),
+              timestamp: new Date().toISOString()
+            })
+          );
+          await Promise.all(notifPromises);
+        }
+
+        Toast.success('Account created! Your registration is pending approval by admin/librarian. You will be able to sign in once approved.');
         this.setMode('signin');
       } catch (e) {
         Toast.error(e.message || 'Sign up failed');
@@ -497,10 +632,10 @@ const LoginPage = {
           this.setLoading('signup-btn', false);
           return;
         }
-        const newUser = { ...userData, password, createdAt: new Date().toISOString(), borrowCount: 0, readingStreak: 0 };
+        const newUser = { ...userData, password, approved: false, createdAt: new Date().toISOString(), borrowCount: 0, readingStreak: 0 };
         storedUsers.push(newUser);
         localStorage.setItem('library_users', JSON.stringify(storedUsers));
-        Toast.success('Account created! Please sign in.');
+        Toast.success('Account created! Your registration is pending approval. You will be able to sign in once approved by admin/librarian.');
         this.setMode('signin');
         return;
       } catch (e) {
@@ -623,40 +758,6 @@ const LoginPage = {
     }
   },
 
-  async demoLogin(role) {
-    const demos = {
-      student: { name: 'Anita Sharma', email: 'anita.s@saraswatischool.edu.np', role: 'student', id: 'demo-student-1', grade: '10', className: 'A', studentId: 'STU-1001', avatar: 'AS' },
-      teacher: { name: 'Mr. Rajesh Adhikari', email: 'r.adhikari@saraswatischool.edu.np', role: 'teacher', id: 'demo-teacher-1', department: 'English', teacherId: 'TCH-1001', avatar: 'RA' },
-      librarian: { name: 'Laxmi Devi', email: 'laxmi@saraswatischool.edu.np', role: 'librarian', id: 'demo-librarian-1', librarianId: 'LIB-001', avatar: 'LD' },
-      admin: { name: 'System Admin', email: 'admin@saraswatischool.edu.np', role: 'admin', id: 'demo-admin-1', adminId: 'ADM-001', avatar: 'SA' }
-    };
-    const demoPasswords = { student: 'demo123', teacher: 'demo123', librarian: 'demo123', admin: 'admin123' };
-
-    const user = demos[role];
-
-    try {
-      if (AppState.isSupabaseConnected) {
-        const { user: authUser, profile } = await Api.signIn(user.email, demoPasswords[role]);
-        AppState.currentUser = Api.mapProfile(profile);
-        AppState.isLoggedIn = true;
-        await AppState.loadFromSupabase();
-        Toast.success(`Welcome, ${AppState.currentUser.name}!`);
-        App.updateUserInfo();
-        App.buildSidebar();
-        window.location.hash = (AppState.currentUser.role === 'admin' || AppState.currentUser.role === 'librarian') ? '#/dashboard' : '#/';
-        return;
-      }
-    } catch (e) {
-      // Supabase not available — use client-side demo mode
-    }
-
-    AppState.setUser(user);
-    Toast.success(`Welcome, ${user.name}! (Demo Mode)`);
-    App.updateUserInfo();
-    App.buildSidebar();
-    window.location.hash = (user.role === 'admin' || user.role === 'librarian') ? '#/dashboard' : '#/';
-  },
-
   getStoredUsers() {
     try {
       return JSON.parse(localStorage.getItem('library_users') || '[]');
@@ -678,7 +779,10 @@ const LoginPage = {
     const pwInput = document.getElementById('login-password');
     if (pwInput) {
       pwInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') this.login();
+        if (e.key === 'Enter') {
+          if (this.mode === 'staff') this.staffLogin();
+          else this.login();
+        }
       });
     }
 

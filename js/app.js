@@ -66,6 +66,8 @@ const App = {
         Router.add('/settings', SettingsPage);
         Router.add('/notifications', NotificationsPage);
         Router.add('/login', LoginPage);
+        Router.add('/admin', { render: (params) => LoginPage.render({ ...params, page: 'admin', mode: 'staff' }), afterRender: (params) => (LoginPage.afterRender ? LoginPage.afterRender(params) : null) });
+        Router.add('/librarian', { render: (params) => LoginPage.render({ ...params, page: 'librarian', mode: 'staff' }), afterRender: (params) => (LoginPage.afterRender ? LoginPage.afterRender(params) : null) });
         Router.add('/new-arrivals', NewArrivalsPage);
         Router.add('/top-rated', TopRatedPage);
         Router.add('/feedback', FeedbackPage);

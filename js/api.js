@@ -71,6 +71,64 @@ window.Api = {
     return data;
   },
 
+  async approveUser(userId) {
+    const { data, error } = await this.client
+      .from('profiles')
+      .update({ approved: true })
+      .eq('id', userId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async rejectUser(userId) {
+    const { error } = await this.client
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
+    if (error) throw error;
+  },
+
+  async addLibrarian({ email, password, name, role = 'librarian', department }) {
+    const { data, error } = await this.client.rpc('add_staff_account', {
+      p_email: email,
+      p_password: password,
+      p_name: name,
+      p_role: role,
+      p_department: department || ''
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  async deleteAccount(userId) {
+    const { data, error } = await this.client.rpc('delete_account', {
+      p_user_id: userId
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  async getAdminAndLibrarians() {
+    const { data, error } = await this.client
+      .from('profiles')
+      .select('id, name, role')
+      .in('role', ['admin', 'librarian']);
+    if (error) throw error;
+    return data;
+  },
+
+  async getPendingUsers() {
+    const { data, error } = await this.client
+      .from('profiles')
+      .select('*')
+      .eq('approved', false)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+
   // ── Books ─────────────────────────────────────────────
   async getAllBooks() {
     const { data, error } = await this.client
@@ -654,6 +712,7 @@ window.Api = {
       avatar: raw.avatar,
       borrowCount: raw.borrow_count,
       readingStreak: raw.reading_streak,
+      approved: raw.approved,
       createdAt: raw.created_at
     };
   },
@@ -825,6 +884,7 @@ window.Api = {
       avatar: raw.avatar,
       borrowCount: raw.borrow_count,
       readingStreak: raw.reading_streak,
+      approved: raw.approved,
       createdAt: raw.created_at
     };
   }

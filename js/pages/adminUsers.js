@@ -19,23 +19,26 @@ const AdminUsersPage = {
         avatar: p.avatar || '',
         borrowCount: p.borrowCount || p.borrow_count || 0,
         readingStreak: p.readingStreak || p.reading_streak || 0,
-        className: p.className || ''
+        className: p.className || '',
+        approved: p.approved !== false
       }));
     } else {
       const students = LIBRARY_DATA.students || [];
       const teachers = LIBRARY_DATA.teachers || [];
-      const librarians = [{ id: 'L1', name: 'Ms. Laxmi Devi', email: 'laxmi.d@saraswatischool.edu.np', role: 'librarian', avatar: 'LD', department: 'Library' }];
-      const admins = [{ id: 'A1', name: 'Admin User', email: 'admin@saraswatischool.edu.np', role: 'admin', avatar: 'AU', department: 'Administration' }];
+      const librarians = [{ id: 'L1', name: 'Ms. Laxmi Devi', email: 'laxmi.d@saraswatischool.edu.np', role: 'librarian', avatar: 'LD', department: 'Library', approved: true }];
+      const admins = [{ id: 'A1', name: 'Admin User', email: 'admin@saraswatischool.edu.np', role: 'admin', avatar: 'AU', department: 'Administration', approved: true }];
       allUsers = [
-        ...students.map(u => ({ ...u, role: 'student' })),
-        ...teachers.map(u => ({ ...u, role: 'teacher' })),
+        ...students.map(u => ({ ...u, role: 'student', approved: u.approved !== false })),
+        ...teachers.map(u => ({ ...u, role: 'teacher', approved: u.approved !== false })),
         ...librarians,
         ...admins
       ];
     }
 
     let filtered = allUsers;
-    if (this.activeRole !== 'all') {
+    if (this.activeRole === 'pending') {
+      filtered = filtered.filter(u => u.approved === false);
+    } else if (this.activeRole !== 'all') {
       filtered = filtered.filter(u => u.role === this.activeRole);
     }
     if (this.searchQuery) {
@@ -51,7 +54,8 @@ const AdminUsersPage = {
     if (this.currentPage > totalPages) this.currentPage = totalPages;
     const paged = filtered.slice((this.currentPage - 1) * this.perPage, this.currentPage * this.perPage);
 
-    const roleCounts = { all: allUsers.length, student: students.length, teacher: teachers.length, librarian: librarians.length, admin: admins.length };
+    const pendingCount = allUsers.filter(u => u.approved === false).length;
+    const roleCounts = { all: allUsers.length, student: students.length, teacher: teachers.length, librarian: librarians.length, admin: admins.length, pending: pendingCount };
 
     return `
       <div class="page-header">
@@ -73,6 +77,9 @@ const AdminUsersPage = {
               ${r.charAt(0).toUpperCase() + r.slice(1)}s (${roleCounts[r]})
             </button>
           `).join('')}
+          <button class="btn btn-sm ${this.activeRole === 'pending' ? 'btn-warning' : 'btn-outline'}" onclick="AdminUsersPage.switchRole('pending')" style="${pendingCount > 0 ? 'border-color:var(--warning);color:var(--warning);' : ''}">
+            ${Utils.getIcon('clock', 14)} Pending (${pendingCount})
+          </button>
         </div>
 
         <div class="card" style="margin-bottom:1.5rem;">
@@ -84,32 +91,38 @@ const AdminUsersPage = {
 
         <div class="card">
           <div class="table-wrap"><table class="data-table">
-            <thead><tr><th>User</th><th>ID</th><th>Email</th><th>Role</th><th>Dept/Grade</th><th>Borrowed</th><th>Actions</th></tr></thead>
+            <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody>
               ${paged.map(user => {
-                const borrowed = AppState.borrowRequests.filter(r => r.studentId === user.id && (r.status === 'borrowed' || r.status === 'overdue')).length;
                 const roleBadge = user.role === 'student' ? 'info' : user.role === 'teacher' ? 'warning' : user.role === 'librarian' ? 'success' : 'primary';
-                const deptGrade = user.role === 'student' ? `Grade ${user.grade || '?'} - ${user.class || '?'}` : (user.department || 'N/A');
+                const isPending = user.approved === false;
                 return `
-                  <tr>
+                  <tr style="${isPending ? 'background:rgba(245,158,11,0.05);' : ''}">
                     <td><div style="display:flex;align-items:center;gap:0.75rem;">
                       <div class="avatar-sm" style="width:36px;height:36px;font-size:0.65rem;">${user.avatar || user.name.split(' ').map(n => n[0]).join('').substring(0, 2)}</div>
                       <strong>${Utils.escapeHtml(user.name)}</strong>
                     </div></td>
-                    <td style="font-size:0.85rem;font-family:monospace;">${Utils.escapeHtml(String(user.id || ''))}</td>
                     <td style="font-size:0.85rem;">${Utils.escapeHtml(user.email || '')}</td>
                     <td><span class="badge badge-${roleBadge}">${user.role || 'student'}</span></td>
-                    <td style="font-size:0.85rem;">${Utils.escapeHtml(deptGrade)}</td>
-                    <td>${borrowed}</td>
+                    <td>${isPending
+                      ? '<span class="badge badge-warning" style="background:rgba(245,158,11,0.15);color:var(--warning);">Pending</span>'
+                      : '<span class="badge badge-success" style="background:rgba(16,185,129,0.15);color:var(--success);">Approved</span>'
+                    }</td>
                     <td><div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
-                      <button class="btn btn-ghost btn-sm" onclick="AdminUsersPage.viewProfile(${JSON.stringify(user.id).replace(/"/g, '&quot;')})" title="View Profile">${Utils.getIcon('eye', 14)}</button>
-                      <button class="btn btn-ghost btn-sm" onclick="AdminUsersPage.editUser(${JSON.stringify(user.id).replace(/"/g, '&quot;')})" title="Edit">${Utils.getIcon('edit-2', 14)}</button>
-                      <button class="btn btn-ghost btn-sm" onclick="AdminUsersPage.viewBorrowHistory(${JSON.stringify(user.id).replace(/"/g, '&quot;')})" title="Borrow History">${Utils.getIcon('clock', 14)}</button>
-                      <button class="btn btn-ghost btn-sm" onclick="AdminUsersPage.resetPassword(${JSON.stringify(user.id).replace(/"/g, '&quot;')}, '${Utils.escapeHtml(user.name)}')" title="Reset Password">${Utils.getIcon('key', 14)}</button>
-                      <button class="btn btn-ghost btn-sm" onclick="AdminUsersPage.toggleAccount(${JSON.stringify(user.id).replace(/"/g, '&quot;')}, '${Utils.escapeHtml(user.name)}')" title="Enable/Disable" style="color:var(--warning);">${Utils.getIcon('shield', 14)}</button>
+                      ${isPending ? `
+                        <button class="btn btn-sm" style="background:var(--success);color:#fff;padding:4px 10px;" onclick="AdminUsersPage.approveUser(${JSON.stringify(user.id).replace(/"/g, '&quot;')}, '${Utils.escapeHtml(user.name)}')" title="Approve">${Utils.getIcon('check', 14)} Approve</button>
+                        <button class="btn btn-sm" style="background:var(--danger);color:#fff;padding:4px 10px;" onclick="AdminUsersPage.rejectUser(${JSON.stringify(user.id).replace(/"/g, '&quot;')}, '${Utils.escapeHtml(user.name)}')" title="Reject">${Utils.getIcon('x', 14)} Reject</button>
+                      ` : `
+                        <button class="btn btn-ghost btn-sm" onclick="AdminUsersPage.viewProfile(${JSON.stringify(user.id).replace(/"/g, '&quot;')})" title="View Profile">${Utils.getIcon('eye', 14)}</button>
+                        <button class="btn btn-ghost btn-sm" onclick="AdminUsersPage.editUser(${JSON.stringify(user.id).replace(/"/g, '&quot;')})" title="Edit">${Utils.getIcon('edit-2', 14)}</button>
+                        <button class="btn btn-ghost btn-sm" onclick="AdminUsersPage.viewBorrowHistory(${JSON.stringify(user.id).replace(/"/g, '&quot;')})" title="Borrow History">${Utils.getIcon('clock', 14)}</button>
+                        ${AppState.currentUser.role === 'admin' && (user.role === 'librarian' || user.role === 'admin') ? `
+                          <button class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick="AdminUsersPage.deleteLibrarian(${JSON.stringify(user.id).replace(/"/g, '&quot;')}, '${Utils.escapeHtml(user.name)}')" title="Delete Account">${Utils.getIcon('trash', 14)}</button>
+                        ` : ''}
+                      `}
                     </div></td>
                   </tr>`;
-              }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text-secondary);padding:2rem;">No users found.</td></tr>'}
+              }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text-secondary);padding:2rem;">No users found.</td></tr>'}
             </tbody>
           </table></div>
           ${totalPages > 1 ? `
@@ -130,6 +143,67 @@ const AdminUsersPage = {
   prevPage() { if (this.currentPage > 1) { this.currentPage--; this.refresh(); } },
   nextPage() { this.currentPage++; this.refresh(); },
   refresh() { Router.resolve(); },
+
+  async approveUser(id, name) {
+    if (AppState.isSupabaseConnected) {
+      try {
+        await Api.approveUser(id);
+        await this._notifyUserApproved(id, name);
+      } catch (e) {
+        Toast.error('Failed to approve user: ' + (e.message || 'Unknown error'));
+        return;
+      }
+      try { AppState.allProfiles = await Api.getAllProfiles(); } catch (e) {}
+    } else {
+      const storedUsers = LoginPage.getStoredUsers();
+      const u = storedUsers.find(x => String(x.id) === String(id));
+      if (u) {
+        u.approved = true;
+        localStorage.setItem('library_users', JSON.stringify(storedUsers));
+      }
+    }
+    Toast.success(`${name} has been approved and can now sign in.`);
+    this.refresh();
+  },
+
+  async rejectUser(id, name) {
+    Modal.confirm('Reject Registration', `Are you sure you want to reject "${name}"? This will delete their account.`, async () => {
+      if (AppState.isSupabaseConnected) {
+        try {
+          await Api.rejectUser(id);
+          try { AppState.allProfiles = await Api.getAllProfiles(); } catch (e) {}
+        } catch (e) {
+          Toast.error('Failed to reject user: ' + (e.message || 'Unknown error'));
+          return;
+        }
+      } else {
+        const storedUsers = LoginPage.getStoredUsers();
+        const updated = storedUsers.filter(x => String(x.id) !== String(id));
+        localStorage.setItem('library_users', JSON.stringify(updated));
+      }
+      Toast.success(`${name} has been rejected.`);
+      this.refresh();
+    });
+  },
+
+  async _notifyUserApproved(userId, name) {
+    try {
+      const profile = await Api.getProfile(userId);
+      const email = profile.email || '';
+      await Api.createNotification({
+        user_id: userId,
+        type: 'success',
+        title: 'Registration Approved',
+        message: `Your account has been approved by the library. You can now sign in.`,
+        icon: 'check-circle',
+        read: false,
+        time: new Date().toISOString(),
+        timestamp: new Date().toISOString()
+      });
+    } catch (e) {
+      console.error('Failed to notify approved user:', e);
+    }
+  },
 
   _findUser(id) {
     if (AppState.isSupabaseConnected && AppState.allProfiles && AppState.allProfiles.length > 0) {
@@ -160,7 +234,7 @@ const AdminUsersPage = {
           <div class="form-group"><label class="form-label">ID Number</label><input class="form-input" id="uf-id" placeholder="Student/Employee ID"></div>
         </div>
         <div class="form-group"><label class="form-label">Role *</label>
-          <select class="form-input" id="uf-role">
+          <select class="form-input" id="uf-role" onchange="AdminUsersPage.onAddRoleChange()">
             <option value="student">Student</option>
             <option value="teacher">Teacher</option>
             <option value="librarian">Librarian</option>
@@ -171,19 +245,94 @@ const AdminUsersPage = {
           <div class="form-group"><label class="form-label">Grade</label><input class="form-input" id="uf-grade" placeholder="Grade (for students)"></div>
           <div class="form-group"><label class="form-label">Department</label><input class="form-input" id="uf-dept" placeholder="Department"></div>
         </div>
-        <div class="form-group"><label class="form-label">Class</label><input class="form-input" id="uf-class" placeholder="Class (for students)"></div>`,
+        <div class="form-group"><label class="form-label">Class</label><input class="form-input" id="uf-class" placeholder="Class (for students)"></div>
+        <div class="form-group">
+          <label class="form-label">Password * <small style="color:var(--text-tertiary);font-weight:400;">(min 8 chars, upper+lower+number)</small></label>
+          <input class="form-input" id="uf-password" type="password" placeholder="Set account password">
+        </div>`,
       buttons: [
-        { label: 'Add User', class: 'btn-primary', onClick: () => {
-          const name = document.getElementById('uf-name')?.value?.trim();
-          const email = document.getElementById('uf-email')?.value?.trim();
-          if (!name) { Toast.error('Name is required'); return; }
-          if (!email) { Toast.error('Email is required'); return; }
-          Toast.success('User added successfully!');
-          Modal.hide();
-        }},
+        { label: 'Add User', class: 'btn-primary', onClick: () => this._createUser() },
         { label: 'Cancel', class: 'btn-outline', onClick: () => Modal.hide() }
       ],
       size: 'md'
+    });
+  },
+
+  onAddRoleChange() {
+    const role = document.getElementById('uf-role')?.value;
+    const depEl = document.getElementById('uf-dept');
+    const classEl = document.getElementById('uf-class');
+    const gradeEl = document.getElementById('uf-grade');
+    if (depEl) depEl.placeholder = role === 'student' ? 'Department' : (role === 'librarian' ? 'Library Department' : 'Department');
+    if (gradeEl) gradeEl.placeholder = role === 'student' ? 'Grade (for students)' : 'Grade';
+  },
+
+  async _createUser() {
+    const name = document.getElementById('uf-name')?.value?.trim();
+    const email = document.getElementById('uf-email')?.value?.trim();
+    const id = document.getElementById('uf-id')?.value?.trim();
+    const role = document.getElementById('uf-role')?.value || 'student';
+    const grade = document.getElementById('uf-grade')?.value?.trim() || '';
+    const dept = document.getElementById('uf-dept')?.value?.trim() || '';
+    const className = document.getElementById('uf-class')?.value?.trim() || '';
+    const password = document.getElementById('uf-password')?.value || '';
+
+    if (!name) { Toast.error('Name is required'); return; }
+    if (!email) { Toast.error('Email is required'); return; }
+    if (!password) { Toast.error('Password is required'); return; }
+    if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+      Toast.error('Password must be at least 8 characters with uppercase, lowercase and a number');
+      return;
+    }
+
+    if (AppState.isSupabaseConnected) {
+      try {
+        if (role === 'librarian' || role === 'admin') {
+          await Api.addLibrarian({ email, password, name, role, department: role === 'admin' ? 'Administration' : dept });
+        } else {
+          const { data } = await Api.signUp(email, password, { name, role, user_id: id, ...(role === 'student' ? { grade } : { department: dept }) });
+          if (data && data.user) {
+            await Api.approveUser(data.user.id);
+          }
+        }
+        try { AppState.allProfiles = await Api.getAllProfiles(); } catch (e) {}
+        Toast.success(`${role} account created successfully.`);
+        Modal.hide();
+        this.refresh();
+      } catch (e) {
+        Toast.error('Failed to create user: ' + (e.message || 'Unknown error'));
+      }
+    } else {
+      const storedUsers = LoginPage.getStoredUsers();
+      if (storedUsers.find(u => u.email === email)) { Toast.error('Email already registered'); return; }
+      const newUser = { name, email, role, approved: true, grade, department: dept, className, password, id: id || Date.now().toString(), createdAt: new Date().toISOString(), borrowCount: 0, readingStreak: 0 };
+      storedUsers.push(newUser);
+      localStorage.setItem('library_users', JSON.stringify(storedUsers));
+      Toast.success(`${role} account created successfully.`);
+      Modal.hide();
+      this.refresh();
+    }
+  },
+
+  async deleteLibrarian(id, name) {
+    if (AppState.currentUser && String(AppState.currentUser.id) === String(id)) {
+      Toast.error('You cannot delete your own account.');
+      return;
+    }
+    Modal.confirm('Delete Librarian', `Are you sure you want to permanently delete "${name}"? This cannot be undone.`, async () => {
+      try {
+        if (AppState.isSupabaseConnected) {
+          await Api.deleteAccount(id);
+          try { AppState.allProfiles = await Api.getAllProfiles(); } catch (e) {}
+        } else {
+          const storedUsers = LoginPage.getStoredUsers();
+          localStorage.setItem('library_users', JSON.stringify(storedUsers.filter(u => String(u.id) !== String(id))));
+        }
+        Toast.success(`${name} has been deleted.`);
+        this.refresh();
+      } catch (e) {
+        Toast.error('Failed to delete user: ' + (e.message || 'Unknown error'));
+      }
     });
   },
 

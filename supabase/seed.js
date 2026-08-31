@@ -118,6 +118,7 @@ async function seed() {
       grade: u.grade || '',
       className: u.className || '',
       avatar: u.name.split(' ').map(n => n[0]).join(''),
+      approved: true,
     }, { onConflict: 'id' });
     if (error) console.log(`  Profile error for ${u.email}: ${error.message}`);
     else console.log(`  Profile updated: ${u.name}`);
