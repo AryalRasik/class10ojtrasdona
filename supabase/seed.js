@@ -116,7 +116,7 @@ async function seed() {
       email: u.email,
       role: u.role,
       grade: u.grade || '',
-      className: u.className || '',
+      classname: u.className || '',
       avatar: u.name.split(' ').map(n => n[0]).join(''),
       approved: true,
     }, { onConflict: 'id' });
