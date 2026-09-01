@@ -27,6 +27,12 @@
     #searchToggleMobile { display: flex; }
     .search-shortcut { display: none; }
 
+    .logo-text { font-size: 0.85rem; }
+    .logo-icon { width: 30px; height: 30px; }
+    .nav-logo { gap: 8px; }
+    .nav-user-btn { padding: 2px; }
+    .nav-user .chevron { display: none; }
+
     .sidebar { width: 280px; }
 
     .bottom-nav { display: flex; }
