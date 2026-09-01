@@ -445,17 +445,23 @@ const App = {
         const u = AppState.currentUser;
         const navUser = document.querySelector('.nav-user');
         const loginBtn = document.getElementById('navLoginBtn');
+        const notifBtn = document.getElementById('notificationBtn');
+        const isMobile = window.innerWidth <= 768;
 
         if (!u) {
-            // Not logged in — hide user menu, show login button
+            // Not logged in — hide user menu, show login button.
+            // On mobile, hide the notification icon too so the Sign In
+            // button sits in a clean position; restore it after sign in.
             if (navUser) navUser.style.display = 'none';
             if (loginBtn) loginBtn.style.display = '';
+            if (isMobile && notifBtn) notifBtn.style.display = 'none';
             return;
         }
 
         // Logged in — show user menu, hide login button
         if (navUser) navUser.style.display = '';
         if (loginBtn) loginBtn.style.display = 'none';
+        if (isMobile && notifBtn) notifBtn.style.display = '';
 
         const avatarText = u.avatar || u.name.split(' ').map(n => n[0]).join('');
         ['navAvatar', 'dropAvatar'].forEach(id => {
