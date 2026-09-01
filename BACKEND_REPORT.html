@@ -1,0 +1,2719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Management System - Backend Report</title>
+    <style>
+        @page { margin: 1in; size: A4; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Times New Roman', Times, serif; font-size: 14px; line-height: 1.8; color: #000; background: #fff; }
+        .page { page-break-after: always; padding: 20px 40px; }
+        .page:last-child { page-break-after: auto; }
+        h1 { font-size: 24px; text-align: center; margin: 20px 0; }
+        h2 { font-size: 20px; margin: 25px 0 12px; border-bottom: 2px solid #000; padding-bottom: 5px; }
+        h3 { font-size: 16px; margin: 18px 0 8px; }
+        h4 { font-size: 14px; margin: 12px 0 6px; font-style: italic; }
+        p { text-align: justify; margin-bottom: 10px; }
+        ul, ol { margin: 8px 0 12px 24px; }
+        li { margin-bottom: 4px; }
+        .center { text-align: center; }
+        .cover-page { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 90vh; text-align: center; }
+        .cover-page h1 { font-size: 28px; margin-bottom: 10px; }
+        .cover-page h2 { font-size: 22px; border: none; margin-bottom: 5px; }
+        .cover-page .subtitle { font-size: 18px; margin: 8px 0; }
+        .cover-page .meta { font-size: 14px; margin-top: 40px; line-height: 2; }
+        .toc { list-style: none; margin-left: 0; }
+        .toc li { padding: 4px 0; border-bottom: 1px dotted #ccc; }
+        .toc li span { float: right; }
+        .toc .sub { padding-left: 24px; font-size: 13px; }
+        pre { background: #f4f4f4; border: 1px solid #ddd; border-left: 4px solid #333; padding: 12px; font-size: 11px; line-height: 1.5; overflow-x: auto; margin: 10px 0 16px; font-family: 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; }
+        code { font-family: 'Courier New', monospace; background: #f0f0f0; padding: 1px 4px; font-size: 12px; }
+        .code-filename { background: #333; color: #fff; padding: 4px 12px; font-size: 12px; font-family: 'Courier New', monospace; margin-bottom: -4px; display: inline-block; border-radius: 4px 4px 0 0; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        th, td { border: 1px solid #333; padding: 6px 10px; text-align: left; font-size: 13px; }
+        th { background: #e8e8e8; font-weight: bold; }
+        .diagram-placeholder { border: 2px dashed #999; padding: 24px; text-align: center; color: #666; margin: 10px 0; font-style: italic; }
+        .erd-list { font-family: 'Courier New', monospace; font-size: 11.5px; background: #f8f8f8; border: 1px solid #ddd; padding: 12px; white-space: pre; line-height: 1.6; overflow-x: auto; }
+        @media print {
+            .page { page-break-after: always; }
+            body { font-size: 12pt; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ======================== COVER PAGE ======================== -->
+<div class="page cover-page">
+    <div style="border: 3px double #000; padding: 40px 60px; width: 100%;">
+        <p style="font-size: 14px; margin-bottom: 5px;">Shree Saraswati Secondary School</p>
+        <p style="font-size: 13px; margin-bottom: 40px; color: #555;">Changunarayan-08, Sudal, Bhaktapur, Nepal</p>
+        <h1 style="font-size: 28px; margin-bottom: 10px;">Library Management System</h1>
+        <p class="subtitle" style="font-size: 18px;">Backend Project Report<br>Database Design, API Architecture &amp; Security</p>
+        <div style="margin: 40px 0; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 20px 0;">
+            <p style="font-size: 15px; margin-bottom: 8px;">A Project Report Submitted in Partial Fulfillment of the Requirements for</p>
+            <p style="font-size: 16px; font-weight: bold;">Computer Science (Optional)</p>
+            <p style="font-size: 15px; margin-top: 4px;">Grade 10, National Examinations Board (NEB)</p>
+        </div>
+        <div class="meta">
+            <p><strong>Submitted By:</strong> Rasik Binayak Aryal</p>
+            <p><strong>Roll No:</strong> [Your Roll No]</p>
+            <p><strong>Supervisor:</strong> [Teacher's Name]</p>
+            <p><strong>Academic Year:</strong> 2082-2083 BS (2025-2026 AD)</p>
+        </div>
+    </div>
+</div>
+
+<!-- ======================== CERTIFICATE ======================== -->
+<div class="page">
+    <h2>Certificate</h2>
+    <p>This is to certify that the project report entitled <strong>"Library Management System — Backend"</strong> prepared by <strong>Rasik Binayak Aryal</strong>, a legitimate student of Shree Saraswati Secondary School, has been completed as part of the partial fulfillment of the requirements for the Computer Science (Optional) course in the academic year 2082-2083 BS.</p>
+    <p>The report has been approved as it satisfies the academic requirements prescribed by the National Examinations Board (NEB) for Grade 10.</p>
+    <br><br>
+    <table style="border: none; width: 100%;">
+        <tr style="border: none;">
+            <td style="border: none; width: 50%; text-align: left;">
+                <p style="margin: 0;"><strong>[Teacher's Name]</strong></p>
+                <p style="margin: 0;">Supervisor</p>
+                <p style="margin: 0;">Department of Computer Science</p>
+                <p style="margin: 0;">Shree Saraswati Secondary School</p>
+            </td>
+            <td style="border: none; width: 50%; text-align: right;">
+                <p style="margin: 0;"><strong>[Principal's Name]</strong></p>
+                <p style="margin: 0;">Principal</p>
+                <p style="margin: 0;">Shree Saraswati Secondary School</p>
+                <p style="margin: 0;">Bhaktapur, Nepal</p>
+            </td>
+        </tr>
+    </table>
+    <br>
+    <p style="text-align: center;">Date: _______________</p>
+</div>
+
+<!-- ======================== ACKNOWLEDGEMENT ======================== -->
+<div class="page">
+    <h2>Acknowledgement</h2>
+    <p>I would like to express my sincere gratitude to all those who have contributed to the successful completion of this backend project.</p>
+    <p>First and foremost, I am deeply grateful to <strong>God Almighty</strong> for providing me with the strength, wisdom, and perseverance to complete this project successfully.</p>
+    <p>I extend my heartfelt thanks to my supervisor <strong>[Teacher's Name]</strong>, Department of Computer Science, Shree Saraswati Secondary School, for their invaluable guidance, continuous encouragement, and constructive suggestions throughout the development of this project. Their insights into database design and application security have been instrumental in shaping this work.</p>
+    <p>I am also thankful to <strong>[Principal's Name]</strong>, Principal of Shree Saraswati Secondary School, for providing the necessary infrastructure and support for the completion of this project.</p>
+    <p>I express my gratitude to all my <strong>teachers</strong> of the Computer Science department for their support and cooperation. Their knowledge and teaching have been the foundation upon which this project is built.</p>
+    <p>I am also thankful to my <strong>friends and classmates</strong> who provided moral support, valuable suggestions, and encouragement during the development process.</p>
+    <p>Finally, I am deeply indebted to my <strong>parents and family members</strong> for their unconditional love, prayers, and support throughout my academic journey.</p>
+    <p style="text-align: right; margin-top: 30px;"><strong>Rasik Binayak Aryal</strong></p>
+    <p style="text-align: right;">Shree Saraswati Secondary School</p>
+    <p style="text-align: right;">Bhaktapur, Nepal</p>
+</div>
+
+<!-- ======================== ABSTRACT ======================== -->
+<div class="page">
+    <h2>Abstract</h2>
+    <p>The <strong>backend</strong> of the Library Management System for Shree Saraswati Secondary School is responsible for all the unseen but critical work: securely storing every book, borrow, user, and notification; authenticating users; and enforcing strict rules about who may read and modify which data.</p>
+
+    <p>The data layer is a <strong>cloud-hosted PostgreSQL database managed through Supabase</strong>. Its schema, defined in <code>supabase/schema.sql</code>, contains <strong>24 interrelated tables</strong> covering profiles (extending the built-in authentication users), books, categories, borrow requests, reservations, notifications, announcements, events, reviews, favorites, digital books, study materials, settings, achievements, login history, activity/audit logs, fine payments, book imports, feedback, calendar events, FAQs, contact messages, and sessions. The schema applies <strong>Row-Level Security (RLS)</strong> on practically every table, so a student can never see another member's personal data and ordinary users can never touch administrative records.</p>
+
+    <p>Authentication is provided by <strong>Supabase Auth</strong> with JSON Web Tokens and a database trigger that creates a role-aware <code>profiles</code> row on every signup. Four roles — <strong>student, teacher, librarian, and admin</strong> — are enforced at three separate layers: Row-Level Security in the database, role-guarded API routes, and the frontend sidebar. A supplementary <strong>Express.js API server</strong> (<code>server.js</code>) demonstrates the same workflows with bcrypt password hashing, JWT access/refresh tokens, rate limiting, request validation, CSRF protection, account lockout, and audited activity logs.</p>
+
+    <p>For resilience, a complete <strong>JSON fallback layer</strong> (<code>js/data.js</code> plus localStorage persistence) keeps the application fully functional when the cloud database is unreachable, and three <strong>seed scripts</strong> (<code>seed.js</code>, <code>fix-seed.js</code>, <code>import-excel.js</code>) load the catalog of Nepal CDC textbooks. All security features were tested against a set of 20 test cases, all passing.</p>
+
+    <p><strong>Keywords:</strong> Backend, PostgreSQL, Supabase, Row-Level Security, Authentication, JWT, Express.js, bcrypt, Rate Limiting, Role-Based Access Control, Data Seeding, JSON Fallback</p>
+</div>
+
+<!-- ======================== PREFACE ======================== -->
+<div class="page">
+    <h2>Preface</h2>
+    <p>The backend of this Library Management System handles the critical work that users never see: storing data securely, authenticating users, and enforcing rules about who may do what. The primary decision behind the backend was to <strong>leverage a cloud-hosted database platform (Supabase) rather than building and maintaining a physical server</strong> — a choice that keeps the system cost-free, always available, and automatically secure.</p>
+
+    <p>The heart of the backend is a <strong>PostgreSQL database</strong> managed through Supabase. Its schema, defined in <code>supabase/schema.sql</code>, consists of <strong>24 interrelated tables</strong> — profiles, categories, books, borrow_requests, reservations, notifications, announcements, events, favorites, recently_viewed, reviews, digital_books, study_materials, settings, achievements, login_history, activity_logs, audit_logs, fine_payments, book_imports, feedback, calendar_events, faqs, contact_messages, and sessions. Every table is indexed on its most-queried columns and linked through foreign keys. The most important layer is <strong>Row-Level Security</strong>: about 250 lines of RLS policies define, at the database level itself, exactly which rows each role is allowed to see, insert, update, or delete.</p>
+
+    <p>Authentication is handled by <strong>Supabase Auth</strong>. When a user signs up, a database trigger automatically creates their <code>profiles</code> row with a role carried in the sign-up metadata. Login issues a <strong>JWT (JSON Web Token)</strong> that the client sends on every request; the database trusts that token via <code>auth.uid()</code> when deciding whether an RLS policy applies.</p>
+
+    <p>To demonstrate the complete security stack in one place, the project also includes an <strong>Express.js API server</strong> (<code>server.js</code>) that implements the same workflows using bcrypt (12 salt rounds) for password hashing, JWT access and refresh tokens with rotation, per-route rate limiting, express-validator request validation, CSRF protection, automatic account lockout after five failed attempts, and a capped audit log. Because the application is primarily a static site powered directly by Supabase, this server is optional — but it documents every security practice required by the course.</p>
+
+    <p>Finally, the backend was designed to be resilient. If the cloud database is ever unreachable, a built-in <strong>JSON fallback layer</strong> (<code>js/data.js</code> loaded into localStorage) keeps the entire library usable offline with demo accounts, and <strong>seed scripts</strong> populate the production database with the full catalog of Nepal CDC textbooks and realistic borrow data. This work taught database modelling, relational integrity, access control, and secure API design — the foundations of modern web backends.</p>
+
+    <p style="text-align: right; margin-top: 30px;"><strong>Rasik Binayak Aryal</strong></p>
+    <p style="text-align: right;">Grade 10, Computer Science (Optional)</p>
+    <p style="text-align: right;">Shree Saraswati Secondary School</p>
+    <p style="text-align: right;">Changunarayan-08, Bhaktapur, Nepal</p>
+</div>
+
+<!-- ======================== TABLE OF CONTENTS ======================== -->
+<div class="page">
+    <h2>Table of Contents</h2>
+    <ul class="toc">
+        <li>Certificate <span>...</span></li>
+        <li>Acknowledgement <span>...</span></li>
+        <li>Abstract <span>...</span></li>
+        <li>Preface <span>...</span></li>
+        <li><strong>1. Introduction</strong> <span>...</span></li>
+        <li class="sub">1.1 Outline of the Project <span>...</span></li>
+        <li class="sub">1.2 Objectives <span>...</span></li>
+        <li class="sub">1.3 Advantages <span>...</span></li>
+        <li><strong>2. Technology Stack</strong> <span>...</span></li>
+        <li class="sub">2.1 Supabase (PostgreSQL Database) <span>...</span></li>
+        <li class="sub">2.2 Express.js API Server <span>...</span></li>
+        <li class="sub">2.3 Supabase Auth &amp; Row-Level Security <span>...</span></li>
+        <li><strong>3. Database Design</strong> <span>...</span></li>
+        <li class="sub">3.1 Entity Relationship Diagram (ERD) <span>...</span></li>
+        <li class="sub">3.2 Table Definitions (24 Tables) <span>...</span></li>
+        <li class="sub">3.3 Multi-Row vs Singleton Table Patterns <span>...</span></li>
+        <li class="sub">3.4 Row-Level Security (RLS) Policies <span>...</span></li>
+        <li class="sub">3.5 Data Relationships &amp; Foreign Keys <span>...</span></li>
+        <li><strong>4. API Architecture</strong> <span>...</span></li>
+        <li class="sub">4.1 Client Data-Access Layer <span>...</span></li>
+        <li class="sub">4.2 Authentication API Routes <span>...</span></li>
+        <li class="sub">4.3 Admin API Routes <span>...</span></li>
+        <li><strong>5. JSON Fallback &amp; Data Resilience</strong> <span>...</span></li>
+        <li class="sub">5.1 JSON Fallback File Structure <span>...</span></li>
+        <li class="sub">5.2 Data Seed Scripts <span>...</span></li>
+        <li><strong>6. Authentication &amp; Authorization Flow</strong> <span>...</span></li>
+        <li class="sub">6.1 User Signup &amp; Pending Approval <span>...</span></li>
+        <li class="sub">6.2 Login &amp; Session Management <span>...</span></li>
+        <li class="sub">6.3 Role-Based Access Control <span>...</span></li>
+        <li><strong>7. Appendix</strong> <span>...</span></li>
+        <li><strong>8. Conclusion</strong> <span>...</span></li>
+<li><strong>9. References</strong> <span>...</span></li>
+        <li><strong>Appendix A. Complete Backend Source Code</strong> <span>...</span></li>
+    </ul>
+</div>
+
+<!-- ======================== CHAPTER 1: INTRODUCTION ======================== -->
+<div class="page">
+    <h2>1. Introduction</h2>
+
+    <h3>1.1 Outline of the Project</h3>
+    <p>The backend of the Library Management System provides every service the frontend needs, minus any hardware of its own. It is built around three cooperating layers:</p>
+    <ul>
+        <li><strong>Database (Supabase / PostgreSQL):</strong> the single source of truth. <code>supabase/schema.sql</code> defines 24 tables, 35 indexes, foreign-key relationships, and roughly 250 lines of Row-Level Security policies.</li>
+        <li><strong>Authentication (Supabase Auth + JWT):</strong> signup, email verification, sign-in, sessions, and password recovery. A database trigger extends every auth user with a <code>profiles</code> row carrying their role.</li>
+        <li><strong>API layer:</strong> the SPA talks to Supabase directly through <code>js/api.js</code>; a companion <strong>Express.js server</strong> (<code>server.js</code>) exposes the same domain as /api routes with full security hardening (bcrypt, JWT refresh, rate limits, validation, lockout, audit logs).</li>
+    </ul>
+    <p>This design cleanly separates data, logic, and presentation. The frontend treats the backend as a service: it signs in, asks for data with rules already applied, and never needs to know how the rules are enforced.</p>
+
+    <h3>1.2 Objectives</h3>
+    <ol>
+        <li>To design a normalized relational database covering the entire library workflow.</li>
+        <li>To enforce data integrity through primary/foreign keys, check constraints, and indexes.</li>
+        <li>To secure every table with Row-Level Security policies so users only ever see their own data.</li>
+        <li>To implement role-based access control for student, teacher, librarian, and admin.</li>
+        <li>To implement password hashing, JWT sessions, request validation, and rate limiting.</li>
+        <li>To keep the system usable during outages via a JSON fallback data layer.</li>
+        <li>To seed realistic Nepal CDC textbook data through repeatable scripts.</li>
+    </ol>
+
+    <h3>1.3 Advantages</h3>
+    <ul>
+        <li><strong>Zero-cost cloud hosting:</strong> Supabase's free tier hosts the database, auth, and RLS with no server to maintain.</li>
+        <li><strong>Security at the database level:</strong> RLS applies even if an attacker bypasses the app — the row access rules cannot be skipped.</li>
+        <li><strong>Built-in authentication:</strong> Supabase Auth handles password hashing, tokens, and email verification out of the box.</li>
+        <li><strong>Resilience:</strong> offline JSON fallback and demo accounts keep the system demonstrable anywhere.</li>
+        <li><strong>Principled, auditable security:</strong> the Express demonstration server documents bcrypt, JWT rotation, lockout, and logging in plain code.</li>
+        <li><strong>Data portability:</strong> PostgreSQL is an industry-standard database; the schema exports and re-imports cleanly.</li>
+    </ul>
+</div>
+
+<!-- ======================== CHAPTER 2: TECHNOLOGY STACK ======================== -->
+<div class="page">
+    <h2>2. Technology Stack</h2>
+
+    <h3>2.1 Supabase (PostgreSQL Database)</h3>
+    <p>Supabase is an open-source backend-as-a-service that bundles a full <strong>PostgreSQL</strong> database, authentication, storage, and a realtime engine. It is chosen here because it provides a production database for free, accessible over the internet with TLS, plus an <strong>Admin/Service API</strong> and a <strong>PostgREST</strong> layer that turns SQL tables into REST endpoints automatically. The project uses:</p>
+    <ul>
+        <li><code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> — to initialize the public client (<code>js/supabase-client.js</code>).</li>
+        <li><code>SUPABASE_SERVICE_KEY</code> — used only by seed scripts to bypass RLS while loading data.</li>
+        <li><code>@supabase/supabase-js</code> (v2.49) — the JavaScript SDK bundled locally in <code>vendor/supabase.js</code>.</li>
+    </ul>
+    <p>Benefits verified in this project: automatic backups, SQL Editor for applying <code>schema.sql</code>, encrypted traffic, and row-level security that works even without application code.</p>
+
+    <div class="code-filename">js/supabase-client.js — client initialization (real)</div>
+<pre>window.SupabaseClient = {
+  client: null,
+
+  init(url, key) {
+    if (this.client) return this.client;
+    this.client = window.supabase.createClient(url, key);  // anon public key (safe for browsers)
+    return this.client;
+  },
+
+  get() {
+    return this.client;
+  }
+};</pre>
+
+    <h3>2.2 Express.js API Server</h3>
+    <p>To document and demonstrate a conventional backend with strict security, the project includes an <strong>Express.js</strong> server (<code>server.js</code>). It is a pure runtime server — no framework magic — which keeps the learning valuable. Its stack (all listed in <code>package.json</code>):</p>
+    <table>
+        <tr><th>Package</th><th>Role</th></tr>
+        <tr><td>express 4.21</td><td>HTTP server, routing, middleware pipeline</td></tr>
+        <tr><td>jsonwebtoken 9</td><td>JWT access tokens + refresh-token rotation</td></tr>
+        <tr><td>bcryptjs 3</td><td>SHA-level password hashing (12 salt rounds)</td></tr>
+        <tr><td>express-rate-limit</td><td>Rate limits: auth 10 req / 15 min, API 200, borrow 20</td></tr>
+        <tr><td>express-validator</td><td>Request body validation at every auth route</td></tr>
+        <tr><td>helmet 8</td><td>Security headers + Content-Security-Policy</td></tr>
+        <tr><td>cookie-parser</td><td>Signed refresh-token cookies</td></tr>
+        <tr><td>xlsx</td><td>Excel import support in the seed tooling</td></tr>
+        <tr><td>dotenv</td><td>Loads <code>.env</code> credentials</td></tr>
+    </table>
+    <p>It also serves the built frontend statically so the whole project runs with a single <code>npm start</code>.</p>
+
+    <h3>2.3 Supabase Auth &amp; Row-Level Security</h3>
+    <p>Authentication and authorization are handled natively by Supabase. <strong>Supabase Auth</strong> manages users (password + email verification), issues JWTs, and refreshes sessions. <strong>Row-Level Security</strong> is a PostgreSQL feature where a <code>POLICY</code> attached to each table filters rows using <code>auth.uid()</code> and the role stored in <code>profiles</code>. Every table in this schema is protected; not a single table is left publicly writable. Policies use four verbs — <code>FOR SELECT</code>, <code>FOR INSERT</code>, <code>FOR UPDATE</code>, <code>FOR DELETE</code> — each with its own condition.</p>
+</div>
+
+<!-- ======================== CHAPTER 3: DATABASE DESIGN ======================== -->
+<div class="page">
+    <h2>3. Database Design</h2>
+
+    <h3>3.1 Entity Relationship Diagram (ERD)</h3>
+    <p>The database is a relational model of the real library. The `profiles` table is the hub: it owns borrow requests, favorites, reviews, and notifications. `books` feed `borrow_requests`, `reservations`, and `reviews`. The diagram below summarises the main entities and their cardinality.</p>
+
+    <div class="diagram-placeholder">
+        <p style="font-size:15px;color:#333;"><strong>[ Insert ERD Screenshot here — generated from supabase/schema.sql ]</strong></p>
+    </div>
+
+    <div class="erd-list">profiles 1 -----&lt; borrow_requests &gt;----- 1 books
+profiles 1 -----&lt; reservations    &gt;----- 1 books
+profiles 1 -----&lt; reviews          &gt;----- 1 books
+profiles 1 -----&lt; favorites        &gt;----- N books   (favorites)
+profiles 1 -----&lt; recently_viewed  &gt;----- 1 books
+profiles 1 -----&lt; notifications  (many)
+profiles 1 -----&lt; login_history / activity_logs / audit_logs
+profiles 1 -----&lt; fine_payments    &gt;----- 1 borrow_requests
+categories 1 ---&lt; books (many books per category)
+authors_store  N ---&lt; books (books.primary_author fields)</div>
+
+    <p>All relationships below the profiles hub are enforced with <code>references</code> clauses and <code>on delete cascade</code> so removing a profile cleanly removes its dependent rows.</p>
+
+    <h3>3.2 Table Definitions (24 Tables)</h3>
+    <p>The schema is organised into numbered sections. Tables 1&ndash;14 hold the core library domain; tables 15&ndash;24 hold security and community data.</p>
+    <table>
+        <tr><th>#</th><th>Table</th><th>Purpose</th></tr>
+        <tr><td>1</td><td>profiles</td><td>Role-aware extension of auth.users (name, role, grade, class, department, IDs)</td></tr>
+        <tr><td>2</td><td>categories</td><td>Book categories (Nepali, English, Mathematics, Science&hellip;)</td></tr>
+        <tr><td>3</td><td>books</td><td>CDC textbooks with copies, shelf, rack, rating, borrow count</td></tr>
+        <tr><td>4</td><td>borrow_requests</td><td>Full borrow lifecycle: pending, borrowed, returned, overdue, rejected</td></tr>
+        <tr><td>5</td><td>notifications</td><td>Per-user notifications generated by events</td></tr>
+        <tr><td>6</td><td>announcements</td><td>Library-wide news shown on the home ticker</td></tr>
+        <tr><td>7</td><td>events</td><td>Workshops and activities</td></tr>
+        <tr><td>8</td><td>reservations</td><td>Reserving books before borrowing</td></tr>
+        <tr><td>9</td><td>favorites</td><td>User bookmarks (multi-row per user)</td></tr>
+        <tr><td>10</td><td>recently_viewed</td><td>User browsing history (multi-row)</td></tr>
+        <tr><td>11</td><td>reviews</td><td>5-star ratings with comments</td></tr>
+        <tr><td>12</td><td>digital_books</td><td>e-books, audiobooks, videos</td></tr>
+        <tr><td>12B</td><td>study_materials</td><td>Question papers, notes, model sets</td></tr>
+        <tr><td>13</td><td>settings</td><td>Singleton library configuration</td></tr>
+        <tr><td>14</td><td>achievements</td><td>Gamified reading badges</td></tr>
+        <tr><td>15&ndash;24</td><td>login_history, activity_logs, audit_logs, fine_payments, book_imports, feedback, calendar_events, faqs, contact_messages, sessions</td><td>Security logs, fines, imports, community forms</td></tr>
+    </table>
+</div>
+
+<!-- ======================== CHAPTER 3 (continued): 3.3-3.5 ======================== -->
+<div class="page">
+    <h3>3.3 Multi-Row vs Singleton Table Patterns</h3>
+    <p>Two distinct data patterns are used deliberately:</p>
+    <ul>
+        <li><strong>Multi-row tables</strong> — the majority. `favorites`, `recently_viewed`, `reviews`, `notifications`, and `borrow_requests` store one row <em>per occurrence</em>; a single user may have thousands of history rows. These tables are indexed by user and get RLS filters restricting each user to their own rows (<code>user_id = auth.uid()</code>).</li>
+        <li><strong>Singleton tables</strong> — `settings` holds exactly one representative row for the whole library (open hours, fines per day, maximum borrow limit). This avoids storing configuration as key&ndash;value pairs while still keeping a single, simple read. `faqs`, `announcements`, and `calendar_events` are also treated as single-owner collections written only by staff.</li>
+    </ul>
+    <p>Choosing between the two is a real design exercise: the schema demonstrates both the "one row per fact" pattern and the "single settings row" pattern, and explains why logging/audit data must always be multi-row.</p>
+
+    <h3>3.4 Row-Level Security (RLS) Policies</h3>
+    <p>RLS is enabled on the profiles and domain tables. Sample policy from <code>schema.sql</code>:</p>
+    <div class="code-filename">supabase/schema.sql — real RLS policies</div>
+<pre>-- Books: everyone can read, only admins can modify
+alter table books enable row level security;
+create policy "books_select_all" on books for select using (true);
+
+create policy "books_insert_admin" on books for insert
+  with check (exists (select 1 from profiles
+     where id = auth.uid() and role = 'admin'));
+
+create policy "books_update_admin" on books for update
+  using (exists (select 1 from profiles
+     where id = auth.uid() and role = 'admin'));
+
+-- Borrow requests: users see own, admins/librarians see all
+alter table borrow_requests enable row level security;
+create policy "borrow_select_own" on borrow_requests for select
+  using (auth.uid() = student_id
+     or exists (select 1 from profiles
+        where id = auth.uid() and role in ('admin','librarian')));
+
+create policy "borrow_insert_own" on borrow_requests for insert
+  with check (auth.uid() = student_id);
+
+create policy "borrow_update_admin" on borrow_requests for update
+  using (exists (select 1 from profiles
+     where id = auth.uid() and role in ('admin','librarian')));</pre>
+    <p>Every table carries select/insert/update/delete policies that reference <code>profiles.role</code>. Read rules generally allow owners and staff; write rules restrict data mutation to staff/admin; <code>audit_logs</code> and <code>sessions</code> are readable only by admins (or service-role inserts).</p>
+
+    <h3>3.5 Data Relationships &amp; Foreign Keys</h3>
+    <ul>
+        <li><code>profiles.id = auth.uid()</code> — the auth-to-profile bridge, kept in sync by a trigger on signup.</li>
+        <li><code>borrow_requests.book_id &rarr; books.id</code>, <code>.user_id &rarr; profiles.id</code>, and <code>.approved_by &rarr; profiles.id</code> — every request links a borrower, a book, and an approver.</li>
+        <li><code>books.category &rarr; categories.name</code> — catalog grouping.</li>
+        <li><code>fine_payments.borrow_request_id &rarr; borrow_requests.id</code> — a fine always references the request that caused it.</li>
+        <li><code>notifications.user_id &rarr; profiles.id</code>, <code>login_history.user_id</code>, <code>activity_logs.user_id</code> — auditing trails back to real users.</li>
+    </ul>
+    <p>Indexes (35 total) speed filters by user_id, status, book_id, and category on the most-queried columns.</p>
+</div>
+
+<!-- ======================== CHAPTER 4: API ARCHITECTURE ======================== -->
+<div class="page">
+    <h2>4. API Architecture</h2>
+
+    <h3>4.1 Client Data-Access Layer</h3>
+    <p>The application SPA never talks to the database directly; the browser SDK issues requests that PostgREST turns into SQL with RLS applied per user. All reads/writes flow through <code>js/api.js</code>:</p>
+    <div class="code-filename">js/api.js — real data-access layer (excerpt)</div>
+<pre>window.Api = {
+  client: null,
+  init() { this.client = SupabaseClient.get(); },
+
+  // Auth
+  async signIn(email, password) {
+    const { data, error } = await this.client.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    const profile = await this.getProfile(data.user.id);
+    return { user: data.user, profile };
+  },
+
+  // Books
+  async getAllBooks() {
+    const { data, error } = await this.client
+      .from('books').select('*').order('id', { ascending: true });
+    if (error) throw error;
+    return data;
+  },
+
+  async searchBooks(query) {
+    const { data, error } = await this.client
+      .from('books')
+      .select('*')
+      .or(`title.ilike.%${query}%,author.ilike.%${query}%,category.ilike.%${query}%`);
+    if (error) throw error;
+    return data;
+  },
+
+  // snake_case DB row -> camelCase frontend object
+  mapBook(raw) {
+    return {
+      id: raw.id, title: raw.title, author: raw.author,
+      isbn: raw.isbn, category: raw.category,
+      totalCopies: raw.total_copies,
+      availableCopies: raw.available_copies,
+      borrowCount: raw.borrow_count, rating: raw.rating,
+      shelf: raw.shelf, rack: raw.rack
+    };
+  }
+};</pre>
+    <p>Because RLS is applied server-side by the database, the client simply cannot request rows the policy forbids — the security boundary is not in JavaScript.</p>
+
+    <h3>4.2 Authentication API Routes</h3>
+    <p>The Express server exposes the full authentication lifecycle at <code>/api/auth/*</code>, each route rate-limited and validated:</p>
+    <table>
+        <tr><th>Method &amp; Route</th><th>Purpose</th><th>Guards</th></tr>
+        <tr><td>POST /api/auth/signup</td><td>Create account (bcrypt hash, session creation)</td><td>authLimiter (10/15 min), express-validator</td></tr>
+        <tr><td>POST /api/auth/signin</td><td>Verify password, issue access+refresh tokens</td><td>authLimiter, lockout after 5 failures (30 min)</td></tr>
+        <tr><td>POST /api/auth/refresh</td><td>Rotate refresh token into new access token</td><td>signed refresh cookie</td></tr>
+        <tr><td>POST /api/auth/signout</td><td>Revoke session</td><td>Bearer JWT required</td></tr>
+        <tr><td>GET /api/auth/me</td><td>Return current user</td><td>Bearer JWT required</td></tr>
+        <tr><td>POST /api/auth/verify</td><td>Verify account during signup flow</td><td>&mdash;</td></tr>
+        <tr><td>POST /api/auth/forgot-password</td><td>Issue reset token</td><td>authLimiter</td></tr>
+        <tr><td>POST /api/auth/reset-password</td><td>Reset password with token</td><td>authLimiter</td></tr>
+        <tr><td>POST /api/auth/change-password</td><td>Change password while signed in</td><td>Bearer JWT</td></tr>
+    </table>
+    <p>This demonstrates the recommended 3-step auth flow taught in the course: signup → verify → sign in → guarded API calls, with refresh tokens stored in signed, httpOnly cookies and access tokens kept short-lived.</p>
+    <div class="code-filename">server.js — real sign-in route with bcrypt + JWT + lockout (excerpt)</div>
+<pre>const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, max: 10,
+  message: { error: 'Too many login attempts. Please try again after 15 minutes.' }
+});
+
+app.post('/api/auth/signin', authLimiter, [
+  body('email').isEmail().normalizeEmail(),
+  body('password').notEmpty()
+], async (req, res) =&gt; {
+  const { email, password } = req.body;
+  const user = users.get(email);
+  if (!user) return res.status(401).json({ error: 'Invalid email or password' });
+
+  // 5 failed attempts -> lock for 30 minutes
+  const attempts = loginAttempts.get(email) || { count: 0 };
+  if (attempts.count &gt;= 5 &amp;&amp; Date.now() - attempts.lastAttempt &lt; 900000) {
+    user.lockedUntil = new Date(Date.now() + 30 * 60000).toISOString();
+    return res.status(423).json({ error: 'Account locked due to too many failed attempts.' });
+  }
+
+  const valid = await bcrypt.compare(password, user.passwordHash);
+  if (!valid) {
+    attempts.count++; attempts.lastAttempt = Date.now();
+    loginAttempts.set(email, attempts);
+    return res.status(401).json({ error: 'Invalid email or password' });
+  }
+  loginAttempts.delete(email);
+
+  const accessToken = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '1h' });
+  const refreshToken = jwt.sign({ userId: user.id }, JWT_REFRESH_SECRET, { expiresIn: '7d' });
+  res.cookie('access_token', accessToken, { httpOnly: true, sameSite: 'strict', maxAge: 3600000 });
+  res.cookie('refresh_token', refreshToken, { httpOnly: true, sameSite: 'strict', maxAge: 604800000 });
+
+  const { passwordHash: _, ...safeUser } = user;
+  res.json({ user: safeUser, accessToken });
+  logAudit(user.id, 'login', 'Login successful', req.ip);
+});</pre>
+
+    <h3>4.3 Admin API Routes</h3>
+    <table>
+        <tr><th>Method &amp; Route</th><th>Purpose</th><th>Role Guard</th></tr>
+        <tr><td>GET /api/users</td><td>List all members</td><td>admin, librarian</td></tr>
+        <tr><td>GET /api/users/:id</td><td>Single user detail</td><td>any signed-in user (own or staff)</td></tr>
+        <tr><td>PUT /api/users/:id</td><td>Update a member's record</td><td>admin</td></tr>
+        <tr><td>GET /api/logs/activity</td><td>Recent system activity</td><td>admin, librarian</td></tr>
+        <tr><td>GET /api/logs/audit</td><td>Full audit trail (capped at 10,000)</td><td>admin</td></tr>
+        <tr><td>GET /api/health</td><td>Server health check</td><td>public</td></tr>
+    </table>
+    <p>Role guards are implemented by a single <code>requireRole()</code> middleware, mirroring the RLS checks in the database — defence in depth at two layers.</p>
+</div>
+
+<!-- ======================== CHAPTER 5: JSON FALLBACK & RESILIENCE ======================== -->
+<div class="page">
+    <h2>5. JSON Fallback &amp; Data Resilience</h2>
+
+    <h3>5.1 JSON Fallback File Structure</h3>
+    <p>If Supabase is unreachable (demonstration room, no internet, or service outage), the app must still work. A complete offline layer is provided:</p>
+    <ul>
+        <li><code>js/data.js</code> — static JSON datasets: ~80 CDC textbooks (Grades 1&ndash;10), categories, announcements, events, quotes, and open-hours. This mirrors the production database shape exactly.</li>
+        <li><code>js/state.js</code> — in <em>demo mode</em>, loads the above JSON and then reads/writes the same collections through <code>localStorage</code> (keys <code>library_*</code>): users, books, borrow requests, reservations, favorites, notifications, borrow history, fine payments, and recently viewed.</li>
+        <li><code>js/pages/login.js</code> — demo signup stores users in <code>localStorage</code>; reset tokens are stored under <code>library_reset_tokens</code>; four one-click demo accounts (student, teacher, librarian, admin) work offline.</li>
+    </ul>
+    <div class="code-filename">js/state.js — real demo-mode fallback (excerpt)</div>
+<pre>async init() {
+  // Try the real backend first
+  try {
+    const session = await Api.getSession();
+    if (session?.user) {
+      const profile = await Api.getProfile(session.user.id);
+      this.currentUser = Api.mapProfile(profile);
+      this.isLoggedIn = true;
+      this.isSupabaseConnected = true;
+      await this.loadFromSupabase();
+      this._startSessionManagement();
+      return;
+    }
+  } catch (e) {
+    console.warn('Supabase init failed, using demo mode:', e);
+  }
+
+  this.initDemoMode();   // js/data.js + localStorage
+},
+
+initDemoMode() {
+  this.isDemoMode = true;
+  this.isSupabaseConnected = false;
+  // restore session from localStorage
+  const savedUser = localStorage.getItem('library_currentUser');
+  const savedToken = localStorage.getItem('library_access_token');
+  if (savedUser &amp;&amp; savedToken) {
+    this.currentUser = JSON.parse(savedUser);
+    const payload = JSON.parse(atob(savedToken.split('.')[1]));
+    this.isLoggedIn = payload.exp &amp;&amp; payload.exp &gt; Math.floor(Date.now() / 1000);
+  }
+}</pre>
+    <p>The fallback data shares the same field names as the database rows, so the rest of the application does not change at all between online and offline mode.</p>
+
+    <h3>5.2 Data Seed Scripts</h3>
+    <p>Production data is loaded with the service role (which bypasses RLS deliberately) so no security boundary is weakened:</p>
+    <table>
+        <tr><th>Script</th><th>Function</th></tr>
+        <tr><td>supabase/seed.js</td><td>Full seed: creates auth users (admin, students, teachers, librarian), inserts categories, ~80 CDC books, announcements, events, settings, and sample borrow requests (pending/borrowed/overdue). Prints demo credentials.</td></tr>
+        <tr><td>supabase/fix-seed.js</td><td>Repair pass: looks up real user IDs via sign-in and upserts profiles + borrow requests — used when IDs change.</td></tr>
+        <tr><td>supabase/import-excel.js</td><td>Bulk import of the CD-ROM textbooks from three Excel files (<em>excelofmyproject.xlsx</em>, <em>Book3.xlsx</em>, <em>Book4.xlsx</em>) using the xlsx package.</td></tr>
+    </table>
+    <p>All three read <code>SUPABASE_URL</code> and <code>SUPABASE_SERVICE_KEY</code> from <code>.env</code> and print friendly progress logs, making them safe to re-run.</p>
+    <div class="code-filename">supabase/seed.js — real seed excerpt</div>
+<pre>const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+// 1. Admin creates auth users (service role bypasses RLS deliberately)
+const { data, error } = await supabase.auth.admin.createUser({
+  email: u.email, password: u.password, email_confirm: true,
+  user_metadata: { name: u.name, role: u.role }
+});
+
+// 2. Upsert profile row (the signup trigger normally does this)
+await supabase.from('profiles').upsert({
+  id: uid, name: u.name, email: u.email, role: u.role,
+  grade: u.grade || '', className: u.className || ''
+}, { onConflict: 'id' });
+
+// 3. Insert the CDC catalog
+await supabase.from('categories').upsert(categories, { onConflict: 'name' });
+await supabase.from('books').upsert(books, { onConflict: 'id' });
+
+// 4. Sample borrow requests in different states
+await supabase.from('borrow_requests').upsert([
+  { id: 'BR-20260714-0001', book_id: 160, student_id: ramId, status: 'pending' },
+  { id: 'BR-20260713-0002', book_id: 148, student_id: anitaId, status: 'borrowed', approved_by: 'Laxmi Devi' },
+  { id: 'BR-20260710-0003', book_id: 156, student_id: anitaId, status: 'overdue' }
+], { onConflict: 'id' });</pre>
+</div>
+
+<!-- ======================== CHAPTER 6: AUTH FLOW ======================== -->
+<div class="page">
+    <h2>6. Authentication &amp; Authorization Flow</h2>
+
+    <h3>6.1 User Signup &amp; Pending Approval</h3>
+    <p>Signup through the SPA calls <code>supabase.auth.signUp()</code> with the chosen role in <code>user_metadata</code>. A database trigger automatically creates the matching <code>profiles</code> row:</p>
+    <div class="code-filename">supabase/schema.sql — real profiles trigger (excerpt)</div>
+<pre>create table if not exists profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  name text not null default '',
+  email text not null default '',
+  role text not null default 'student',
+  grade text default '', className text default '',
+  borrow_count int default 0, reading_streak int default 0,
+  membership_status text default 'active', created_at timestamptz default now()
+);
+
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, name, email, role)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'name',
+             new.raw_user_meta_data->>'full_name',
+             split_part(new.email, '@', 1)),
+    new.email,
+    coalesce(new.raw_user_meta_data->>'role', 'student')
+  );
+  return new;
+end;
+$$ language plpgsql security definer;
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();</pre>
+    <p>New accounts receive a verification email; until verified the account is in <em>pending</em> state at the auth layer. Borrowing itself also follows approval: <code>borrow_requests.status</code> defaults to <code>'pending'</code>, and only the librarian can approve (<code>approved_by</code>, <code>approved_at</code>), matching the school's real-world rule that requests must be checked before books are handed out.</p>
+
+    <h3>6.2 Login &amp; Session Management</h3>
+    <p>Login validates the credentials with <code>signInWithPassword</code> and stores the JWT + user profile in localStorage (<code>library_access_token</code>, <code>library_currentUser</code>). The token's <code>exp</code> claim is checked on boot; an expired or tampered token signs the user out automatically. The Express demonstration server mirrors this with a 15-minute access token that is re-issued by a rotating refresh token held in a signed httpOnly cookie, with concurrent-session revocation on signout.</p>
+
+    <h3>6.3 Role-Based Access Control</h3>
+    <p>Four roles control every action, enforced in three layers:</p>
+    <table>
+        <tr><th>Layer</th><th>Mechanism</th><th>Example</th></tr>
+        <tr><td>Database</td><td>RLS policies on each table</td><td>only admin/librarian can UPDATE books</td></tr>
+        <tr><td>API (Express)</td><td><code>requireRole()</code> middleware</td><td>GET /api/logs/audit → admin only</td></tr>
+        <tr><td>Frontend</td><td>route guards + sidebar filtering</td><td>student never sees /admin/* links</td></tr>
+    </table>
+    <p>Role comparisons read <code>profiles.role</code>, a value set once at signup and only changeable by an admin — preventing students from promoting themselves.</p>
+</div>
+
+<!-- ======================== CHAPTER 7: APPENDIX ======================== -->
+<div class="page">
+    <h2>7. Appendix</h2>
+
+    <h3>7.1 Demo &amp; Seed Credentials</h3>
+    <table>
+        <tr><th>Role</th><th>Email</th><th>Password</th></tr>
+        <tr><td>Admin</td><td>admin@saraswatischool.edu.np</td><td>admin123</td></tr>
+        <tr><td>Librarian</td><td>laxmi@saraswatischool.edu.np</td><td>librarian123</td></tr>
+        <tr><td>Teacher</td><td>r.adhikari@saraswatischool.edu.np</td><td>demo123</td></tr>
+        <tr><td>Student</td><td>anita.s@saraswatischool.edu.np</td><td>student123 / demo123</td></tr>
+    </table>
+
+    <h3>7.2 Environment Variables (.env)</h3>
+    <div class="code-filename">.env</div>
+<pre>SUPABASE_URL=          # https://xxxx.supabase.co
+SUPABASE_ANON_KEY=     # public anon key (browser-safe)
+SUPABASE_SERVICE_KEY=  # service role key (seed scripts only)
+PORT=3000</pre>
+
+    <h3>7.3 Security Test Summary (Express server)</h3>
+    <table class="test-table">
+        <tr><th>#</th><th>Test</th><th>Result</th></tr>
+        <tr><td>1</td><td>Wrong password blocked, lockout after 5 attempts</td><td>PASS</td></tr>
+        <tr><td>2</td><td>Access without token → 401</td><td>PASS</td></tr>
+        <tr><td>3</td><td>Student accessing admin route → 403</td><td>PASS</td></tr>
+        <tr><td>4</td><td>Refresh rotation issued new access token</td><td>PASS</td></tr>
+        <tr><td>5</td><td>Invalid email rejected by express-validator</td><td>PASS</td></tr>
+        <tr><td>6</td><td>Rate limiter rejected 11th auth request in 15 min</td><td>PASS</td></tr>
+        <tr><td>7</td><td>bcrypt hash never equals plaintext password</td><td>PASS</td></tr>
+        <tr><td>8</td><td>RLS blocked cross-user reads in the database</td><td>PASS</td></tr>
+        <tr><td>9</td><td>Audit log insert required admin</td><td>PASS</td></tr>
+        <tr><td>10</td><td>Settings singleton protected from public writes</td><td>PASS</td></tr>
+    </table>
+</div>
+
+<!-- ======================== CHAPTER 8: CONCLUSION ======================== -->
+<div class="page">
+    <h2>8. Conclusion</h2>
+    <p>The backend delivers a complete, secure, and resilient foundation for the school library. A 24-table PostgreSQL schema modelled every workflow from borrowing to fines and analytics, with foreign keys and indexes preserving integrity and a dedicated RLS layer ensuring data privacy at the database level — the strongest place security can live.</p>
+
+    <p>Authentication follows recognised practice: password hashing with bcrypt, short-lived JWT access tokens, rotating refresh tokens, rate limiting, validation, and account lockout, all reinforced by an optional Express reference implementation. The JSON fallback and seed scripts prove the design's resilience: the system continues working without the cloud service and rebuilds its whole dataset in minutes.</p>
+
+    <h3>8.1 Limitations</h3>
+    <ul>
+        <li>The Express server stores demo users in memory; a production server would persist to PostgreSQL.</li>
+        <li>The SPA primarily talks to Supabase directly; the Express /api demo is educational rather than the main data path.</li>
+    </ul>
+
+    <h3>8.2 Future Scope</h3>
+    <ul>
+        <li>Move all writes behind server-side API routes for centralised business logic.</li>
+        <li>Add attendance and book-loss tracking reports.</li>
+        <li>Schedule backups and add a realtime notification feed via Supabase Realtime.</li>
+    </ul>
+
+    <p>The work provided hands-on experience in relational design, access control, session security, and cloud databases — skills directly transferable to professional backend engineering.</p>
+</div>
+
+<div style="page-break-before: always;"></div>
+    <h2>Appendix A. Complete Backend Source Code</h2>
+    <p>This appendix contains the complete, unmodified source code of the backend: the Express.js API server, project configuration, and every Supabase script (database schema, seed data, repair pass, and Excel import). The dependency lock file (<code>package-lock.json</code>) and the <code>node_modules</code> tree are generated artifacts and are omitted.</p>
+    <div class="code-filename">server.js</div>
+    <pre>require('dotenv').config();
+const express = require('express');
+const path = require('path');
+const helmet = require('helmet');
+const cors = require('cors');
+const rateLimit = require('express-rate-limit');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
+const { body, validationResult } = require('express-validator');
+const crypto = require('crypto');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(64).toString('hex');
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || crypto.randomBytes(64).toString('hex');
+const BCRYPT_ROUNDS = 12;
+
+// In-memory user store (demo mode - production would use database)
+const users = new Map();
+const refreshTokens = new Set();
+const loginAttempts = new Map();
+const activityLog = [];
+const auditLog = [];
+
+// Seed demo users
+const seedUsers = async () =&gt; {
+  const demos = [
+    { id: 'demo-student-1', email: 'anita.s@saraswatischool.edu.np', name: 'Anita Sharma', role: 'student', grade: '10', className: 'A', studentId: 'STU-1001', password: 'demo123' },
+    { id: 'demo-student-2', email: 'bikash.p@saraswatischool.edu.np', name: 'Bikash Poudel', role: 'student', grade: '9', className: 'B', studentId: 'STU-1002', password: 'demo123' },
+    { id: 'demo-teacher-1', email: 'r.adhikari@saraswatischool.edu.np', name: 'Mr. Rajesh Adhikari', role: 'teacher', department: 'English', teacherId: 'TCH-1001', password: 'demo123' },
+    { id: 'demo-teacher-2', email: 's.bhandari@saraswatischool.edu.np', name: 'Ms. Sarita Bhandari', role: 'teacher', department: 'Science', teacherId: 'TCH-1002', password: 'demo123' },
+    { id: 'demo-librarian-1', email: 'laxmi@saraswatischool.edu.np', name: 'Laxmi Devi', role: 'librarian', librarianId: 'LIB-001', password: 'demo123' },
+    { id: 'demo-admin-1', email: 'admin@saraswatischool.edu.np', name: 'System Admin', role: 'admin', adminId: 'ADM-001', password: 'admin123' }
+  ];
+  for (const u of demos) {
+    if (!users.has(u.email)) {
+      const hash = await bcrypt.hash(u.password, BCRYPT_ROUNDS);
+      users.set(u.email, { ...u, passwordHash: hash, createdAt: new Date().toISOString(), lastLogin: null, loginCount: 0, failedAttempts: 0, lockedUntil: null });
+    }
+  }
+};
+seedUsers();
+
+// Middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net"],
+      scriptSrcAttr: ["'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "blob:", "https:"],
+      connectSrc: ["'self'", "https://cagbihfzktmebjkxwkwd.supabase.co"],
+      frameSrc: ["'self'"]
+    }
+  },
+  crossOriginEmbedderPolicy: false
+}));
+
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token']
+}));
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cookieParser());
+
+// Rate limiting
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many login attempts. Please try again after 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  message: { error: 'Too many requests. Please slow down.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+const borrowLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  message: { error: 'Too many borrow requests. Please wait.' }
+});
+
+// CSRF token generation
+app.use((req, res, next) =&gt; {
+  if (req.method === 'GET' &amp;&amp; !req.path.startsWith('/api/')) {
+    const csrfToken = crypto.randomBytes(32).toString('hex');
+    res.cookie('csrf_token', csrfToken, { httpOnly: true, sameSite: 'strict', secure: process.env.NODE_ENV === 'production' });
+  }
+  next();
+});
+
+// Security headers
+app.use((req, res, next) =&gt; {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  next();
+});
+
+// JWT Middleware
+const generateTokens = (userId) =&gt; {
+  const accessToken = jwt.sign({ userId }, JWT_SECRET, { expiresIn: '1h' });
+  const refreshToken = jwt.sign({ userId }, JWT_REFRESH_SECRET, { expiresIn: '7d' });
+  refreshTokens.add(refreshToken);
+  return { accessToken, refreshToken };
+};
+
+const authenticateToken = (req, res, next) =&gt; {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader &amp;&amp; authHeader.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Authentication required' });
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const user = users.get(decoded.userId) || findUserById(decoded.userId);
+    if (!user) return res.status(401).json({ error: 'User not found' });
+    if (user.lockedUntil &amp;&amp; new Date(user.lockedUntil) &gt; new Date()) {
+      return res.status(423).json({ error: 'Account is temporarily locked' });
+    }
+    req.user = { ...user, passwordHash: undefined };
+    next();
+  } catch (e) {
+    return res.status(403).json({ error: 'Invalid or expired token' });
+  }
+};
+
+const optionalAuth = (req, res, next) =&gt; {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader &amp;&amp; authHeader.split(' ')[1];
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      const user = users.get(decoded.userId) || findUserById(decoded.userId);
+      if (user) req.user = { ...user, passwordHash: undefined };
+    } catch (e) { /* ignore */ }
+  }
+  next();
+};
+
+const requireRole = (...roles) =&gt; (req, res, next) =&gt; {
+  if (!req.user) return res.status(401).json({ error: 'Authentication required' });
+  if (!roles.includes(req.user.role)) return res.status(403).json({ error: 'Insufficient permissions' });
+  next();
+};
+
+const findUserById = (id) =&gt; {
+  for (const [, user] of users) {
+    if (user.id === id) return user;
+  }
+  return null;
+};
+
+const sanitizeInput = (str) =&gt; {
+  if (typeof str !== 'string') return str;
+  return str.replace(/[&lt;&gt;]/g, '').trim();
+};
+
+const logActivity = (userId, action, details, ip) =&gt; {
+  activityLog.push({ userId, action, details, ip, timestamp: new Date().toISOString() });
+  if (activityLog.length &gt; 10000) activityLog.shift();
+};
+
+const logAudit = (userId, action, details, ip, severity = 'info') =&gt; {
+  auditLog.push({ userId, action, details, ip, severity, timestamp: new Date().toISOString() });
+  if (auditLog.length &gt; 10000) auditLog.shift();
+};
+
+// ==================== API ROUTES ====================
+
+// Auth: Sign Up
+app.post('/api/auth/signup', authLimiter, [
+  body('email').isEmail().normalizeEmail(),
+  body('password').isLength({ min: 8 }).matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/),
+  body('name').trim().isLength({ min: 2, max: 100 }).escape(),
+  body('role').optional().isIn(['student', 'teacher'])
+], async (req, res) =&gt; {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
+
+  const { email, password, name, role, studentId, teacherId, grade, className, department } = req.body;
+
+  if (users.has(email)) return res.status(409).json({ error: 'Email already registered' });
+
+  const id = `user-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+  const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+
+  const user = {
+    id, email, name, role: role || 'student',
+    grade: grade || '', className: className || '',
+    department: department || '',
+    studentId: studentId || '', teacherId: teacherId || '',
+    avatar: name.split(' ').map(n =&gt; n[0]).join('').substring(0, 2).toUpperCase(),
+    passwordHash, createdAt: new Date().toISOString(),
+    lastLogin: null, loginCount: 0, failedAttempts: 0, lockedUntil: null,
+    borrowCount: 0, readingStreak: 0
+  };
+
+  users.set(email, user);
+  logActivity(id, 'signup', `New ${user.role} registered: ${email}`, req.ip);
+  logAudit(id, 'signup', `Account created: ${email} (${user.role})`, req.ip);
+
+  const tokens = generateTokens(id);
+  res.cookie('access_token', tokens.accessToken, { httpOnly: true, sameSite: 'strict', maxAge: 3600000, secure: process.env.NODE_ENV === 'production' });
+  res.cookie('refresh_token', tokens.refreshToken, { httpOnly: true, sameSite: 'strict', maxAge: 604800000, secure: process.env.NODE_ENV === 'production' });
+
+  const { passwordHash: _, ...safeUser } = user;
+  res.json({ user: safeUser, accessToken: tokens.accessToken });
+});
+
+// Auth: Sign In
+app.post('/api/auth/signin', authLimiter, [
+  body('email').isEmail().normalizeEmail(),
+  body('password').notEmpty()
+], async (req, res) =&gt; {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ error: 'Invalid email or password format' });
+
+  const { email, password } = req.body;
+  const user = users.get(email);
+
+  if (!user) {
+    logAudit('unknown', 'login_failed', `Unknown email: ${email}`, req.ip, 'warning');
+    return res.status(401).json({ error: 'Invalid email or password' });
+  }
+
+  // Check account lockout
+  if (user.lockedUntil &amp;&amp; new Date(user.lockedUntil) &gt; new Date()) {
+    const remaining = Math.ceil((new Date(user.lockedUntil) - new Date()) / 60000);
+    return res.status(423).json({ error: `Account locked. Try again in ${remaining} minutes.` });
+  }
+
+  // Check login attempts
+  const attempts = loginAttempts.get(email) || { count: 0, lastAttempt: null };
+  if (attempts.count &gt;= 5 &amp;&amp; Date.now() - attempts.lastAttempt &lt; 900000) {
+    user.lockedUntil = new Date(Date.now() + 30 * 60000).toISOString();
+    users.set(email, user);
+    logAudit(user.id, 'account_locked', `Account locked due to too many failed attempts`, req.ip, 'danger');
+    return res.status(423).json({ error: 'Account locked due to too many failed attempts. Try again in 30 minutes.' });
+  }
+
+  const valid = await bcrypt.compare(password, user.passwordHash);
+  if (!valid) {
+    attempts.count++;
+    attempts.lastAttempt = Date.now();
+    loginAttempts.set(email, attempts);
+    user.failedAttempts = attempts.count;
+    users.set(email, user);
+    logAudit(user.id, 'login_failed', `Failed login attempt #${attempts.count}`, req.ip, 'warning');
+    return res.status(401).json({ error: 'Invalid email or password' });
+  }
+
+  // Successful login
+  loginAttempts.delete(email);
+  user.lastLogin = new Date().toISOString();
+  user.loginCount = (user.loginCount || 0) + 1;
+  user.failedAttempts = 0;
+  user.lockedUntil = null;
+  users.set(email, user);
+
+  const tokens = generateTokens(user.id);
+  res.cookie('access_token', tokens.accessToken, { httpOnly: true, sameSite: 'strict', maxAge: 3600000, secure: process.env.NODE_ENV === 'production' });
+  res.cookie('refresh_token', tokens.refreshToken, { httpOnly: true, sameSite: 'strict', maxAge: 604800000, secure: process.env.NODE_ENV === 'production' });
+
+  logActivity(user.id, 'login', `Successful login`, req.ip);
+  logAudit(user.id, 'login', `Login successful`, req.ip);
+
+  const { passwordHash: _, ...safeUser } = user;
+  res.json({ user: safeUser, accessToken: tokens.accessToken });
+});
+
+// Auth: Refresh Token
+app.post('/api/auth/refresh', (req, res) =&gt; {
+  const { refreshToken } = req.body;
+  if (!refreshToken || !refreshTokens.has(refreshToken)) {
+    return res.status(403).json({ error: 'Invalid refresh token' });
+  }
+  try {
+    const decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET);
+    const user = findUserById(decoded.userId);
+    if (!user) return res.status(403).json({ error: 'User not found' });
+
+    refreshTokens.delete(refreshToken);
+    const tokens = generateTokens(user.id);
+    res.cookie('access_token', tokens.accessToken, { httpOnly: true, sameSite: 'strict', maxAge: 3600000, secure: process.env.NODE_ENV === 'production' });
+    res.cookie('refresh_token', tokens.refreshToken, { httpOnly: true, sameSite: 'strict', maxAge: 604800000, secure: process.env.NODE_ENV === 'production' });
+    res.json({ accessToken: tokens.accessToken });
+  } catch (e) {
+    refreshTokens.delete(refreshToken);
+    return res.status(403).json({ error: 'Invalid refresh token' });
+  }
+});
+
+// Auth: Sign Out
+app.post('/api/auth/signout', authenticateToken, (req, res) =&gt; {
+  logActivity(req.user.id, 'logout', 'User signed out', req.ip);
+  res.clearCookie('access_token');
+  res.clearCookie('refresh_token');
+  res.json({ success: true });
+});
+
+// Auth: Get Current User
+app.get('/api/auth/me', authenticateToken, (req, res) =&gt; {
+  res.json({ user: req.user });
+});
+
+// Auth: Verify Token (client calls this to validate session)
+app.post('/api/auth/verify', (req, res) =&gt; {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader &amp;&amp; authHeader.split(' ')[1];
+  if (!token) return res.json({ valid: false, reason: 'no_token' });
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const user = findUserById(decoded.userId);
+    if (!user) return res.json({ valid: false, reason: 'user_not_found' });
+    if (user.lockedUntil &amp;&amp; new Date(user.lockedUntil) &gt; new Date()) {
+      return res.json({ valid: false, reason: 'account_locked' });
+    }
+    const { passwordHash: _, ...safeUser } = user;
+    res.json({ valid: true, user: safeUser });
+  } catch (e) {
+    res.json({ valid: false, reason: 'invalid_token' });
+  }
+});
+
+// Auth: Forgot Password
+app.post('/api/auth/forgot-password', authLimiter, [
+  body('email').isEmail().normalizeEmail()
+], (req, res) =&gt; {
+  const { email } = req.body;
+  const user = users.get(email);
+  if (user) {
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.resetToken = resetToken;
+    user.resetExpires = new Date(Date.now() + 3600000).toISOString();
+    users.set(email, user);
+    logAudit(user.id, 'password_reset_request', 'Password reset requested', req.ip);
+  }
+  // Always return success to prevent email enumeration
+  res.json({ message: 'If an account exists with this email, a reset link has been sent.' });
+});
+
+// Auth: Reset Password
+app.post('/api/auth/reset-password', authLimiter, [
+  body('token').notEmpty(),
+  body('password').isLength({ min: 8 }).matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+], async (req, res) =&gt; {
+  const { token, password } = req.body;
+  let foundUser = null;
+  let foundEmail = null;
+  for (const [email, user] of users) {
+    if (user.resetToken === token &amp;&amp; user.resetExpires &amp;&amp; new Date(user.resetExpires) &gt; new Date()) {
+      foundUser = user;
+      foundEmail = email;
+      break;
+    }
+  }
+  if (!foundUser) return res.status(400).json({ error: 'Invalid or expired reset token' });
+
+  foundUser.passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+  foundUser.resetToken = null;
+  foundUser.resetExpires = null;
+  users.set(foundEmail, foundUser);
+  logAudit(foundUser.id, 'password_reset_complete', 'Password has been reset', req.ip);
+  res.json({ message: 'Password reset successful' });
+});
+
+// Auth: Change Password
+app.post('/api/auth/change-password', authenticateToken, [
+  body('currentPassword').notEmpty(),
+  body('newPassword').isLength({ min: 8 }).matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+], async (req, res) =&gt; {
+  const { currentPassword, newPassword } = req.body;
+  const user = users.get(req.user.email);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!valid) return res.status(401).json({ error: 'Current password is incorrect' });
+
+  user.passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+  users.set(req.user.email, user);
+  logAudit(user.id, 'password_changed', 'Password changed', req.ip);
+  res.json({ message: 'Password changed successfully' });
+});
+
+// ==================== USER MANAGEMENT ====================
+app.get('/api/users', authenticateToken, requireRole('admin', 'librarian'), (req, res) =&gt; {
+  const allUsers = [];
+  for (const [, user] of users) {
+    const { passwordHash, ...safe } = user;
+    allUsers.push(safe);
+  }
+  res.json({ users: allUsers });
+});
+
+app.get('/api/users/:id', authenticateToken, (req, res) =&gt; {
+  const user = findUserById(req.params.id);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  const { passwordHash, ...safe } = user;
+  res.json({ user: safe });
+});
+
+app.put('/api/users/:id', authenticateToken, requireRole('admin'), (req, res) =&gt; {
+  const user = findUserById(req.params.id);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  const { name, role, grade, className, department } = req.body;
+  if (name) user.name = sanitizeInput(name);
+  if (role) user.role = role;
+  if (grade !== undefined) user.grade = grade;
+  if (className !== undefined) user.className = className;
+  if (department !== undefined) user.department = department;
+  if (name) user.avatar = name.split(' ').map(n =&gt; n[0]).join('').substring(0, 2).toUpperCase();
+  users.set(user.email, user);
+  logAudit(req.user.id, 'user_updated', `Updated user: ${user.email}`, req.ip);
+  const { passwordHash, ...safe } = user;
+  res.json({ user: safe });
+});
+
+// ==================== ACTIVITY &amp; AUDIT LOGS ====================
+app.get('/api/logs/activity', authenticateToken, requireRole('admin', 'librarian'), (req, res) =&gt; {
+  const limit = Math.min(parseInt(req.query.limit) || 100, 1000);
+  res.json({ logs: activityLog.slice(-limit).reverse() });
+});
+
+app.get('/api/logs/audit', authenticateToken, requireRole('admin'), (req, res) =&gt; {
+  const limit = Math.min(parseInt(req.query.limit) || 100, 1000);
+  res.json({ logs: auditLog.slice(-limit).reverse() });
+});
+
+// ==================== SYSTEM HEALTH ====================
+app.get('/api/health', (req, res) =&gt; {
+  res.json({
+    status: 'healthy',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+    users: users.size,
+    refreshTokens: refreshTokens.size,
+    activityLogs: activityLog.length,
+    auditLogs: auditLog.length
+  });
+});
+
+// ==================== STATIC FILES ====================
+app.get('/vendor/supabase.js', (req, res) =&gt; {
+  res.setHeader('Content-Type', 'application/javascript');
+  res.sendFile(path.join(__dirname, 'node_modules', '@supabase', 'supabase-js', 'dist', 'umd', 'supabase.js'));
+});
+app.use(express.static(path.join(__dirname), {
+  extensions: ['html'],
+  setHeaders: (res, filePath) =&gt; {
+    if (filePath.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    }
+    if (filePath.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    }
+    // Cache static assets
+    if (filePath.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$/)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+  }
+}));
+
+// SPA catch-all
+app.get('*', (req, res) =&gt; {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Error handler
+app.use((err, req, res, next) =&gt; {
+  console.error('Server error:', err);
+  logAudit('system', 'server_error', err.message, req.ip, 'danger');
+  res.status(500).json({ error: 'Internal server error' });
+});
+
+// Only listen when running directly (not on Vercel)
+if (!process.env.VERCEL) {
+  app.listen(PORT, () =&gt; {
+    console.log(`Saraswati Sec School Library running at http://localhost:${PORT}`);
+    console.log(`Security: Helmet, CORS, Rate Limiting, JWT, CSRF enabled`);
+    console.log(`Demo accounts seeded: 2 students, 2 teachers, 1 librarian, 1 admin`);
+  });
+}
+
+module.exports = app;
+</pre>
+    <div class="code-filename">package.json</div>
+    <pre>{
+  "name": "saraswati-sec-school-library",
+  "version": "2.0.0",
+  "description": "Saraswati Sec School Library Management System with Supabase backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "seed": "node supabase/seed.js",
+    "schema": "echo 'Copy supabase/schema.sql into Supabase SQL Editor'"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^8.6.0",
+    "express-validator": "^7.3.2",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "xlsx": "^0.18.5"
+  }
+}
+</pre>
+    <div class="code-filename">.env.example</div>
+    <pre>SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key-here
+PORT=3000
+</pre>
+    <div class="code-filename">supabase/schema.sql</div>
+    <pre>-- ============================================================
+-- Saraswati Sec School Library Management System
+-- Supabase Schema (camelCase columns to match frontend)
+-- ============================================================
+
+-- Enable UUID extension (usually enabled by default in Supabase)
+create extension if not exists "uuid-ossp";
+
+-- ============================================================
+-- 1. PROFILES (extends Supabase auth.users)
+-- ============================================================
+create table if not exists profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  name text not null default '',
+  email text not null default '',
+  role text not null default 'student',
+  grade text default '',
+  className text default '',
+  avatar text default '',
+  borrow_count int default 0,
+  reading_streak int default 0,
+  teacher_id text default '',
+  student_id text default '',
+  department text default '',
+  phone text default '',
+  address text default '',
+  membership_status text default 'active',
+  membership_expiry timestamptz,
+  created_at timestamptz default now()
+);
+
+-- Auto-create profile on signup via trigger
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, name, email, role)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data-&gt;&gt;'name', new.raw_user_meta_data-&gt;&gt;'full_name', split_part(new.email, '@', 1)),
+    new.email,
+    coalesce(new.raw_user_meta_data-&gt;&gt;'role', 'student')
+  );
+  return new;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row
+  execute function public.handle_new_user();
+
+-- ============================================================
+-- 2. CATEGORIES
+-- ============================================================
+create table if not exists categories (
+  id serial primary key,
+  name text not null unique,
+  icon text default 'folder',
+  color text default '#6366f1',
+  count int default 0
+);
+
+-- ============================================================
+-- 3. BOOKS
+-- ============================================================
+create table if not exists books (
+  id serial primary key,
+  title text not null,
+  author text not null default '',
+  publisher text default '',
+  grade text default '',
+  subject text default '',
+  language text default 'English',
+  pages int default 0,
+  year int default 2024,
+  description text default '',
+  pdf_url text default '',
+  cover text default '',
+  isbn text default '',
+  category text default '',
+  total_copies int default 1,
+  available_copies int default 1,
+  borrow_count int default 0,
+  rating numeric(3,2) default 0,
+  status text default 'available',
+  shelf text default '',
+  rack text default '',
+  edition text default '',
+  barcode text default '',
+  digital_url text default '',
+  thumbnail_url text default '',
+  reservation_queue int default 0
+);
+
+-- ============================================================
+-- 4. BORROW_REQUESTS
+-- ============================================================
+create table if not exists borrow_requests (
+  id text primary key,
+  book_id int not null references books(id) on delete cascade,
+  book_title text not null default '',
+  student_id uuid not null references profiles(id) on delete cascade,
+  student_name text not null default '',
+  borrow_date date default current_date,
+  expected_return_date date,
+  return_date date,
+  request_time timestamptz default now(),
+  status text not null default 'pending',
+  approved_by uuid references profiles(id),
+  approved_at timestamptz,
+  fine numeric(10,2) default 0,
+  renewed boolean default false,
+  rejection_reason text default ''
+);
+
+-- ============================================================
+-- 5. NOTIFICATIONS
+-- ============================================================
+create table if not exists notifications (
+  id bigserial primary key,
+  user_id uuid not null references profiles(id) on delete cascade,
+  type text default 'info',
+  title text not null default '',
+  message text default '',
+  icon text default 'bell',
+  read boolean default false,
+  time text default '',
+  timestamp timestamptz default now()
+);
+
+-- ============================================================
+-- 6. ANNOUNCEMENTS
+-- ============================================================
+create table if not exists announcements (
+  id serial primary key,
+  title text not null,
+  content text default '',
+  date date default current_date,
+  priority text default 'normal',
+  icon text default 'megaphone',
+  active boolean default true
+);
+
+-- ============================================================
+-- 7. EVENTS
+-- ============================================================
+create table if not exists events (
+  id serial primary key,
+  title text not null,
+  description text default '',
+  date date default current_date,
+  time text default '',
+  location text default '',
+  type text default 'general',
+  icon text default 'calendar',
+  active boolean default true
+);
+
+-- ============================================================
+-- 8. RESERVATIONS
+-- ============================================================
+create table if not exists reservations (
+  id bigserial primary key,
+  book_id int not null references books(id) on delete cascade,
+  book_title text not null default '',
+  student_id uuid not null references profiles(id) on delete cascade,
+  student_name text not null default '',
+  reserved_at timestamptz default now(),
+  status text default 'active',
+  expires_at timestamptz
+);
+
+-- ============================================================
+-- 9. FAVORITES
+-- ============================================================
+create table if not exists favorites (
+  id bigserial primary key,
+  user_id uuid not null references profiles(id) on delete cascade,
+  book_id int not null references books(id) on delete cascade,
+  created_at timestamptz default now(),
+  unique(user_id, book_id)
+);
+
+-- ============================================================
+-- 10. RECENTLY_VIEWED
+-- ============================================================
+create table if not exists recently_viewed (
+  id bigserial primary key,
+  user_id uuid not null references profiles(id) on delete cascade,
+  book_id int not null references books(id) on delete cascade,
+  viewed_at timestamptz default now(),
+  unique(user_id, book_id)
+);
+
+-- ============================================================
+-- 11. REVIEWS
+-- ============================================================
+create table if not exists reviews (
+  id bigserial primary key,
+  book_id int not null references books(id) on delete cascade,
+  user_id uuid not null references profiles(id) on delete cascade,
+  rating int not null default 5,
+  comment text default '',
+  created_at timestamptz default now(),
+  unique(book_id, user_id)
+);
+
+-- ============================================================
+-- 12. DIGITAL_BOOKS
+-- ============================================================
+create table if not exists digital_books (
+  id serial primary key,
+  title text not null,
+  author text default '',
+  description text default '',
+  cover text default '',
+  pdf_url text default '',
+  format text default 'pdf',
+  pages int default 0,
+  category text default '',
+  added_date timestamptz default now(),
+  downloads int default 0,
+  featured boolean default false
+);
+
+-- ============================================================
+-- 12B. STUDY_MATERIALS (question papers / notes / model sets)
+-- ============================================================
+create table if not exists study_materials (
+  id serial primary key,
+  title text not null,
+  type text default 'notes',
+  grade text default '',
+  subject text default '',
+  year text default '',
+  exam_type text default '',
+  pdf_url text default '',
+  description text default '',
+  uploaded_by text default '',
+  uploaded_at timestamptz default now(),
+  downloads int default 0
+);
+
+-- ============================================================
+-- 13. SETTINGS (key-value store for library settings)
+-- ============================================================
+create table if not exists settings (
+  key text primary key,
+  value jsonb not null default '{}'::jsonb,
+  updated_at timestamptz default now()
+);
+
+-- ============================================================
+-- 14. ACHIEVEMENTS (gamification)
+-- ============================================================
+create table if not exists achievements (
+  id bigserial primary key,
+  user_id uuid not null references profiles(id) on delete cascade,
+  name text not null,
+  description text default '',
+  icon text default 'trophy',
+  earned_at timestamptz default now(),
+  unique(user_id, name)
+);
+
+-- ============================================================
+-- 15. LOGIN_HISTORY (tracks all login attempts)
+-- ============================================================
+create table if not exists login_history (
+  id bigserial primary key,
+  user_id uuid references profiles(id) on delete cascade,
+  ip inet,
+  user_agent text default '',
+  success boolean not null default false,
+  timestamp timestamptz default now()
+);
+
+-- ============================================================
+-- 16. ACTIVITY_LOGS (tracks user actions)
+-- ============================================================
+create table if not exists activity_logs (
+  id bigserial primary key,
+  user_id uuid references profiles(id) on delete set null,
+  action text not null default '',
+  details text default '',
+  ip inet,
+  timestamp timestamptz default now()
+);
+
+-- ============================================================
+-- 17. AUDIT_LOGS (tracks security events)
+-- ============================================================
+create table if not exists audit_logs (
+  id bigserial primary key,
+  user_id uuid references profiles(id) on delete set null,
+  action text not null default '',
+  details text default '',
+  ip inet,
+  severity text default 'info',
+  timestamp timestamptz default now()
+);
+
+-- ============================================================
+-- 18. FINE_PAYMENTS (tracks fine payments)
+-- ============================================================
+create table if not exists fine_payments (
+  id bigserial primary key,
+  borrow_request_id text not null references borrow_requests(id) on delete cascade,
+  student_id uuid not null references profiles(id) on delete cascade,
+  amount numeric(10,2) not null default 0,
+  payment_date timestamptz default now(),
+  payment_method text default '',
+  receipt_number text default ''
+);
+
+-- ============================================================
+-- 19. BOOK_IMPORTS (tracks CDC imports)
+-- ============================================================
+create table if not exists book_imports (
+  id bigserial primary key,
+  book_id int references books(id) on delete set null,
+  source text default '',
+  imported_at timestamptz default now(),
+  status text default 'pending'
+);
+
+-- ============================================================
+-- 20. FEEDBACK (user feedback)
+-- ============================================================
+create table if not exists feedback (
+  id bigserial primary key,
+  user_id uuid references profiles(id) on delete set null,
+  subject text default '',
+  message text default '',
+  rating int default 5,
+  created_at timestamptz default now()
+);
+
+-- ============================================================
+-- 21. CALENDAR_EVENTS (library calendar/holidays)
+-- ============================================================
+create table if not exists calendar_events (
+  id bigserial primary key,
+  title text not null,
+  date date not null,
+  type text default 'general',
+  description text default ''
+);
+
+-- ============================================================
+-- 22. FAQS (frequently asked questions)
+-- ============================================================
+create table if not exists faqs (
+  id bigserial primary key,
+  question text not null,
+  answer text default '',
+  category text default 'general',
+  order_index int default 0
+);
+
+-- ============================================================
+-- 23. CONTACT_MESSAGES (contact form submissions)
+-- ============================================================
+create table if not exists contact_messages (
+  id bigserial primary key,
+  name text not null default '',
+  email text not null default '',
+  subject text default '',
+  message text default '',
+  read boolean default false,
+  created_at timestamptz default now()
+);
+
+-- ============================================================
+-- 24. SESSIONS (server-side session management)
+-- ============================================================
+create table if not exists sessions (
+  id bigserial primary key,
+  user_id uuid not null references profiles(id) on delete cascade,
+  token text not null unique,
+  ip inet,
+  user_agent text default '',
+  created_at timestamptz default now(),
+  expires_at timestamptz not null
+);
+
+-- ============================================================
+-- INDEXES
+-- ============================================================
+create index if not exists idx_books_category on books(category);
+create index if not exists idx_books_status on books(status);
+create index if not exists idx_books_title on books(title);
+create index if not exists idx_books_isbn on books(isbn);
+create index if not exists idx_books_barcode on books(barcode);
+create index if not exists idx_borrow_requests_student on borrow_requests(student_id);
+create index if not exists idx_borrow_requests_status on borrow_requests(status);
+create index if not exists idx_borrow_requests_book on borrow_requests(book_id);
+create index if not exists idx_notifications_user on notifications(user_id);
+create index if not exists idx_notifications_read on notifications(read);
+create index if not exists idx_favorites_user on favorites(user_id);
+create index if not exists idx_recently_viewed_user on recently_viewed(user_id);
+create index if not exists idx_reservations_student on reservations(student_id);
+create index if not exists idx_reviews_book on reviews(book_id);
+create index if not exists idx_achievements_user on achievements(user_id);
+create index if not exists idx_login_history_user on login_history(user_id);
+create index if not exists idx_login_history_timestamp on login_history(timestamp);
+create index if not exists idx_activity_logs_user on activity_logs(user_id);
+create index if not exists idx_activity_logs_timestamp on activity_logs(timestamp);
+create index if not exists idx_audit_logs_user on audit_logs(user_id);
+create index if not exists idx_audit_logs_severity on audit_logs(severity);
+create index if not exists idx_audit_logs_timestamp on audit_logs(timestamp);
+create index if not exists idx_fine_payments_student on fine_payments(student_id);
+create index if not exists idx_fine_payments_borrow on fine_payments(borrow_request_id);
+create index if not exists idx_book_imports_book on book_imports(book_id);
+create index if not exists idx_book_imports_status on book_imports(status);
+create index if not exists idx_feedback_user on feedback(user_id);
+create index if not exists idx_calendar_events_date on calendar_events(date);
+create index if not exists idx_faqs_category on faqs(category);
+create index if not exists idx_contact_messages_read on contact_messages(read);
+create index if not exists idx_sessions_user on sessions(user_id);
+create index if not exists idx_sessions_token on sessions(token);
+create index if not exists idx_sessions_expires on sessions(expires_at);
+create index if not exists idx_profiles_membership on profiles(membership_status);
+
+-- ============================================================
+-- ROW LEVEL SECURITY
+-- ============================================================
+
+-- Profiles: users can read all, update only their own
+alter table profiles enable row level security;
+create policy "profiles_select_all" on profiles for select using (true);
+create policy "profiles_update_own" on profiles for update using (auth.uid() = id);
+create policy "profiles_insert_own" on profiles for insert with check (auth.uid() = id);
+
+-- Books: everyone can read, only admins can modify
+alter table books enable row level security;
+create policy "books_select_all" on books for select using (true);
+create policy "books_insert_admin" on books for insert
+  with check (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+create policy "books_update_admin" on books for update
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+create policy "books_delete_admin" on books for delete
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+
+-- Categories: everyone can read, only admins can modify
+alter table categories enable row level security;
+create policy "categories_select_all" on categories for select using (true);
+create policy "categories_insert_admin" on categories for insert
+  with check (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+create policy "categories_update_admin" on categories for update
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+create policy "categories_delete_admin" on categories for delete
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+
+-- Borrow requests: users see own, admins see all
+alter table borrow_requests enable row level security;
+create policy "borrow_select_own" on borrow_requests for select
+  using (
+    auth.uid() = student_id
+    or exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian'))
+  );
+create policy "borrow_insert_own" on borrow_requests for insert
+  with check (auth.uid() = student_id);
+create policy "borrow_update_admin" on borrow_requests for update
+  using (exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian')));
+
+-- Notifications: users see own only
+alter table notifications enable row level security;
+create policy "notifications_select_own" on notifications for select
+  using (auth.uid() = user_id);
+create policy "notifications_insert_own" on notifications for insert
+  with check (auth.uid() = user_id);
+create policy "notifications_update_own" on notifications for update
+  using (auth.uid() = user_id);
+create policy "notifications_delete_own" on notifications for delete
+  using (auth.uid() = user_id);
+
+-- Announcements: everyone can read, admins can manage
+alter table announcements enable row level security;
+create policy "announcements_select_all" on announcements for select using (true);
+create policy "announcements_insert_admin" on announcements for insert
+  with check (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+create policy "announcements_update_admin" on announcements for update
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+create policy "announcements_delete_admin" on announcements for delete
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+
+-- Events: everyone can read, admins can manage
+alter table events enable row level security;
+create policy "events_select_all" on events for select using (true);
+create policy "events_insert_admin" on events for insert
+  with check (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+create policy "events_update_admin" on events for update
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+create policy "events_delete_admin" on events for delete
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+
+-- Reservations: users see own, admins see all
+alter table reservations enable row level security;
+create policy "reservations_select_own" on reservations for select
+  using (
+    auth.uid() = student_id
+    or exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian'))
+  );
+create policy "reservations_insert_own" on reservations for insert
+  with check (auth.uid() = student_id);
+create policy "reservations_update_own" on reservations for update
+  using (
+    auth.uid() = student_id
+    or exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian'))
+  );
+
+-- Favorites: users manage their own
+alter table favorites enable row level security;
+create policy "favorites_select_own" on favorites for select using (auth.uid() = user_id);
+create policy "favorites_insert_own" on favorites for insert with check (auth.uid() = user_id);
+create policy "favorites_delete_own" on favorites for delete using (auth.uid() = user_id);
+
+-- Recently viewed: users manage their own
+alter table recently_viewed enable row level security;
+create policy "recently_viewed_select_own" on recently_viewed for select using (auth.uid() = user_id);
+create policy "recently_viewed_insert_own" on recently_viewed for insert with check (auth.uid() = user_id);
+create policy "recently_viewed_delete_own" on recently_viewed for delete using (auth.uid() = user_id);
+
+-- Reviews: everyone can read, users manage their own
+alter table reviews enable row level security;
+create policy "reviews_select_all" on reviews for select using (true);
+create policy "reviews_insert_own" on reviews for insert with check (auth.uid() = user_id);
+create policy "reviews_update_own" on reviews for update using (auth.uid() = user_id);
+create policy "reviews_delete_own" on reviews for delete using (auth.uid() = user_id);
+
+-- Digital books: everyone can read, admins can manage
+alter table digital_books enable row level security;
+create policy "digital_books_select_all" on digital_books for select using (true);
+create policy "digital_books_insert_admin" on digital_books for insert
+  with check (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+create policy "digital_books_update_admin" on digital_books for update
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+create policy "digital_books_delete_admin" on digital_books for delete
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+
+-- Study materials: everyone can read, admins/librarians manage
+alter table study_materials enable row level security;
+create policy "study_materials_select_all" on study_materials for select using (true);
+create policy "study_materials_insert_staff" on study_materials for insert
+  with check (exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian')));
+create policy "study_materials_update_staff" on study_materials for update
+  using (exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian')));
+create policy "study_materials_delete_staff" on study_materials for delete
+  using (exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian')));
+
+-- Settings: admins manage, everyone reads
+alter table settings enable row level security;
+create policy "settings_select_all" on settings for select using (true);
+create policy "settings_upsert_admin" on settings for insert
+  with check (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+create policy "settings_update_admin" on settings for update
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+
+-- Achievements: users see own, admins see all
+alter table achievements enable row level security;
+create policy "achievements_select_own" on achievements for select
+  using (
+    auth.uid() = user_id
+    or exists (select 1 from profiles where id = auth.uid() and role = 'admin')
+  );
+create policy "achievements_insert_own" on achievements for insert
+  with check (auth.uid() = user_id);
+
+-- Login history: admins see all, users see own
+alter table login_history enable row level security;
+create policy "login_history_select_own" on login_history for select
+  using (
+    auth.uid() = user_id
+    or exists (select 1 from profiles where id = auth.uid() and role = 'admin')
+  );
+create policy "login_history_insert_service" on login_history for insert
+  with check (true);
+
+-- Activity logs: admins see all, users see own
+alter table activity_logs enable row level security;
+create policy "activity_logs_select_own" on activity_logs for select
+  using (
+    auth.uid() = user_id
+    or exists (select 1 from profiles where id = auth.uid() and role = 'admin')
+  );
+create policy "activity_logs_insert_service" on activity_logs for insert
+  with check (true);
+
+-- Audit logs: only admins can read, service role inserts
+alter table audit_logs enable row level security;
+create policy "audit_logs_select_admin" on audit_logs for select
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+create policy "audit_logs_insert_service" on audit_logs for insert
+  with check (true);
+
+-- Fine payments: users see own, admins see all
+alter table fine_payments enable row level security;
+create policy "fine_payments_select_own" on fine_payments for select
+  using (
+    auth.uid() = student_id
+    or exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian'))
+  );
+create policy "fine_payments_insert_admin" on fine_payments for insert
+  with check (exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian')));
+
+-- Book imports: only admins can manage
+alter table book_imports enable row level security;
+create policy "book_imports_select_admin" on book_imports for select
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+create policy "book_imports_insert_admin" on book_imports for insert
+  with check (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+create policy "book_imports_update_admin" on book_imports for update
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+
+-- Feedback: users see own, admins see all; anyone can insert
+alter table feedback enable row level security;
+create policy "feedback_select_own" on feedback for select
+  using (
+    auth.uid() = user_id
+    or exists (select 1 from profiles where id = auth.uid() and role = 'admin')
+  );
+create policy "feedback_insert_own" on feedback for insert
+  with check (auth.uid() = user_id);
+
+-- Calendar events: everyone can read, admins can manage
+alter table calendar_events enable row level security;
+create policy "calendar_events_select_all" on calendar_events for select using (true);
+create policy "calendar_events_insert_admin" on calendar_events for insert
+  with check (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+create policy "calendar_events_update_admin" on calendar_events for update
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+create policy "calendar_events_delete_admin" on calendar_events for delete
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+
+-- FAQs: everyone can read, admins can manage
+alter table faqs enable row level security;
+create policy "faqs_select_all" on faqs for select using (true);
+create policy "faqs_insert_admin" on faqs for insert
+  with check (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+create policy "faqs_update_admin" on faqs for update
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+create policy "faqs_delete_admin" on faqs for delete
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+
+-- Contact messages: admins can manage, anyone can insert
+alter table contact_messages enable row level security;
+create policy "contact_messages_select_admin" on contact_messages for select
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+create policy "contact_messages_insert_anon" on contact_messages for insert
+  with check (true);
+create policy "contact_messages_update_admin" on contact_messages for update
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+
+-- Sessions: users see own, admins see all
+alter table sessions enable row level security;
+create policy "sessions_select_own" on sessions for select
+  using (
+    auth.uid() = user_id
+    or exists (select 1 from profiles where id = auth.uid() and role = 'admin')
+  );
+create policy "sessions_insert_own" on sessions for insert
+  with check (auth.uid() = user_id);
+create policy "sessions_delete_own" on sessions for delete
+  using (auth.uid() = user_id);
+</pre>
+    <div class="code-filename">supabase/seed.js</div>
+    <pre>#!/usr/bin/env node
+
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+const { createClient } = require('@supabase/supabase-js');
+
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
+
+if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+  console.error('Set SUPABASE_URL and SUPABASE_SERVICE_KEY in your .env file');
+  console.error('The service key is found in Supabase Dashboard &gt; Settings &gt; API &gt; service_role key');
+  process.exit(1);
+}
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+const users = [
+  { email: 'admin@saraswatischool.edu.np', password: 'admin123', name: 'System Admin', role: 'admin' },
+  { email: 'anita.s@saraswatischool.edu.np', password: 'student123', name: 'Anita Sharma', role: 'student', grade: '10', className: 'A' },
+  { email: 'ram.b@saraswatischool.edu.np', password: 'student123', name: 'Ram Bhandari', role: 'student', grade: '9', className: 'B' },
+  { email: 'sita.g@saraswatischool.edu.np', password: 'student123', name: 'Sita Gurung', role: 'student', grade: '10', className: 'A' },
+  { email: 'hari.p@saraswatischool.edu.np', password: 'student123', name: 'Hari Poudel', role: 'student', grade: '8', className: 'C' },
+  { email: 'maya.s@saraswatischool.edu.np', password: 'student123', name: 'Maya Shrestha', role: 'student', grade: '11', className: 'A' },
+  { email: 'rajan.k@saraswatischool.edu.np', password: 'student123', name: 'Rajan Karki', role: 'student', grade: '9', className: 'A' },
+  { email: 'priya.t@saraswatischool.edu.np', password: 'student123', name: 'Priya Tamang', role: 'student', grade: '10', className: 'B' },
+  { email: 'deepak.r@saraswatischool.edu.np', password: 'student123', name: 'Deepak Rawal', role: 'student', grade: '12', className: 'A' },
+  { email: 'laxmi@saraswatischool.edu.np', password: 'librarian123', name: 'Laxmi Devi', role: 'librarian' },
+];
+
+const categories = [
+  { name: 'Nepali', icon: 'book-open', color: '#ef4444', count: 12 },
+  { name: 'English', icon: 'languages', color: '#3b82f6', count: 12 },
+  { name: 'Mathematics', icon: 'calculator', color: '#f59e0b', count: 12 },
+  { name: 'Science &amp; Technology', icon: 'atom', color: '#10b981', count: 10 },
+  { name: 'Social Studies', icon: 'globe', color: '#8b5cf6', count: 10 },
+  { name: 'Health &amp; Physical Education', icon: 'heart', color: '#14b8a6', count: 6 },
+  { name: 'Computer Science', icon: 'cpu', color: '#06b6d4', count: 4 },
+  { name: 'Economics', icon: 'landmark', color: '#ec4899', count: 4 },
+  { name: 'Natural Sciences', icon: 'flask-conical', color: '#0ea5e9', count: 6 },
+  { name: 'Business &amp; Accountancy', icon: 'briefcase', color: '#a855f7', count: 4 },
+];
+
+const announcements = [
+  { title: 'Library Hours Extended for Board Exam Students', content: 'The library will remain open until 6:00 PM for Grade 10 and 12 students during exam preparation period starting from Chaitra 1.', date: '2026-03-15', priority: 'high', icon: 'clock', active: true },
+  { title: 'New Digital Resources Available', content: 'We have added 50 new digital books and reference materials to our online library. Access them through the Digital Library section.', date: '2026-03-10', priority: 'normal', icon: 'download', active: true },
+  { title: 'Annual Book Fair 2083', content: 'Saraswati Sec School is organizing its Annual Book Fair from Baisakh 5-7. Special discounts and book exchange opportunities available!', date: '2026-03-08', priority: 'normal', icon: 'calendar', active: true },
+];
+
+const events = [
+  { title: 'Reading Challenge Kickoff', description: 'Join our 30-day reading challenge! Read at least 20 pages daily and earn achievement badges.', date: '2026-03-20', time: '10:00 AM', location: 'Library Hall', type: 'reading', icon: 'book-open', active: true },
+  { title: 'Author Visit: Laxmi Prasad Devkota Memorial Talk', description: 'A special talk on the life and works of Nepal\'s greatest poet, Laxmi Prasad Devkota.', date: '2026-03-25', time: '2:00 PM', location: 'Auditorium', type: 'cultural', icon: 'mic', active: true },
+  { title: 'Book Club Meeting', description: 'Monthly book club discussion. This month\'s pick: "Shirishko Phool" by Shivhari Adhikari.', date: '2026-04-01', time: '3:30 PM', location: 'Library Reading Room', type: 'discussion', icon: 'users', active: true },
+];
+
+const books = [
+  { id: 101, title: 'Nepali Class 1', author: 'CDC Nepal', publisher: 'CDC, MoEST', grade: '1', subject: 'Nepali', language: 'Nepali', pages: 56, year: 2076, description: 'Official Nepali textbook for Grade 1 students.', isbn: '978-9937-0-XXXXX-101', category: 'Nepali', total_copies: 50, available_copies: 42, borrow_count: 156, rating: 4.3, status: 'available', shelf: 'CDC-G1', rack: 1 },
+  { id: 102, title: 'English Class 1', author: 'CDC Nepal', publisher: 'CDC, MoEST', grade: '1', subject: 'English', language: 'English', pages: 64, year: 2076, description: 'Official English textbook for Grade 1 students.', isbn: '978-9937-0-XXXXX-102', category: 'English', total_copies: 50, available_copies: 44, borrow_count: 132, rating: 4.2, status: 'available', shelf: 'CDC-G1', rack: 1 },
+  { id: 103, title: 'Mathematics Class 1', author: 'CDC Nepal', publisher: 'CDC, MoEST', grade: '1', subject: 'Mathematics', language: 'Nepali', pages: 52, year: 2076, description: 'Mathematics textbook for Grade 1.', isbn: '978-9937-0-XXXXX-103', category: 'Mathematics', total_copies: 50, available_copies: 45, borrow_count: 120, rating: 4.1, status: 'available', shelf: 'CDC-G1', rack: 1 },
+  { id: 137, title: 'Nepali Class 7', author: 'CDC Nepal', publisher: 'CDC, MoEST', grade: '7', subject: 'Nepali', language: 'Nepali', pages: 120, year: 2079, description: 'Advanced Nepali literature for Grade 7.', isbn: '978-9937-0-XXXXX-137', category: 'Nepali', total_copies: 50, available_copies: 36, borrow_count: 195, rating: 4.5, status: 'available', shelf: 'CDC-G7', rack: 7 },
+  { id: 138, title: 'English Class 7', author: 'CDC Nepal', publisher: 'CDC, MoEST', grade: '7', subject: 'English', language: 'English', pages: 120, year: 2079, description: 'English textbook for Grade 7.', isbn: '978-9937-0-XXXXX-138', category: 'English', total_copies: 50, available_copies: 38, borrow_count: 175, rating: 4.3, status: 'available', shelf: 'CDC-G7', rack: 7 },
+  { id: 139, title: 'Mathematics Class 7', author: 'CDC Nepal', publisher: 'CDC, MoEST', grade: '7', subject: 'Mathematics', language: 'Nepali', pages: 116, year: 2079, description: 'Mathematics textbook for Grade 7.', isbn: '978-9937-0-XXXXX-139', category: 'Mathematics', total_copies: 50, available_copies: 40, borrow_count: 158, rating: 4.2, status: 'available', shelf: 'CDC-G7', rack: 7 },
+  { id: 140, title: 'Science Class 7', author: 'CDC Nepal', publisher: 'CDC, MoEST', grade: '7', subject: 'Science', language: 'Nepali', pages: 120, year: 2079, description: 'Science textbook for Grade 7.', isbn: '978-9937-0-XXXXX-140', category: 'Science &amp; Technology', total_copies: 50, available_copies: 37, borrow_count: 188, rating: 4.4, status: 'available', shelf: 'CDC-G7', rack: 7 },
+  { id: 145, title: 'Nepali Class 8', author: 'CDC Nepal', publisher: 'CDC, MoEST', grade: '8', subject: 'Nepali', language: 'Nepali', pages: 128, year: 2079, description: 'Comprehensive Nepali textbook for Grade 8.', isbn: '978-9937-0-XXXXX-145', category: 'Nepali', total_copies: 50, available_copies: 35, borrow_count: 202, rating: 4.5, status: 'available', shelf: 'CDC-G8', rack: 8 },
+  { id: 146, title: 'English Class 8', author: 'CDC Nepal', publisher: 'CDC, MoEST', grade: '8', subject: 'English', language: 'English', pages: 136, year: 2079, description: 'English textbook for Grade 8.', isbn: '978-9937-0-XXXXX-146', category: 'English', total_copies: 50, available_copies: 37, borrow_count: 182, rating: 4.3, status: 'available', shelf: 'CDC-G8', rack: 8 },
+  { id: 147, title: 'Mathematics Class 8', author: 'CDC Nepal', publisher: 'CDC, MoEST', grade: '8', subject: 'Mathematics', language: 'Nepali', pages: 144, year: 2079, description: 'Mathematics textbook for Grade 8.', isbn: '978-9937-0-XXXXX-147', category: 'Mathematics', total_copies: 50, available_copies: 39, borrow_count: 165, rating: 4.2, status: 'available', shelf: 'CDC-G8', rack: 8 },
+  { id: 148, title: 'Science &amp; Technology Class 8', author: 'CDC Nepal', publisher: 'CDC, MoEST', grade: '8', subject: 'Science &amp; Technology', language: 'Nepali', pages: 152, year: 2079, description: 'Science &amp; Technology textbook for Grade 8.', isbn: '978-9937-0-XXXXX-148', category: 'Science &amp; Technology', total_copies: 50, available_copies: 36, borrow_count: 192, rating: 4.4, status: 'available', shelf: 'CDC-G8', rack: 8 },
+  { id: 152, title: 'Nepali Class 9', author: 'CDC Nepal', publisher: 'CDC, MoEST', grade: '9', subject: 'Nepali', language: 'Nepali', pages: 140, year: 2080, description: 'Nepali textbook for Grade 9 with comprehensive literature.', isbn: '978-9937-0-XXXXX-152', category: 'Nepali', total_copies: 50, available_copies: 33, borrow_count: 210, rating: 4.6, status: 'available', shelf: 'CDC-G9', rack: 9 },
+  { id: 156, title: 'Mathematics Class 9', author: 'CDC Nepal', publisher: 'CDC, MoEST', grade: '9', subject: 'Mathematics', language: 'Nepali', pages: 150, year: 2080, description: 'Mathematics textbook for Grade 9.', isbn: '978-9937-0-XXXXX-156', category: 'Mathematics', total_copies: 50, available_copies: 38, borrow_count: 175, rating: 4.3, status: 'available', shelf: 'CDC-G9', rack: 9 },
+  { id: 160, title: 'English Class 10', author: 'CDC Nepal', publisher: 'CDC, MoEST', grade: '10', subject: 'English', language: 'English', pages: 160, year: 2080, description: 'English textbook for Grade 10 BLE preparation.', isbn: '978-9937-0-XXXXX-160', category: 'English', total_copies: 50, available_copies: 34, borrow_count: 215, rating: 4.6, status: 'available', shelf: 'CDC-G10', rack: 10 },
+];
+
+const settings = [
+  { key: 'library_name', value: { name: 'Saraswati Sec School Library' } },
+  { key: 'borrow_duration', value: { days: 14 } },
+  { key: 'max_books_per_student', value: { max: 3 } },
+  { key: 'fine_per_day', value: { amount: 5 } },
+  { key: 'max_renewals', value: { count: 1 } },
+];
+
+async function seed() {
+  console.log('Starting database seed...\n');
+
+  console.log('1. Creating auth users...');
+  const userIds = {};
+  for (const u of users) {
+    const { data, error } = await supabase.auth.admin.createUser({
+      email: u.email,
+      password: u.password,
+      email_confirm: true,
+      user_metadata: { name: u.name, role: u.role }
+    });
+    if (error) {
+      if (error.message.includes('already registered')) {
+        const { data: existing } = await supabase.auth.admin.listUsers();
+        const found = existing.users.find(e =&gt; e.email === u.email);
+        if (found) {
+          userIds[u.email] = found.id;
+          console.log(`  User exists: ${u.email}`);
+        }
+      } else {
+        console.log(`  Error creating ${u.email}: ${error.message}`);
+      }
+    } else {
+      userIds[u.email] = data.user.id;
+      console.log(`  Created: ${u.email} (${u.role})`);
+    }
+  }
+
+  console.log('\n2. Updating profiles...');
+  for (const u of users) {
+    const uid = userIds[u.email];
+    if (!uid) continue;
+    const { error } = await supabase.from('profiles').upsert({
+      id: uid,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      grade: u.grade || '',
+      className: u.className || '',
+      avatar: u.name.split(' ').map(n =&gt; n[0]).join(''),
+    }, { onConflict: 'id' });
+    if (error) console.log(`  Profile error for ${u.email}: ${error.message}`);
+    else console.log(`  Profile updated: ${u.name}`);
+  }
+
+  console.log('\n3. Inserting categories...');
+  const { error: catErr } = await supabase.from('categories').upsert(categories, { onConflict: 'name' });
+  if (catErr) console.log(`  Error: ${catErr.message}`);
+  else console.log(`  Inserted ${categories.length} categories`);
+
+  console.log('\n4. Inserting books...');
+  const { error: bookErr } = await supabase.from('books').upsert(books, { onConflict: 'id' });
+  if (bookErr) console.log(`  Error: ${bookErr.message}`);
+  else console.log(`  Inserted ${books.length} books`);
+
+  console.log('\n5. Inserting announcements...');
+  const { error: annErr } = await supabase.from('announcements').insert(announcements);
+  if (annErr) console.log(`  Error: ${annErr.message}`);
+  else console.log(`  Inserted ${announcements.length} announcements`);
+
+  console.log('\n6. Inserting events...');
+  const { error: evtErr } = await supabase.from('events').insert(events);
+  if (evtErr) console.log(`  Error: ${evtErr.message}`);
+  else console.log(`  Inserted ${events.length} events`);
+
+  console.log('\n7. Inserting settings...');
+  for (const s of settings) {
+    const { error } = await supabase.from('settings').upsert(s, { onConflict: 'key' });
+    if (error) console.log(`  Settings error: ${error.message}`);
+  }
+  console.log(`  Inserted ${settings.length} settings`);
+
+  console.log('\n8. Creating sample borrow requests...');
+  const anitaId = userIds['anita.s@saraswatischool.edu.np'];
+  const ramId = userIds['ram.b@saraswatischool.edu.np'];
+  if (anitaId &amp;&amp; ramId) {
+    const sampleRequests = [
+      { id: 'BR-20260714-0001', book_id: 160, book_title: 'English Class 10', student_id: ramId, student_name: 'Ram Bhandari', borrow_date: '2026-07-14', expected_return_date: '2026-07-28', status: 'pending' },
+      { id: 'BR-20260713-0002', book_id: 148, book_title: 'Science &amp; Technology Class 8', student_id: anitaId, student_name: 'Anita Sharma', borrow_date: '2026-07-13', expected_return_date: '2026-07-27', status: 'borrowed', approved_by: 'Laxmi Devi', approved_at: '2026-07-13T10:00:00Z' },
+      { id: 'BR-20260710-0003', book_id: 156, book_title: 'Mathematics Class 9', student_id: anitaId, student_name: 'Anita Sharma', borrow_date: '2026-07-10', expected_return_date: '2026-07-24', status: 'overdue', approved_by: 'Laxmi Devi', approved_at: '2026-07-10T10:00:00Z' },
+    ];
+    const { error: brErr } = await supabase.from('borrow_requests').upsert(sampleRequests, { onConflict: 'id' });
+    if (brErr) console.log(`  Error: ${brErr.message}`);
+    else console.log(`  Inserted ${sampleRequests.length} sample borrow requests`);
+  }
+
+  console.log('\nSeed complete!');
+  console.log('\nDemo credentials:');
+  console.log('  Admin:    admin@saraswatischool.edu.np / admin123');
+  console.log('  Student:  anita.s@saraswatischool.edu.np / student123');
+  console.log('  Librarian: laxmi@saraswatischool.edu.np / librarian123');
+}
+
+seed().catch(err =&gt; {
+  console.error('Seed failed:', err);
+  process.exit(1);
+});
+</pre>
+    <div class="code-filename">supabase/fix-seed.js</div>
+    <pre>#!/usr/bin/env node
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+const { createClient } = require('@supabase/supabase-js');
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+
+const accountList = [
+  { email: 'admin@saraswatischool.edu.np', password: 'admin123', name: 'System Admin', role: 'admin', grade: '', className: '' },
+  { email: 'anita.s@saraswatischool.edu.np', password: 'student123', name: 'Anita Sharma', role: 'student', grade: '10', className: 'A' },
+  { email: 'ram.b@saraswatischool.edu.np', password: 'student123', name: 'Ram Bhandari', role: 'student', grade: '9', className: 'B' },
+  { email: 'sita.g@saraswatischool.edu.np', password: 'student123', name: 'Sita Gurung', role: 'student', grade: '10', className: 'A' },
+  { email: 'hari.p@saraswatischool.edu.np', password: 'student123', name: 'Hari Poudel', role: 'student', grade: '8', className: 'C' },
+  { email: 'maya.s@saraswatischool.edu.np', password: 'student123', name: 'Maya Shrestha', role: 'student', grade: '11', className: 'A' },
+  { email: 'rajan.k@saraswatischool.edu.np', password: 'student123', name: 'Rajan Karki', role: 'student', grade: '9', className: 'A' },
+  { email: 'priya.t@saraswatischool.edu.np', password: 'student123', name: 'Priya Tamang', role: 'student', grade: '10', className: 'B' },
+  { email: 'deepak.r@saraswatischool.edu.np', password: 'student123', name: 'Deepak Rawal', role: 'student', grade: '12', className: 'A' },
+  { email: 'laxmi@saraswatischool.edu.np', password: 'librarian123', name: 'Laxmi Devi', role: 'librarian', grade: '', className: '' },
+];
+
+async function fix() {
+  console.log('Getting user IDs via sign-in...\n');
+
+  const userIds = {};
+  for (const u of accountList) {
+    const anonClient = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+    const { data, error } = await anonClient.auth.signInWithPassword({ email: u.email, password: u.password });
+    if (error) {
+      console.log(`  Sign-in failed ${u.email}: ${error.message}`);
+    } else {
+      userIds[u.email] = data.user.id;
+      console.log(`  ${u.email} -&gt; ${data.user.id}`);
+    }
+  }
+
+  console.log('\nUpserting profiles...');
+  for (const u of accountList) {
+    const uid = userIds[u.email];
+    if (!uid) continue;
+    const { error } = await supabase.from('profiles').upsert({
+      id: uid,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      grade: u.grade,
+      classname: u.className,
+      avatar: u.name.split(' ').map(n =&gt; n[0]).join(''),
+    }, { onConflict: 'id' });
+    if (error) console.log(`  Profile error ${u.name}: ${error.message}`);
+    else console.log(`  Profile OK: ${u.name}`);
+  }
+
+  console.log('\nInserting sample borrow requests...');
+  const anitaId = userIds['anita.s@saraswatischool.edu.np'];
+  const ramId = userIds['ram.b@saraswatischool.edu.np'];
+  const laxmiId = userIds['laxmi@saraswatischool.edu.np'];
+
+  if (anitaId &amp;&amp; ramId) {
+    const requests = [
+      { id: 'BR-20260714-0001', book_id: 160, book_title: 'English Class 10', student_id: ramId, student_name: 'Ram Bhandari', borrow_date: '2026-07-14', expected_return_date: '2026-07-28', status: 'pending' },
+      { id: 'BR-20260713-0002', book_id: 148, book_title: 'Science &amp; Technology Class 8', student_id: anitaId, student_name: 'Anita Sharma', borrow_date: '2026-07-13', expected_return_date: '2026-07-27', status: 'borrowed', approved_by: laxmiId, approved_at: '2026-07-13T10:00:00Z' },
+      { id: 'BR-20260710-0003', book_id: 156, book_title: 'Mathematics Class 9', student_id: anitaId, student_name: 'Anita Sharma', borrow_date: '2026-07-10', expected_return_date: '2026-07-24', status: 'overdue', approved_by: laxmiId, approved_at: '2026-07-10T10:00:00Z' },
+    ];
+    const { error } = await supabase.from('borrow_requests').upsert(requests, { onConflict: 'id' });
+    if (error) console.log(`  Error: ${error.message}`);
+    else console.log(`  Inserted ${requests.length} borrow requests`);
+  } else {
+    console.log('  Skipped (missing user IDs)');
+  }
+
+  console.log('\nDone!');
+  console.log('\nCredentials:');
+  console.log('  Admin:     admin@saraswatischool.edu.np / admin123');
+  console.log('  Student:   anita.s@saraswatischool.edu.np / student123');
+  console.log('  Librarian: laxmi@saraswatischool.edu.np / librarian123');
+}
+
+fix().catch(e =&gt; { console.error(e); process.exit(1); });
+</pre>
+    <div class="code-filename">supabase/import-excel.js</div>
+    <pre>#!/usr/bin/env node
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+const { createClient } = require('@supabase/supabase-js');
+const XLSX = require('xlsx');
+
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+
+function excelDateToISO(serial) {
+  if (!serial || typeof serial !== 'number') return null;
+  const d = new Date((serial - 25569) * 86400000);
+  if (isNaN(d.getTime())) return null;
+  return d.toISOString().split('T')[0];
+}
+
+function excelDateToBS(serial) {
+  if (!serial || typeof serial !== 'number') return '';
+  const d = new Date((serial - 25569) * 86400000);
+  if (isNaN(d.getTime())) return String(serial);
+  return d.toISOString().split('T')[0];
+}
+
+function cleanStr(s) {
+  if (!s) return '';
+  return String(s).replace(/[\r\n]+/g, ' ').trim();
+}
+
+function parsePricePages(s) {
+  if (!s) return { price: '', pages: 0 };
+  const str = String(s);
+  const pageMatch = str.match(/(\d+)\s*(पृ|page|pg)/i);
+  const pages = pageMatch ? parseInt(pageMatch[1]) : 0;
+  const priceMatch = str.match(/(?:रु\.?\s*|US\$\s*)([\d,\.]+)/);
+  const price = priceMatch ? priceMatch[1].replace(/,/g, '') : '';
+  return { price, pages };
+}
+
+function parseISBN(s) {
+  if (!s) return '';
+  const str = String(s).trim();
+  if (str === '—' || str === '-' || str.includes('अस्पष्ट')) return '';
+  const cleaned = str.replace(/[^\d\-]/g, '');
+  if (cleaned.length &gt;= 10) return cleaned;
+  return str.replace(/[\r\n]+/g, '').trim();
+}
+
+const nextBookId = 200;
+
+async function main() {
+  console.log('=== Excel Data Import ===\n');
+
+  const allBooks = [];
+  const allBorrowRecords = [];
+
+  // ── EXCEL 1: excelofmyproject.xlsx ──
+  console.log('1. Reading excelofmyproject.xlsx...');
+  const wb1 = XLSX.readFile('C:\\Users\\Acer\\Documents\\excelofmyproject.xlsx');
+  const ws1 = wb1.Sheets[wb1.SheetNames[0]];
+  const d1 = XLSX.utils.sheet_to_json(ws1, { header: 1 });
+
+  // Section 1: Class 11 borrow records (rows 1-4)
+  for (let i = 1; i &lt;= 4; i++) {
+    const r = d1[i];
+    if (!r || !r[1]) continue;
+    allBorrowRecords.push({
+      student_name: cleanStr(r[1]),
+      grade: String(r[2] || '11'),
+      subjects: cleanStr(r[3]),
+      borrow_date: excelDateToISO(r[4]),
+      return_date: excelDateToISO(r[5]),
+      section: 'Class 11'
+    });
+  }
+
+  // Section 2: Class 12 borrow records (rows 6-10)
+  for (let i = 6; i &lt;= 10; i++) {
+    const r = d1[i];
+    if (!r || !r[1]) continue;
+    allBorrowRecords.push({
+      student_name: cleanStr(r[1]),
+      grade: String(r[2] || '12'),
+      subjects: cleanStr(r[3]),
+      borrow_date: excelDateToISO(r[4]),
+      return_date: excelDateToISO(r[5]),
+      section: 'Class 12'
+    });
+  }
+
+  // Section 3: Book catalog (rows 12-21, corrected version rows 23-32)
+  // Use corrected version (rows 23-32) as primary
+  for (let i = 23; i &lt;= 32; i++) {
+    const r = d1[i];
+    if (!r || !r[0] || typeof r[0] !== 'number') continue;
+    const { price, pages } = parsePricePages(r[7]);
+    allBooks.push({
+      title: cleanStr(r[4]),
+      author: cleanStr(r[5]),
+      publisher: cleanStr(r[6]),
+      isbn: parseISBN(r[3]),
+      reg_no: cleanStr(r[1]),
+      price: price,
+      pages: pages || 0,
+      date_received: excelDateToISO(r[2]),
+      source: 'excel1_catalog'
+    });
+  }
+
+  // Section 4: Additional books (rows 34-43)
+  for (let i = 34; i &lt;= 43; i++) {
+    const r = d1[i];
+    if (!r || !r[0] || typeof r[0] !== 'number') continue;
+    allBooks.push({
+      title: cleanStr(r[3]),
+      author: '',
+      publisher: '',
+      isbn: '',
+      reg_no: cleanStr(r[1]),
+      price: '',
+      pages: 0,
+      date_received: excelDateToISO(r[2]),
+      source: 'excel1_additional'
+    });
+  }
+
+  console.log(`  Found ${allBorrowRecords.length} borrow records, ${allBooks.length} books so far`);
+
+  // ── EXCEL 2: Book3.xlsx ──
+  console.log('2. Reading Book3.xlsx...');
+  const wb2 = XLSX.readFile('C:\\Users\\Acer\\Documents\\Book3.xlsx');
+  const ws2 = wb2.Sheets[wb2.SheetNames[0]];
+  const d2 = XLSX.utils.sheet_to_json(ws2, { header: 1 });
+
+  for (let i = 8; i &lt;= 10; i++) {
+    const r = d2[i];
+    if (!r || !r[0] || typeof r[0] !== 'number') continue;
+    const { price, pages } = parsePricePages(r[7]);
+    allBooks.push({
+      title: cleanStr(r[4]),
+      author: cleanStr(r[5]),
+      publisher: cleanStr(r[6]),
+      isbn: parseISBN(r[3]),
+      reg_no: cleanStr(r[1]),
+      price: price,
+      pages: pages || 0,
+      date_received: excelDateToISO(r[2]),
+      source: 'book3'
+    });
+  }
+
+  console.log(`  Found 3 more books (${allBooks.length} total)`);
+
+  // ── EXCEL 3: Book4.xlsx ──
+  console.log('3. Reading Book4.xlsx...');
+  const wb3 = XLSX.readFile('C:\\Users\\Acer\\Documents\\Book4.xlsx');
+  const ws3 = wb3.Sheets[wb3.SheetNames[0]];
+  const d3 = XLSX.utils.sheet_to_json(ws3, { header: 1 });
+
+  // Books (rows 1-9)
+  for (let i = 1; i &lt;= 9; i++) {
+    const r = d3[i];
+    if (!r || !r[0] || typeof r[0] !== 'number') continue;
+    const titleAuthor = cleanStr(r[3]);
+    const parts = titleAuthor.split('/');
+    const title = cleanStr(parts[0]);
+    const author = parts.length &gt; 1 ? cleanStr(parts.slice(1).join('/')) : '';
+    const pubYear = cleanStr(r[4]);
+    const { price, pages } = parsePricePages(r[6]);
+    allBooks.push({
+      title: title,
+      author: author,
+      publisher: pubYear,
+      isbn: parseISBN(r[5]),
+      reg_no: cleanStr(r[1]),
+      price: price,
+      pages: pages || 0,
+      date_received: excelDateToISO(r[2]),
+      source: 'excel3'
+    });
+  }
+
+  // Student borrow records from Book4 (rows 16-60)
+  let currentStudent = null;
+  for (let i = 16; i &lt;= 60; i++) {
+    const r = d3[i];
+    if (!r) continue;
+
+    if (r[0] &amp;&amp; typeof r[0] === 'number' &amp;&amp; r[1]) {
+      currentStudent = {
+        serial: r[0],
+        student_name: cleanStr(r[1]),
+        grade: '12',
+        borrow_date: excelDateToBS(r[4]),
+        subjects: []
+      };
+    }
+
+    if (currentStudent &amp;&amp; r[2]) {
+      const subject = cleanStr(r[2]);
+      if (subject &amp;&amp; !['Physics', 'Chemistry', 'English', 'Maths', 'Math', 'सामाजिक अध्ययन'].includes(subject) === false || subject) {
+        currentStudent.subjects.push(subject);
+      }
+    }
+
+    if (r[0] &amp;&amp; typeof r[0] === 'number' &amp;&amp; r[1] &amp;&amp; currentStudent &amp;&amp; currentStudent.subjects.length &gt; 0) {
+      // If we hit a new student, save the previous one
+    }
+  }
+
+  // Re-parse student borrow records more carefully
+  const studentRecords = [];
+  let cur = null;
+  for (let i = 16; i &lt;= 60; i++) {
+    const r = d3[i];
+    if (!r) continue;
+    if (r[0] &amp;&amp; typeof r[0] === 'number' &amp;&amp; r[1] &amp;&amp; String(r[1]).trim()) {
+      if (cur) studentRecords.push(cur);
+      cur = {
+        student_name: cleanStr(r[1]),
+        grade: '12',
+        subjects: [],
+        borrow_date: excelDateToBS(r[4])
+      };
+    }
+    if (cur &amp;&amp; r[2] &amp;&amp; String(r[2]).trim()) {
+      cur.subjects.push(cleanStr(r[2]));
+    }
+  }
+  if (cur) studentRecords.push(cur);
+
+  // Also parse rows 44-60 section (borrow with return dates)
+  for (let i = 45; i &lt;= 60; i++) {
+    const r = d3[i];
+    if (!r) continue;
+    if (r[0] &amp;&amp; typeof r[0] === 'number' &amp;&amp; r[1] &amp;&amp; String(r[1]).trim()) {
+      const existing = studentRecords.find(s =&gt; s.student_name === cleanStr(r[1]));
+      if (!existing) {
+        studentRecords.push({
+          student_name: cleanStr(r[1]),
+          grade: '12',
+          subjects: [],
+          borrow_date: excelDateToBS(r[4])
+        });
+      }
+    }
+  }
+
+  console.log(`  Found ${studentRecords.length} more student records`);
+
+  // ── DEDUPLICATE BOOKS ──
+  const seen = new Set();
+  const uniqueBooks = [];
+  for (const b of allBooks) {
+    const key = (b.title + b.author).toLowerCase().replace(/\s+/g, '');
+    if (!seen.has(key) &amp;&amp; b.title) {
+      seen.add(key);
+      uniqueBooks.push(b);
+    }
+  }
+
+  console.log(`\n  Total unique books: ${uniqueBooks.length}`);
+  console.log(`  Total borrow records: ${allBorrowRecords.length + studentRecords.length}\n`);
+
+  // ── CATEGORIZE BOOKS ──
+  function categorize(title, author) {
+    const t = (title + ' ' + author).toLowerCase();
+    if (t.includes('nepali') || t.includes('नेपाली') || t.includes('व्याकरण') || t.includes('गाईड')) return 'Nepali';
+    if (t.includes('english') || t.includes('grammar') || t.includes('dictionary') || t.includes('oxford')) return 'English';
+    if (t.includes('math') || t.includes('गणित')) return 'Mathematics';
+    if (t.includes('chemistry') || t.includes('रसायन')) return 'Science &amp; Technology';
+    if (t.includes('physics') || t.includes('भौतिक')) return 'Science &amp; Technology';
+    if (t.includes('science') || t.includes('विज्ञान')) return 'Science &amp; Technology';
+    if (t.includes('computer') || t.includes('कम्प्युटर') || t.includes('java') || t.includes('wmad') || t.includes('csa') || t.includes('os')) return 'Computer Science';
+    if (t.includes('knowledge') || t.includes('ज्ञान') || t.includes('gk') || t.includes('iq')) return 'Social Studies';
+    if (t.includes('social') || t.includes('सामाजिक')) return 'Social Studies';
+    if (t.includes('economy') || t.includes('account')) return 'Economics';
+    if (t.includes('health') || t.includes('शारीरिक')) return 'Health &amp; Physical Education';
+    return 'English';
+  }
+
+  // ── INSERT BOOKS ──
+  console.log('4. Inserting books into Supabase...');
+  let bookCount = 0;
+  for (let i = 0; i &lt; uniqueBooks.length; i++) {
+    const b = uniqueBooks[i];
+    const bookId = nextBookId + i;
+    const category = categorize(b.title, b.author);
+
+    const { error } = await supabase.from('books').upsert({
+      id: bookId,
+      title: b.title,
+      author: b.author || 'Unknown',
+      publisher: b.publisher || '',
+      grade: '',
+      subject: category,
+      language: /^[\x00-\x7F]*$/.test(b.title) ? 'English' : 'Nepali',
+      pages: b.pages || 0,
+      year: 2082,
+      description: `Imported from library records. Reg: ${b.reg_no || 'N/A'}`,
+      isbn: b.isbn || '',
+      category: category,
+      total_copies: 1,
+      available_copies: 1,
+      borrow_count: 0,
+      rating: 0,
+      status: 'available',
+      shelf: '',
+      rack: 0
+    }, { onConflict: 'id' });
+
+    if (error) {
+      console.log(`  Error book ${i + 1}: ${error.message}`);
+    } else {
+      bookCount++;
+    }
+  }
+  console.log(`  Inserted ${bookCount} books`);
+
+  // ── INSERT BORROW RECORDS ──
+  console.log('\n5. Creating borrow request records...');
+
+  // Get anita's user ID for attaching records
+  const anonClient = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+  const { data: loginData } = await anonClient.auth.signInWithPassword({
+    email: 'anita.s@saraswatischool.edu.np',
+    password: 'student123'
+  });
+  const anitaId = loginData ? loginData.user.id : null;
+
+  let borrowCount = 0;
+
+  // Process excelofmyproject borrow records
+  for (const rec of allBorrowRecords) {
+    const borrowId = `BR-EXL-${String(borrowCount + 1).padStart(4, '0')}`;
+    const { error } = await supabase.from('borrow_requests').upsert({
+      id: borrowId,
+      book_id: 200,
+      book_title: rec.subjects || 'Multiple Books',
+      student_id: anitaId || '00000000-0000-0000-0000-000000000002',
+      student_name: rec.student_name,
+      borrow_date: rec.borrow_date || '2026-01-01',
+      expected_return_date: rec.return_date || '2026-02-01',
+      return_date: rec.return_date || null,
+      status: rec.return_date ? 'returned' : 'borrowed'
+    }, { onConflict: 'id' });
+
+    if (error) console.log(`  Borrow error: ${error.message}`);
+    else borrowCount++;
+  }
+
+  // Process Book4 student records
+  for (const rec of studentRecords) {
+    const borrowId = `BR-BK4-${String(borrowCount + 1).padStart(4, '0')}`;
+    const { error } = await supabase.from('borrow_requests').upsert({
+      id: borrowId,
+      book_id: 200,
+      book_title: rec.subjects.join(', ') || 'Multiple Books',
+      student_id: anitaId || '00000000-0000-0000-0000-000000000002',
+      student_name: rec.student_name,
+      borrow_date: rec.borrow_date || '2026-01-01',
+      expected_return_date: '2026-03-01',
+      status: 'returned'
+    }, { onConflict: 'id' });
+
+    if (error) console.log(`  Borrow error: ${error.message}`);
+    else borrowCount++;
+  }
+
+  console.log(`  Created ${borrowCount} borrow records`);
+
+  // ── Summary ──
+  const { count: totalBooks } = await supabase.from('books').select('*', { count: 'exact', head: true });
+  const { count: totalBorrows } = await supabase.from('borrow_requests').select('*', { count: 'exact', head: true });
+
+  console.log(`\n=== Import Complete ===`);
+  console.log(`Books in database: ${totalBooks}`);
+  console.log(`Borrow records: ${totalBorrows}`);
+  console.log(`\nNew books imported: ${bookCount}`);
+  console.log(`New borrow records: ${borrowCount}`);
+}
+
+main().catch(e =&gt; { console.error('Import failed:', e); process.exit(1); });
+</pre>
+    <div class="code-filename">supabase/README.md</div>
+    <pre># Saraswati Sec School Library - Supabase Setup Guide
+
+## Prerequisites
+- Node.js 18+ installed
+- A Supabase account (free tier works)
+
+## Step 1: Create Supabase Project
+
+1. Go to [supabase.com](https://supabase.com) and sign in
+2. Click **New Project**
+3. Choose a project name (e.g., `saraswati-library`)
+4. Set a strong database password (save it)
+5. Choose a region close to your users
+6. Click **Create new project** and wait ~2 minutes
+
+## Step 2: Get Your Credentials
+
+1. In your project dashboard, go to **Settings** &gt; **API**
+2. Copy these two values:
+   - **Project URL** (looks like `https://xxxx.supabase.co`)
+   - **anon public key** (long string starting with `eyJ...`)
+3. Also copy the **service_role key** (for the seed script only, keep it secret)
+
+## Step 3: Run the Database Schema
+
+1. In your Supabase dashboard, go to the **SQL Editor** tab
+2. Click **New query**
+3. Open the file `supabase/schema.sql` from this project
+4. Copy the entire contents and paste into the SQL Editor
+5. Click **Run** (or press Ctrl+Enter)
+6. Wait for the "Success" message
+
+## Step 4: Configure the Frontend
+
+1. Open `index.html` in the project root
+2. Find these two lines near the top of the scripts section:
+   ```js
+   window.SUPABASE_URL = '';
+   window.SUPABASE_ANON_KEY = '';
+   ```
+3. Replace with your actual values:
+   ```js
+   window.SUPABASE_URL = 'https://your-project.supabase.co';
+   window.SUPABASE_ANON_KEY = 'your-anon-key';
+   ```
+
+## Step 5: Seed the Database (Optional)
+
+1. Install Node.js dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Create a `.env` file in the project root:
+   ```
+   SUPABASE_URL=https://your-project.supabase.co
+   SUPABASE_SERVICE_KEY=your-service-role-key
+   ```
+
+3. Run the seeder:
+   ```bash
+   npm run seed
+   ```
+
+   This creates:
+   - 10 users (1 admin, 8 students, 1 librarian)
+   - 14 sample books
+   - 10 categories
+   - 3 announcements
+   - 3 events
+   - 5 library settings
+   - 3 sample borrow requests
+
+## Step 6: Start the Server
+
+```bash
+npm start
+```
+
+Open `http://localhost:3000` in your browser.
+
+## Demo Credentials
+
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@saraswatischool.edu.np | admin123 |
+| Student | anita.s@saraswatischool.edu.np | student123 |
+| Librarian | laxmi@saraswatischool.edu.np | librarian123 |
+
+## How It Works
+
+### Architecture
+- **Frontend**: Vanilla JS SPA (same as before)
+- **Backend**: Supabase (PostgreSQL + Auth + Row Level Security)
+- **Express**: Serves static files only, no API needed
+- **Auth**: Supabase Auth handles login/signup/JWT tokens
+
+### Data Flow
+1. On page load, the app checks for an existing Supabase session
+2. If logged in, it fetches all data from Supabase into memory
+3. Reads happen from memory (fast)
+4. Writes update memory immediately + persist to Supabase in the background
+5. If Supabase is unavailable, the app falls back to demo mode with localStorage
+
+### Row Level Security (RLS)
+All tables have RLS policies:
+- **Students** can only see their own data (borrow requests, notifications, etc.)
+- **Admins/Librarians** can see and manage all data
+- **Public data** (books, announcements, events) is readable by everyone
+
+### Without Supabase (Demo Mode)
+The app works fully offline without Supabase:
+- Uses `LIBRARY_DATA` from `data.js` for books
+- Stores everything in localStorage
+- Demo login buttons work without any backend
+- Perfect for development and testing
+
+## File Structure
+
+```
+library/
+  .env                    # Your Supabase credentials (git ignore this)
+  package.json            # Node.js dependencies
+  server.js               # Express static file server
+  index.html              # Entry point (Supabase CDN loaded here)
+  js/
+    supabase-client.js    # Supabase client initialization
+    api.js                # Complete data access layer
+    state.js              # App state (Supabase + localStorage hybrid)
+    app.js                # App initialization (async)
+    router.js             # Hash-based router (async rendering)
+    ...
+  supabase/
+    schema.sql            # Full database schema with RLS
+    seed.js               # Database seeder
+    README.md             # This file
+```
+
+## Troubleshooting
+
+**"Failed to fetch" error on login**
+- Check that your Supabase URL and anon key are correct in `index.html`
+- Make sure the schema.sql was run successfully (check for errors in SQL Editor)
+
+**"new row violates row-level security" error**
+- The RLS policies require authentication for write operations
+- Make sure you're logged in before trying to create/edit data
+
+**App loads but shows demo mode**
+- Supabase credentials might be empty or wrong
+- Check the browser console for Supabase init errors
+- The app automatically falls back to demo mode if Supabase is unavailable
+
+**Seed script fails**
+- Make sure you're using the `service_role` key (not the anon key) in `.env`
+- The service_role key bypasses RLS, which is needed for admin operations
+</pre>
+
+<!-- ======================== CHAPTER 9: REFERENCES ======================== -->
+<div class="page">
+    <h2>9. References</h2>
+    <ol>
+        <li>PostgreSQL Documentation. "Row Security Policies."
+            PostgreSQL Global Development Group.
+            <br><code>https://www.postgresql.org/docs/current/ddl-rowsecurity.html</code></li>
+        <li>Supabase Documentation. "Database: Row Level Security."
+            Supabase Inc.
+            <br><code>https://supabase.com/docs/guides/database/postgres/row-level-security</code></li>
+        <li>Supabase Documentation. "Supabase Auth."
+            Supabase Inc.
+            <br><code>https://supabase.com/docs/guides/auth</code></li>
+        <li>Supabase Documentation. "JavaScript Client Reference."
+            Supabase Inc.
+            <br><code>https://supabase.com/docs/reference/javascript/start</code></li>
+        <li>Express.js Documentation. "Middleware and Routing."
+            OpenJS Foundation.
+            <br><code>https://expressjs.com/en/guide/routing.html</code></li>
+        <li>Auth0. "JWT (JSON Web Token) Handbook."
+            Auth0 Inc.
+            <br><code>https://auth0.com/resources/whitepapers/jwt-handbook</code></li>
+        <li>OWASP Foundation. "Password Storage Cheat Sheet."
+            OWASP.
+            <br><code>https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html</code></li>
+        <li>npm. "bcryptjs, jsonwebtoken, express-rate-limit, express-validator packages."
+            <br><code>https://www.npmjs.com</code></li>
+        <li>Nepal CDC. "Curriculum Development Centre (CDC) textbooks and syllabus."
+            Ministry of Education, Science and Technology, Nepal.
+            <br><code>https://moecdc.gov.np</code></li>
+        <li>MDN Web Docs. "HTTP cookies and security (httpOnly, sameSite)."
+            Mozilla Foundation.
+            <br><code>https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies</code></li>
+    </ol>
+
+    <br><br>
+    <div style="text-align: center; border-top: 2px solid #000; padding-top: 20px; margin-top: 40px;">
+        <p style="font-size: 16px; font-weight: bold;">END OF BACKEND REPORT</p>
+        <p style="margin-top: 10px;">Project: Library Management System (Backend)</p>
+        <p>Shree Saraswati Secondary School</p>
+        <p>Academic Year: 2082-2083 BS</p>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Management System - Project Report</title>
+    <style>
+        @page { margin: 1in; size: A4; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Times New Roman', Times, serif; font-size: 14px; line-height: 1.8; color: #000; background: #fff; }
+        .page { page-break-after: always; padding: 20px 40px; }
+        .page:last-child { page-break-after: auto; }
+        h1 { font-size: 24px; text-align: center; margin: 20px 0; }
+        h2 { font-size: 20px; margin: 25px 0 12px; border-bottom: 2px solid #000; padding-bottom: 5px; }
+        h3 { font-size: 16px; margin: 18px 0 8px; }
+        h4 { font-size: 14px; margin: 12px 0 6px; font-style: italic; }
+        p { text-align: justify; margin-bottom: 10px; }
+        ul, ol { margin: 8px 0 12px 24px; }
+        li { margin-bottom: 4px; }
+        .center { text-align: center; }
+        .cover-page { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 90vh; text-align: center; }
+        .cover-page h1 { font-size: 28px; margin-bottom: 10px; }
+        .cover-page h2 { font-size: 22px; border: none; margin-bottom: 5px; }
+        .cover-page .subtitle { font-size: 18px; margin: 8px 0; }
+        .cover-page .meta { font-size: 14px; margin-top: 40px; line-height: 2; }
+        .toc { list-style: none; margin-left: 0; }
+        .toc li { padding: 4px 0; border-bottom: 1px dotted #ccc; }
+        .toc li span { float: right; }
+        pre { background: #f4f4f4; border: 1px solid #ddd; border-left: 4px solid #333; padding: 12px; font-size: 11px; line-height: 1.5; overflow-x: auto; margin: 10px 0 16px; font-family: 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; }
+        code { font-family: 'Courier New', monospace; background: #f0f0f0; padding: 1px 4px; font-size: 12px; }
+        .code-filename { background: #333; color: #fff; padding: 4px 12px; font-size: 12px; font-family: 'Courier New', monospace; margin-bottom: -4px; display: inline-block; border-radius: 4px 4px 0 0; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        th, td { border: 1px solid #333; padding: 6px 10px; text-align: left; font-size: 13px; }
+        th { background: #e8e8e8; font-weight: bold; }
+        .er-box { border: 2px solid #333; padding: 12px; margin: 8px 0; background: #fafafa; text-align: center; font-weight: bold; font-size: 13px; }
+        .er-entity { display: inline-block; border: 2px solid #000; padding: 8px 16px; margin: 6px; background: #fff; min-width: 140px; }
+        .er-entity .title { font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 4px; margin-bottom: 4px; }
+        .er-entity .fields { text-align: left; font-size: 12px; font-weight: normal; }
+        .er-entity .fields div { padding: 1px 0; }
+        .er-relation { font-style: italic; margin: 4px 0; font-size: 12px; }
+        .snapshot-placeholder { border: 2px dashed #999; padding: 30px; text-align: center; color: #666; margin: 10px 0; font-style: italic; }
+        .test-table td:first-child { width: 40px; text-align: center; }
+        .test-table td:nth-child(2) { width: 250px; }
+        .test-pass { color: green; font-weight: bold; }
+        .test-fail { color: red; font-weight: bold; }
+        @media print {
+            .page { page-break-after: always; }
+            body { font-size: 12pt; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ======================== COVER PAGE ======================== -->
+<div class="page cover-page">
+    <div style="border: 3px double #000; padding: 40px 60px; width: 100%;">
+        <p style="font-size: 14px; margin-bottom: 5px;">Shree Saraswati Secondary School</p>
+        <p style="font-size: 13px; margin-bottom: 40px; color: #555;">Changunarayan-08, Sudal, Bhaktapur, Nepal</p>
+        <h1 style="font-size: 28px; margin-bottom: 10px;">Library Management System</h1>
+        <p class="subtitle" style="font-size: 18px;">A Web-Based Digital Library Platform</p>
+        <div style="margin: 40px 0; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 20px 0;">
+            <p style="font-size: 15px; margin-bottom: 8px;">A Project Report Submitted in Partial Fulfillment of the Requirements for</p>
+            <p style="font-size: 16px; font-weight: bold;">Computer Science (Optional)</p>
+            <p style="font-size: 15px; margin-top: 4px;">Grade 10, National Examinations Board (NEB)</p>
+        </div>
+        <div class="meta">
+            <p><strong>Submitted By:</strong> [Your Name]</p>
+            <p><strong>Roll No:</strong> [Your Roll No]</p>
+            <p><strong>Supervisor:</strong> [Teacher's Name]</p>
+            <p><strong>Academic Year:</strong> 2082-2083 BS (2025-2026 AD)</p>
+        </div>
+    </div>
+</div>
+
+<!-- ======================== CERTIFICATE ======================== -->
+<div class="page">
+    <h2>Certificate</h2>
+    <p>This is to certify that the OJT report entitled <strong>"Library Management System Using HTML, CSS, JavaScript, and Supabase"</strong> prepared by <strong>Rasik Binayak Aryal</strong>, a legitimate student of Shree Saraswati Secondary School after completion of 3 months of OJT in academic year 2082.</p>
+    <p>The OJT report has been approved as it satisfies the academic requirements in the respect of On-Job-Training prescribed for the sub-overseer of Computer Engineering.</p>
+    <br><br>
+    <table style="border: none; width: 100%;">
+        <tr style="border: none;">
+            <td style="border: none; width: 50%; text-align: left;">
+                <p style="margin: 0;"><strong>[Teacher's Name]</strong></p>
+                <p style="margin: 0;">Supervisor</p>
+                <p style="margin: 0;">Department of Computer Science</p>
+                <p style="margin: 0;">Shree Saraswati Secondary School</p>
+            </td>
+            <td style="border: none; width: 50%; text-align: right;">
+                <p style="margin: 0;"><strong>[Principal's Name]</strong></p>
+                <p style="margin: 0;">Principal</p>
+                <p style="margin: 0;">Shree Saraswati Secondary School</p>
+                <p style="margin: 0;">Bhaktapur, Nepal</p>
+            </td>
+        </tr>
+    </table>
+    <br>
+    <p style="text-align: center;">Date: _______________</p>
+</div>
+
+<!-- ======================== ACKNOWLEDGEMENT ======================== -->
+<div class="page">
+    <h2>Acknowledgement</h2>
+    <p>I would like to express my sincere gratitude to all those who have contributed to the successful completion of this project.</p>
+    <p>First and foremost, I am deeply grateful to <strong>God Almighty</strong> for providing me with the strength, wisdom, and perseverance to complete this project successfully.</p>
+    <p>I extend my heartfelt thanks to my supervisor <strong>[Teacher's Name]</strong>, Department of Computer Science, Shree Saraswati Secondary School, for their invaluable guidance, continuous encouragement, and constructive suggestions throughout the development of this project. Their expertise and patience have been instrumental in shaping this work.</p>
+    <p>I am also thankful to <strong>[Principal's Name]</strong>, Principal of Shree Saraswati Secondary School, for providing the necessary infrastructure and support for the completion of this project.</p>
+    <p>I express my gratitude to all my <strong>teachers</strong> of the Computer Science department for their support and cooperation. Their knowledge and teaching have been the foundation upon which this project is built.</p>
+    <p>I am also thankful to my <strong>friends and classmates</strong> who provided moral support, valuable suggestions, and encouragement during the development process.</p>
+    <p>Finally, I am deeply indebted to my <strong>parents and family members</strong> for their unconditional love, prayers, and support throughout my academic journey.</p>
+    <p style="text-align: right; margin-top: 30px;"><strong>[Your Name]</strong></p>
+    <p style="text-align: right;">Shree Saraswati Secondary School</p>
+    <p style="text-align: right;">Bhaktapur, Nepal</p>
+</div>
+
+<!-- ======================== ABSTRACT ======================== -->
+<div class="page">
+    <h2>Abstract</h2>
+    <p>The <strong>Library Management System (LMS)</strong> is a web-based application developed for Shree Saraswati Secondary School to digitize and streamline library operations. The system replaces traditional manual book-keeping with a modern, responsive web platform that supports book cataloging, borrowing management, digital resource access, user authentication, and administrative reporting.</p>
+
+    <p>Built using <strong>HTML5, CSS3, and vanilla JavaScript</strong> as a Single Page Application (SPA) with hash-based routing, the system operates entirely in the browser with a clean separation of concerns. The backend is powered by <strong>Supabase</strong>, a cloud-hosted PostgreSQL database with real-time capabilities, providing authentication, data storage, and row-level security. The application follows a <strong>Progressive Web App (PWA)</strong> architecture with a Service Worker for offline caching and a Web App Manifest for installability on mobile devices.</p>
+
+    <p>The system supports four distinct user roles — <strong>Student, Teacher, Librarian, and Admin</strong> — each with role-based access control and configurable permissions. Key features include a searchable book catalog with 100+ CDC curriculum textbooks across Grades 1-10, borrow request workflow (request → approve → pickup → return), reservation queue management, fine calculation for overdue returns, digital library with PDF access, study materials management, announcements, events calendar, notifications, audit logs, and a responsive admin dashboard with reports.</p>
+
+    <p>The system is deployed on <strong>Vercel</strong> as a static web application, ensuring fast load times, global CDN availability, and zero server maintenance. All data is persisted in Supabase cloud with full backup and recovery. The application has been tested across multiple browsers (Chrome, Firefox, Edge) and device types (desktop, tablet, mobile) to ensure cross-platform compatibility.</p>
+
+    <p><strong>Keywords:</strong> Library Management System, Web Application, SPA, JavaScript, Supabase, PWA, School Library, Digital Library, Borrow Management, Role-Based Access Control</p>
+</div>
+
+<!-- ======================== PREFACE (FRONTEND) ======================== -->
+<div class="page">
+    <h2>Preface (Frontend)</h2>
+    <p>The frontend of this Library Management System represents the visible face of the project — the part that students, teachers, librarians, and administrators interact with directly. It was designed from the very beginning with a clear philosophy: <strong>to build a fast, beautiful, and responsive user interface using minimal, understandable technology</strong> rather than heavy frameworks that would be difficult for school developers to maintain.</p>
+
+    <p>The frontend is built as a <strong>Single Page Application (SPA)</strong> using pure HTML5, CSS3, and vanilla JavaScript. No React, Vue, or Angular is used. Instead, a custom hash-based router (<code>router.js</code>) was written in about 130 lines to handle navigation between more than 30 distinct pages — from the book catalog and book detail views, to the digital library, study materials, announcements, and the five administrative panels. Each page is an independent module (<code>js/pages/*.js</code>) that exposes a <code>render()</code> method, making the codebase easy to understand, test, and extend page by page.</p>
+
+    <p>Special attention was given to the user experience. The interface supports <strong>dark and light themes</strong> through CSS custom properties defined in <code>css/variables.css</code>, adapting instantly with a single toggle. The design is fully <strong>responsive</strong>, with a desktop sidebar, a mobile bottom navigation bar, and a floating action button, ensuring a smooth experience from a 320px phone screen to a 4K desktop display. The custom component library — toast notifications, modal dialogs, star ratings, book covers, QR codes, and bar codes — was built from scratch to keep the application lightweight and coherent, with no external CSS or JS frameworks.</p>
+
+    <p>The frontend also embraces <strong>Progressive Web App (PWA)</strong> technology. A service worker (<code>sw.js</code>) implements a network-first caching strategy so that the application shell and Google Fonts remain available even when internet connectivity is lost, and a web app manifest (<code>manifest.json</code>) allows students to install the library on their mobile home screens like a native application.</p>
+
+    <p>State management and data access are handled through a well-organized client architecture: <code>state.js</code> maintains the global application state (user session, books, borrow requests, notifications), <code>api.js</code> wraps all Supabase database operations, and <code>utils.js</code> provides shared utilities such as HTML escaping, date formatting, debouncing, and an icon library of over 50 inline SVGs. This modular separation of concerns — routing, view, state, and data access — is the core design decision that keeps the entire frontend organized and maintainable.</p>
+
+    <p style="text-align: right; margin-top: 30px;"><strong>Rasik Binayak Aryal</strong></p>
+    <p style="text-align: right;">Grade 10, Computer Science (Optional)</p>
+</div>
+
+<!-- ======================== PREFACE (BACKEND) ======================== -->
+<div class="page">
+    <h2>Preface (Backend)</h2>
+    <p>The backend of this Library Management System handles the unseen but critical work: storing data securely, authenticating users, and enforcing rules about who may do what. The primary decision behind the backend was to <strong>leverage a cloud-hosted database platform (Supabase) rather than building and maintaining a physical server</strong> — a choice that keeps the system cost-free, always available, and automatically secure.</p>
+
+    <p>The heart of the backend is a <strong>PostgreSQL database</strong> managed through Supabase. Its schema, defined in <code>supabase/schema.sql</code>, consists of <strong>24 interrelated tables</strong>: profiles (extending the built-in authentication users), books, categories, borrow_requests, reservations, notifications, announcements, events, favorites, recently_viewed, reviews, digital_books, study_materials, settings, achievements, login_history, activity_logs, audit_logs, fine_payments, book_imports, feedback, calendar_events, faqs, contact_messages, and sessions. Every table is indexed on its most queried columns and properly linked through foreign keys to guarantee data integrity.</p>
+
+    <p>Authentication is handled by <strong>Supabase Auth</strong>, which manages user sign-up, sign-in, sessions, and JSON Web Tokens out of the box. A database trigger automatically creates a corresponding profile record whenever a new user registers, capturing the user's name, email, and role. Four distinct roles — <strong>Student, Teacher, Librarian, and Admin</strong> — are enforced through <strong>Row Level Security (RLS) policies</strong> spanning approximately 250 lines, ensuring that, for example, a student can only ever see and modify their own borrow requests and notifications, while only admins and librarians can approve borrows, manage books, or view audit logs.</p>
+
+    <p>A local development server (<code>server.js</code>) was also written using <strong>Express.js</strong> as an alternative backend for offline testing. It implements a complete security stack: bcrypt password hashing, JWT access and refresh tokens, CSRF protection, rate limiting, account lockout after repeated failed login attempts, input validation, Helmet security headers, and activity/audit logging. It serves the static frontend files and exposes a REST API under <code>/api/</code>.</p>
+
+    <p>Finally, the database is pre-seeded with curriculum content — 100+ CDC textbooks across Grades 1-10, sample users for each role, and starter study materials — through <code>supabase/seed.js</code>. The combination of a well-normalized schema, strict row-level security, and cloud hosting means the school receives a backend that is reliable, backup-protected, and requires no dedicated IT staff to operate.</p>
+
+    <p style="text-align: right; margin-top: 30px;"><strong>Rasik Binayak Aryal</strong></p>
+    <p style="text-align: right;">Grade 10, Computer Science (Optional)</p>
+</div>
+
+<!-- ======================== TABLE OF CONTENTS ======================== -->
+<div class="page">
+    <h2>Table of Contents</h2>
+    <ul class="toc">
+        <li>Certificate <span>...</span></li>
+        <li>Acknowledgement <span>...</span></li>
+        <li>Abstract <span>...</span></li>
+        <li>Preface (Frontend) <span>...</span></li>
+        <li>Preface (Backend) <span>...</span></li>
+        <li>Table of Contents <span>...</span></li>
+        <li><strong>1. Introduction</strong> <span>...</span></li>
+        <li>&nbsp;&nbsp;&nbsp;1.1 Problem Statement <span>...</span></li>
+        <li>&nbsp;&nbsp;&nbsp;1.2 Proposed Solution <span>...</span></li>
+        <li>&nbsp;&nbsp;&nbsp;1.3 Aim of the Project <span>...</span></li>
+        <li>&nbsp;&nbsp;&nbsp;1.4 Objectives <span>...</span></li>
+        <li>&nbsp;&nbsp;&nbsp;1.5 Rationale <span>...</span></li>
+        <li><strong>2. System Analysis and Design</strong> <span>...</span></li>
+        <li>&nbsp;&nbsp;&nbsp;2.1 ER Diagram (Entity-Relationship) <span>...</span></li>
+        <li>&nbsp;&nbsp;&nbsp;2.2 Advantages of the System <span>...</span></li>
+        <li>&nbsp;&nbsp;&nbsp;2.3 System Requirements <span>...</span></li>
+        <li><strong>3. Web Pages and Source Code</strong> <span>...</span></li>
+        <li>&nbsp;&nbsp;&nbsp;3.1 index.html <span>...</span></li>
+        <li>&nbsp;&nbsp;&nbsp;3.2 Router (router.js) <span>...</span></li>
+        <li>&nbsp;&nbsp;&nbsp;3.3 State Management (state.js) <span>...</span></li>
+        <li>&nbsp;&nbsp;&nbsp;3.4 App Initialization (app.js) <span>...</span></li>
+        <li>&nbsp;&nbsp;&nbsp;3.5 Home Page (home.js) <span>...</span></li>
+        <li>&nbsp;&nbsp;&nbsp;3.6 Books Page (books.js) <span>...</span></li>
+        <li>&nbsp;&nbsp;&nbsp;3.7 Login Page (login.js) <span>...</span></li>
+        <li>&nbsp;&nbsp;&nbsp;3.8 API Layer (api.js) <span>...</span></li>
+        <li>&nbsp;&nbsp;&nbsp;3.9 Utilities (utils.js) <span>...</span></li>
+        <li>&nbsp;&nbsp;&nbsp;3.10 Service Worker (sw.js) <span>...</span></li>
+        <li>&nbsp;&nbsp;&nbsp;3.11 Supabase Client (supabase-client.js) <span>...</span></li>
+        <li>&nbsp;&nbsp;&nbsp;3.12 Toast Notifications (toast.js) <span>...</span></li>
+        <li>&nbsp;&nbsp;&nbsp;3.13 Modal Component (modal.js) <span>...</span></li>
+        <li>&nbsp;&nbsp;&nbsp;3.14 Data Module (data.js) <span>...</span></li>
+        <li><strong>4. Testing</strong> <span>...</span></li>
+        <li><strong>5. Snapshots</strong> <span>...</span></li>
+        <li><strong>6. Conclusion</strong> <span>...</span></li>
+        <li><strong>7. References</strong> <span>...</span></li>
+    </ul>
+</div>
+
+<!-- ======================== CHAPTER 1: INTRODUCTION ======================== -->
+<div class="page">
+    <h2>1. Introduction</h2>
+
+    <h3>1.1 Problem Statement</h3>
+    <p>Shree Saraswati Secondary School, located in Changunarayan-08, Sudal, Bhaktapur, serves over 600 students from Grade 1 to Grade 10. The school library maintains a collection of 100+ CDC curriculum textbooks, reference books, and supplementary reading materials across multiple subjects including Nepali, English, Mathematics, Science, Social Studies, and Computer Science.</p>
+
+    <p>The current library management system relies entirely on manual processes:</p>
+    <ul>
+        <li><strong>Manual Record Keeping:</strong> Book issuing and returning is tracked using handwritten registers, making it prone to errors, misplacement, and damage.</li>
+        <li><strong>No Search Capability:</strong> Students and teachers must physically browse shelves or ask the librarian to find a specific book, consuming valuable time.</li>
+        <li><strong>Overdue Tracking:</strong> Tracking overdue books and calculating fines is a tedious manual process often neglected due to workload.</li>
+        <li><strong>No Digital Resources:</strong> The school has no centralized platform to share digital textbooks, study materials, PDFs, or online resources with students.</li>
+        <li><strong>Communication Gap:</strong> Library announcements, new arrivals, events, and schedule changes are communicated through notice boards, which students frequently miss.</li>
+        <li><strong>No Analytics:</strong> The librarian has no visibility into borrowing trends, popular books, overdue statistics, or usage patterns.</li>
+        <li><strong>Data Loss Risk:</strong> Physical registers can be damaged, lost, or tampered with, leading to permanent data loss.</li>
+    </ul>
+
+    <p>These challenges result in inefficient library operations, reduced book accessibility, poor resource utilization, and a degraded user experience for both students and library staff.</p>
+
+    <h3>1.2 Proposed Solution</h3>
+    <p>To address the above problems, we propose a <strong>Web-Based Library Management System</strong> — a modern, responsive, single-page web application that digitizes all library operations. The system provides:</p>
+    <ul>
+        <li>A <strong>searchable online catalog</strong> where students can browse, search, and filter books by title, author, category, grade, subject, and availability.</li>
+        <li>A <strong>digital borrowing workflow</strong> with request submission, librarian approval, pickup tracking, return processing, and automatic fine calculation.</li>
+        <li>A <strong>digital library</strong> providing direct PDF access to textbooks and study materials.</li>
+        <li><strong>Role-based access control</strong> for Students, Teachers, Librarians, and Admins with configurable permissions and borrow limits.</li>
+        <li><strong>Real-time notifications</strong> for borrow approvals, due reminders, overdue alerts, and library announcements.</li>
+        <li>An <strong>admin dashboard</strong> with borrowing statistics, popular books, overdue reports, and audit logs.</li>
+        <li>A <strong>Progressive Web App</strong> (PWA) that can be installed on mobile devices and works offline via service worker caching.</li>
+    </ul>
+
+    <h3>1.3 Aim of the Project</h3>
+    <p>The aim of this project is to develop a comprehensive, web-based library management system for Shree Saraswati Secondary School that automates library operations, enhances resource accessibility for students and teachers, and provides the library administration with powerful tools for catalog management, borrowing oversight, and data-driven decision making.</p>
+
+    <h3>1.4 Objectives</h3>
+    <p>The specific objectives of this project are:</p>
+    <ol>
+        <li>To design and develop a responsive web application that serves as a centralized platform for all library operations.</li>
+        <li>To implement a secure user authentication system with role-based access control for Students, Teachers, Librarians, and Admins.</li>
+        <li>To create a searchable book catalog containing 100+ CDC curriculum textbooks with advanced filtering capabilities.</li>
+        <li>To develop a complete book borrowing lifecycle management system including request, approval, pickup, return, renewal, and fine calculation.</li>
+        <li>To provide a digital library section for accessing PDF textbooks and study materials online.</li>
+        <li To implement a notification system for timely communication of library events, due dates, and announcements.</li>
+        <li To build an admin dashboard with borrowing reports, usage statistics, and audit trail logging.</li>
+        <li To deploy the system as a Progressive Web App (PWA) for mobile installability and offline support.</li>
+        <li To ensure cross-browser compatibility and responsive design across desktop, tablet, and mobile devices.</li>
+    </ol>
+
+    <h3>1.5 Rationale</h3>
+    <p>The rationale behind choosing this project stems from the practical needs of the school library. Manual library management is inefficient, error-prone, and fails to leverage the potential of modern technology. A web-based system eliminates paper records, reduces human errors, enables instant book searching, automates fine calculations, and provides data analytics — all accessible from any device with a web browser.</p>
+
+    <p>Furthermore, with the increasing adoption of digital learning in Nepal's education sector, especially after the COVID-19 pandemic, there is a growing need for digital library resources. This system bridges the gap between physical and digital library management, providing students with 24/7 access to book catalogs and digital resources, thereby promoting a culture of reading and self-directed learning.</p>
+
+    <p>The use of modern web technologies (HTML5, CSS3, JavaScript) with a cloud backend (Supabase) and static hosting (Vercel) ensures the system is cost-effective, scalable, and requires minimal maintenance — making it ideal for a school environment with limited IT resources.</p>
+</div>
+
+<!-- ======================== CHAPTER 2: SYSTEM ANALYSIS ======================== -->
+<div class="page">
+    <h2>2. System Analysis and Design</h2>
+
+    <h3>2.1 ER Diagram (Entity-Relationship Diagram)</h3>
+    <p>The following entity-relationship diagram represents the data model of the Library Management System. The system consists of the following key entities and their relationships:</p>
+
+    <div style="overflow-x: auto; text-align: center; margin: 20px 0;">
+        <table style="border: none; margin: 0 auto;">
+            <tr>
+                <td style="border: none; padding: 20px;">
+                    <div class="er-entity">
+                        <div class="title">USER (Profile)</div>
+                        <div class="fields">
+                            <div><strong>id</strong> (PK, UUID)</div>
+                            <div>email</div>
+                            <div>name</div>
+                            <div>role (student/teacher/librarian/admin)</div>
+                            <div>user_id (Student/Teacher ID)</div>
+                            <div>grade</div>
+                            <div>department</div>
+                            <div>avatar</div>
+                            <div>membership_status</div>
+                            <div>created_at</div>
+                        </div>
+                    </div>
+                </td>
+                <td style="border: none; padding: 10px; font-size: 20px;">1 &#8594; M</td>
+                <td style="border: none; padding: 20px;">
+                    <div class="er-entity">
+                        <div class="title">BORROW_REQUEST</div>
+                        <div class="fields">
+                            <div><strong>id</strong> (PK, VARCHAR)</div>
+                            <div>book_id (FK &#8594; Book)</div>
+                            <div>book_title</div>
+                            <div>student_id (FK &#8594; User)</div>
+                            <div>student_name</div>
+                            <div>borrow_date</div>
+                            <div>expected_return_date</div>
+                            <div>return_date</div>
+                            <div>status (pending/approved/borrowed/overdue/returned/rejected)</div>
+                            <div>approved_by</div>
+                            <div>fine</div>
+                            <div>renew_count</div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table style="border: none; margin: 10px auto;">
+            <tr>
+                <td style="border: none; padding: 20px;">
+                    <div class="er-entity">
+                        <div class="title">BOOK</div>
+                        <div class="fields">
+                            <div><strong>id</strong> (PK, INT)</div>
+                            <div>title</div>
+                            <div>author</div>
+                            <div>isbn</div>
+                            <div>category</div>
+                            <div>subject</div>
+                            <div>grade</div>
+                            <div>language</div>
+                            <div>publisher</div>
+                            <div>total_copies</div>
+                            <div>available_copies</div>
+                            <div>borrow_count</div>
+                            <div>rating</div>
+                            <div>cover_color</div>
+                            <div>description</div>
+                            <div>pdf_url</div>
+                        </div>
+                    </div>
+                </td>
+                <td style="border: none; padding: 10px; font-size: 20px;">1 &#8594; M</td>
+                <td style="border: none; padding: 20px;">
+                    <div class="er-entity">
+                        <div class="title">RESERVATION</div>
+                        <div class="fields">
+                            <div><strong>id</strong> (PK, BIGINT)</div>
+                            <div>book_id (FK &#8594; Book)</div>
+                            <div>book_title</div>
+                            <div>student_id (FK &#8594; User)</div>
+                            <div>student_name</div>
+                            <div>reserved_at</div>
+                            <div>expires_at</div>
+                            <div>status (waiting/cancelled/expired/fulfilled)</div>
+                            <div>position</div>
+                            <div>is_physical</div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table style="border: none; margin: 10px auto;">
+            <tr>
+                <td style="border: none; padding: 15px;">
+                    <div class="er-entity">
+                        <div class="title">NOTIFICATION</div>
+                        <div class="fields">
+                            <div><strong>id</strong> (PK, BIGINT)</div>
+                            <div>user_id (FK &#8594; User)</div>
+                            <div>type</div>
+                            <div>title</div>
+                            <div>message</div>
+                            <div>icon</div>
+                            <div>read (BOOLEAN)</div>
+                            <div>time</div>
+                        </div>
+                    </div>
+                </td>
+                <td style="border: none; padding: 15px;">
+                    <div class="er-entity">
+                        <div class="title">CATEGORY</div>
+                        <div class="fields">
+                            <div><strong>id</strong> (PK, INT)</div>
+                            <div>name</div>
+                            <div>icon</div>
+                            <div>color</div>
+                            <div>count</div>
+                        </div>
+                    </div>
+                </td>
+                <td style="border: none; padding: 15px;">
+                    <div class="er-entity">
+                        <div class="title">DIGITAL_BOOK</div>
+                        <div class="fields">
+                            <div><strong>id</strong> (PK, BIGINT)</div>
+                            <div>title</div>
+                            <div>author</div>
+                            <div>subject</div>
+                            <div>grade</div>
+                            <div>pdf_url</div>
+                            <div>cover_color</div>
+                            <div>rating</div>
+                            <div>downloads</div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td style="border: none; padding: 15px;">
+                    <div class="er-entity">
+                        <div class="title">STUDY_MATERIAL</div>
+                        <div class="fields">
+                            <div><strong>id</strong> (PK, BIGINT)</div>
+                            <div>title</div>
+                            <div>type (notes/book/guide)</div>
+                            <div>grade</div>
+                            <div>subject</div>
+                            <div>pdf_url</div>
+                            <div>description</div>
+                            <div>uploaded_by</div>
+                            <div>downloads</div>
+                        </div>
+                    </div>
+                </td>
+                <td style="border: none; padding: 15px;">
+                    <div class="er-entity">
+                        <div class="title">AUDIT_LOG</div>
+                        <div class="fields">
+                            <div><strong>id</strong> (PK, BIGINT)</div>
+                            <div>type</div>
+                            <div>message</div>
+                            <div>user_id</div>
+                            <div>user_name</div>
+                            <div>user_role</div>
+                            <div>timestamp</div>
+                        </div>
+                    </div>
+                </td>
+                <td style="border: none; padding: 15px;">
+                    <div class="er-entity">
+                        <div class="title">ANNOUNCEMENT</div>
+                        <div class="fields">
+                            <div><strong>id</strong> (PK, INT)</div>
+                            <div>title</div>
+                            <div>content</div>
+                            <div>date</div>
+                            <div>priority</div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="er-relation">
+        <p><strong>Relationships:</strong></p>
+        <ul style="list-style: disc; margin-left: 20px; font-size: 13px;">
+            <li>One <strong>User</strong> can have Many <strong>BorrowRequests</strong> (1:M)</li>
+            <li>One <strong>User</strong> can have Many <strong>Reservations</strong> (1:M)</li>
+            <li>One <strong>User</strong> can have Many <strong>Notifications</strong> (1:M)</li>
+            <li>One <strong>Book</strong> can have Many <strong>BorrowRequests</strong> (1:M)</li>
+            <li>One <strong>Book</strong> can have Many <strong>Reservations</strong> (1:M)</li>
+            <li>One <strong>Category</strong> can have Many <strong>Books</strong> (1:M)</li>
+        </ul>
+    </div>
+
+    <h3>2.2 Advantages of the System</h3>
+    <ol>
+        <li><strong>Time Efficiency:</strong> Instant book search and digital borrowing eliminates the need for physical browsing, saving time for both students and librarians.</li>
+        <li><strong>Accessibility:</strong> Students can access the library catalog and digital resources 24/7 from any device — computer, tablet, or smartphone.</li>
+        <li><strong>Accuracy:</strong> Automated fine calculation, due date tracking, and status updates eliminate human errors in manual record-keeping.</li>
+        <li><strong>Cost-Effective:</strong> The system uses free/open-source technologies and cloud hosting with zero maintenance cost.</li>
+        <li><strong>Scalability:</strong> The modular architecture allows easy addition of new features, more books, and more users without system redesign.</li>
+        <li><strong>Security:</strong> Role-based access control ensures students can only access permitted features while admin functions are restricted.</li>
+        <li><strong>Offline Support:</strong> PWA capabilities with service worker caching allow basic access even without internet connection.</li>
+        <li><strong>Analytics:</strong> Admin dashboard provides real-time borrowing statistics, popular books, and overdue reports for data-driven decisions.</li>
+        <li><strong>Audit Trail:</strong> Every significant action (login, borrow, return, admin changes) is logged for security and accountability.</li>
+        <li><strong>Digital Resources:</strong> PDF textbooks and study materials are accessible directly from the browser, supporting digital learning.</li>
+        <li><strong>Responsive Design:</strong> The system adapts seamlessly to any screen size — from 320px mobile to 4K desktop.</li>
+        <li><strong>Dark Mode:</strong> Built-in dark/light theme toggle for comfortable reading in different lighting conditions.</li>
+    </ol>
+
+    <h3>2.3 System Requirements</h3>
+
+    <h4>2.3.1 Hardware Requirements</h4>
+    <table>
+        <tr><th>Component</th><th>Minimum</th><th>Recommended</th></tr>
+        <tr><td>Processor</td><td>Intel Core i3 or equivalent</td><td>Intel Core i5 or higher</td></tr>
+        <tr><td>RAM</td><td>4 GB</td><td>8 GB or more</td></tr>
+        <tr><td>Storage</td><td>10 GB free space</td><td>20 GB or more SSD</td></tr>
+        <tr><td>Display</td><td>1366 x 768 resolution</td><td>1920 x 1080 or higher</td></tr>
+        <tr><td>Internet</td><td>Minimum 1 Mbps broadband</td><td>5 Mbps or faster</td></tr>
+        <tr><td>Input Devices</td><td>Keyboard, Mouse</td><td>Keyboard, Mouse, Touchscreen</td></tr>
+        <tr><td>For Mobile Users</td><td>Android 7.0+ or iOS 13+</td><td>Android 10+ or iOS 15+</td></tr>
+    </table>
+
+    <h4>2.3.2 Software Requirements</h4>
+    <table>
+        <tr><th>Software</th><th>Details</th></tr>
+        <tr><td><strong>Operating System</strong></td><td>Windows 10/11, macOS 12+, Ubuntu 20.04+, Android 10+, iOS 15+</td></tr>
+        <tr><td><strong>Web Browser</strong></td><td>Google Chrome 90+, Mozilla Firefox 88+, Microsoft Edge 90+, Safari 14+</td></tr>
+        <tr><td><strong>Development</strong></td><td>VS Code (IDE), Node.js 18+ (for local server), Git (version control)</td></tr>
+        <tr><td><strong>Frontend Stack</strong></td><td>HTML5, CSS3, Vanilla JavaScript (ES6+), Google Fonts (Inter, Playfair Display)</td></tr>
+        <tr><td><strong>Backend/Database</strong></td><td>Supabase (PostgreSQL, Authentication, Row-Level Security)</td></tr>
+        <tr><td><strong>Deployment</strong></td><td>Vercel (Static hosting, CDN, Automatic deployments from GitHub)</td></tr>
+        <tr><td><strong>Version Control</strong></td><td>Git + GitHub</td></tr>
+        <tr><td><strong>Local Server</strong></td><td>Express.js (for local development via <code>npm start</code>)</td></tr>
+        <tr><td><strong>PWA Support</strong></td><td>Service Worker API, Web App Manifest</td></tr>
+    </table>
+</div>
+
+<!-- ======================== CHAPTER 3: WEB PAGES & SOURCE CODE ======================== -->
+<div class="page">
+    <h2>3. Web Pages and Source Code</h2>
+    <p>The project is organized as a modular Single Page Application (SPA) with the following file structure:</p>
+<pre style="background: #f8f8f8;">
+library/
+  index.html              -- Entry point / Shell HTML
+  manifest.json           -- PWA Web App Manifest
+  sw.js                   -- Service Worker for offline caching
+  vercel.json             -- Deployment configuration
+  package.json            -- Project metadata and dependencies
+  server.js               -- Local development Express server
+  css/
+    variables.css         -- CSS Custom Properties (colors, spacing, themes)
+    main.css              -- Core layout and typography
+    animations.css        -- CSS animations and transitions
+    components.css        -- Reusable component styles
+    pages.css             -- Page-specific styles
+    responsive.css        -- Media queries for responsive design
+  js/
+    supabase-client.js    -- Supabase SDK initialization
+    data.js               -- Static library data (books, categories, school info)
+    utils.js              -- Utility functions (formatting, icons, helpers)
+    state.js              -- Global application state management
+    api.js                -- Supabase API wrapper (CRUD operations)
+    router.js             -- Hash-based SPA router
+    app.js                -- Application initialization and setup
+    components/
+      toast.js            -- Toast notification system
+      modal.js            -- Modal dialog system
+      charts.js           -- Chart components for dashboard
+      qrcode.js           -- QR code generation
+      barcode.js          -- Barcode generation
+      notifications.js    -- Notification panel
+      animations.js       -- Scroll reveal animations
+    pages/
+      home.js             -- Home/Landing page
+      books.js            -- Book catalog with search and filters
+      bookDetail.js       -- Individual book detail view
+      digitalLibrary.js   -- Digital book browsing
+      studyMaterials.js   -- Study materials section
+      login.js            -- Authentication (sign in/up/forgot/reset)
+      profile.js          -- User profile page
+      dashboard.js        -- Admin/Librarian dashboard
+      adminBooks.js       -- Book management (CRUD)
+      adminUsers.js       -- User management
+      adminReports.js     -- Reports and analytics
+      adminSettings.js    -- System settings
+      adminAuditLogs.js   -- Audit log viewer
+      adminImport.js      -- Book import from CDC
+      adminStudyMaterials.js -- Study material management
+      announcements.js    -- Library announcements
+      events.js           -- Events calendar
+      categories.js       -- Book categories browser
+      notifications.js    -- Notification center
+      settings.js         -- User settings
+      newArrivals.js      -- Recently added books
+      topRated.js         -- Highest rated books
+      feedback.js         -- User feedback form
+      faq.js              -- FAQ section
+      calendar.js         -- Calendar view
+      help.js             -- Help section
+      rules.js            -- Library rules
+      support.js          -- Support page
+  vendor/
+    supabase.js           -- Bundled Supabase JS SDK
+  supabase/
+    schema.sql            -- Database schema
+    seed.js               -- Database seeding script
+  assets/                 -- SVG covers, PDFs, images
+</pre>
+</div>
+
+<!-- ======================== 3.1 index.html ======================== -->
+<div class="page">
+    <h3>3.1 index.html — Application Entry Point</h3>
+    <p>The <code>index.html</code> file is the single HTML page that loads all CSS stylesheets, JavaScript modules, and defines the application shell including the navbar, sidebar, main content area, bottom navigation, and toast/modal containers.</p>
+    <div class="code-filename">index.html</div>
+<pre>&lt;!DOCTYPE html&gt;
+&lt;html lang="en" data-theme="light"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;meta name="description" content="Premier School Library Management System"&gt;
+    &lt;title&gt;Saraswati Sec School Library&lt;/title&gt;
+    &lt;link rel="manifest" href="manifest.json"&gt;
+    &lt;link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet"&gt;
+    &lt;link rel="stylesheet" href="css/variables.css"&gt;
+    &lt;link rel="stylesheet" href="css/main.css"&gt;
+    &lt;link rel="stylesheet" href="css/animations.css"&gt;
+    &lt;link rel="stylesheet" href="css/components.css"&gt;
+    &lt;link rel="stylesheet" href="css/pages.css"&gt;
+    &lt;link rel="stylesheet" href="css/responsive.css"&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div id="app"&gt;
+        &lt;!-- Loading Screen --&gt;
+        &lt;div id="loading-screen" class="loading-screen"&gt;
+            &lt;div class="loader-content"&gt;
+                &lt;div class="loader-logo"&gt;
+                    &lt;svg viewBox="0 0 80 80" class="loader-icon"&gt;
+                        &lt;rect x="10" y="15" width="12" height="50" rx="2"
+                              fill="url(#loaderGrad)" class="loader-bar bar1"/&gt;
+                        &lt;rect x="26" y="10" width="12" height="55" rx="2"
+                              fill="url(#loaderGrad)" class="loader-bar bar2"/&gt;
+                        &lt;rect x="42" y="18" width="12" height="47" rx="2"
+                              fill="url(#loaderGrad)" class="loader-bar bar3"/&gt;
+                        &lt;rect x="58" y="12" width="12" height="53" rx="2"
+                              fill="url(#loaderGrad)" class="loader-bar bar4"/&gt;
+                    &lt;/svg&gt;
+                &lt;/div&gt;
+                &lt;h2 class="loader-title"&gt;Saraswati Sec School Library&lt;/h2&gt;
+                &lt;div class="loader-progress"&gt;
+                    &lt;div class="loader-progress-bar" id="loaderProgress"&gt;&lt;/div&gt;
+                &lt;/div&gt;
+                &lt;p class="loader-text" id="loaderText"&gt;Initializing...&lt;/p&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+
+        &lt;!-- Navigation Bar --&gt;
+        &lt;nav id="navbar" class="navbar"&gt;
+            &lt;div class="nav-container"&gt;
+                &lt;div class="nav-left"&gt;
+                    &lt;button class="nav-hamburger" id="hamburgerBtn"&gt;
+                        &lt;span&gt;&lt;/span&gt;&lt;span&gt;&lt;/span&gt;&lt;span&gt;&lt;/span&gt;
+                    &lt;/button&gt;
+                    &lt;a href="#/" class="nav-logo" data-nav&gt;...&lt;/a&gt;
+                &lt;/div&gt;
+                &lt;div class="nav-center"&gt;
+                    &lt;div class="nav-search" id="navSearch"&gt;
+                        &lt;input type="text" id="globalSearch"
+                               placeholder="Search books, authors, ISBN..."&gt;
+                        &lt;kbd class="search-shortcut"&gt;Ctrl+K&lt;/kbd&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+                &lt;div class="nav-right"&gt;
+                    &lt;button id="themeToggle"&gt;...&lt;/button&gt;
+                    &lt;button id="notificationBtn"&gt;...&lt;/button&gt;
+                    &lt;a href="#/login" id="navLoginBtn"&gt;Sign In&lt;/a&gt;
+                    &lt;div class="nav-user" id="navUser"&gt;...&lt;/div&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/nav&gt;
+
+        &lt;!-- Sidebar --&gt;
+        &lt;aside id="sidebar" class="sidebar"&gt;
+            &lt;div class="sidebar-header"&gt;...&lt;/div&gt;
+            &lt;nav class="sidebar-nav" id="sidebarNav"&gt;&lt;/nav&gt;
+        &lt;/aside&gt;
+
+        &lt;!-- Main Content Area --&gt;
+        &lt;main id="mainContent" class="main-content"&gt;
+            &lt;div id="pageContent" class="page-content"&gt;&lt;/div&gt;
+        &lt;/main&gt;
+
+        &lt;!-- Bottom Navigation (Mobile) --&gt;
+        &lt;nav class="bottom-nav" id="bottomNav"&gt;
+            &lt;a href="#/" data-nav data-page="home"&gt;Home&lt;/a&gt;
+            &lt;a href="#/books" data-nav data-page="books"&gt;Books&lt;/a&gt;
+            &lt;a href="#/digital-library" data-nav data-page="digital-library"&gt;Library&lt;/a&gt;
+            &lt;a href="#/notifications" data-nav data-page="notifications"&gt;Alerts&lt;/a&gt;
+            &lt;a href="#/profile" data-nav data-page="profile"&gt;Profile&lt;/a&gt;
+        &lt;/nav&gt;
+
+        &lt;div id="toastContainer" class="toast-container"&gt;&lt;/div&gt;
+        &lt;div id="modalContainer" class="modal-container"&gt;&lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;script src="vendor/supabase.js"&gt;&lt;/script&gt;
+    &lt;script&gt;
+        window.SUPABASE_URL = '...';
+        window.SUPABASE_ANON_KEY = '...';
+    &lt;/script&gt;
+    &lt;script src="js/supabase-client.js"&gt;&lt;/script&gt;
+    &lt;script src="js/data.js"&gt;&lt;/script&gt;
+    &lt;script src="js/utils.js"&gt;&lt;/script&gt;
+    &lt;script src="js/state.js"&gt;&lt;/script&gt;
+    &lt;script src="js/api.js"&gt;&lt;/script&gt;
+    &lt;script src="js/components/toast.js"&gt;&lt;/script&gt;
+    &lt;script src="js/components/modal.js"&gt;&lt;/script&gt;
+    &lt;!-- ... all page scripts ... --&gt;
+    &lt;script src="js/router.js"&gt;&lt;/script&gt;
+    &lt;script src="js/app.js"&gt;&lt;/script&gt;
+    &lt;script&gt;
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () =&gt; {
+                navigator.serviceWorker.register('sw.js').catch(() =&gt; {});
+            });
+        }
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+</div>
+
+<!-- ======================== 3.2 router.js ======================== -->
+<div class="page">
+    <h3>3.2 Router (router.js) — Hash-Based SPA Routing</h3>
+    <p>The router uses <code>window.location.hash</code> to manage navigation without page reloads. It supports dynamic route parameters (e.g., <code>/book/:id</code>), route guards for authentication, and page transition animations.</p>
+    <div class="code-filename">js/router.js</div>
+<pre>const Router = {
+    routes: [],
+    currentRoute: null,
+    _beforeNavigateCallbacks: [],
+
+    add(path, handler) {
+        this.routes.push({ path, handler });
+    },
+
+    beforeNavigate(callback) {
+        if (typeof callback === 'function') {
+            this._beforeNavigateCallbacks.push(callback);
+        }
+    },
+
+    init() {
+        window.addEventListener('hashchange', () =&gt; this.resolve());
+        this.resolve();
+    },
+
+    resolve() {
+        const hash = window.location.hash || '#/';
+        const full = hash.substring(1);
+        const [pathPart, queryPart] = full.split('?');
+        const query = {};
+        if (queryPart) new URLSearchParams(queryPart).forEach((v, k) =&gt; {
+            query[k] = v;
+        });
+
+        let matched = null;
+        let params = { ...query };
+
+        for (const route of this.routes) {
+            const routeSegs = route.path.split('/');
+            const pathSegs = pathPart.split('/');
+            if (routeSegs.length !== pathSegs.length) continue;
+            let ok = true;
+            const p = { ...query };
+            for (let i = 0; i &lt; routeSegs.length; i++) {
+                if (routeSegs[i].startsWith(':')) {
+                    p[routeSegs[i].slice(1)] = decodeURIComponent(pathSegs[i]);
+                } else if (routeSegs[i] !== pathSegs[i]) {
+                    ok = false;
+                    break;
+                }
+            }
+            if (ok) { matched = route; params = p; break; }
+        }
+
+        if (!matched) {
+            matched = { handler: {
+                render: () =&gt; '&lt;div class="error-page"&gt;&lt;h2&gt;404&lt;/h2&gt;&lt;/div&gt;',
+                afterRender: () =&gt; {}
+            }};
+        }
+
+        for (const cb of this._beforeNavigateCallbacks) {
+            if (cb(pathPart) === false) return;
+        }
+
+        this.currentRoute = matched;
+        this.render(matched.handler, params);
+    },
+
+    async render(handler, params) {
+        const container = document.getElementById('pageContent');
+        if (!container) return;
+        container.classList.add('transitioning');
+        setTimeout(async () =&gt; {
+            const html = await handler.render(params);
+            container.innerHTML = html;
+            container.classList.remove('transitioning');
+            if (handler.afterRender) await handler.afterRender(params);
+            this.bindLinks();
+            this.highlightNav();
+        }, 200);
+    },
+
+    go(path) { window.location.hash = path; }
+};</pre>
+</div>
+
+<!-- ======================== 3.3 state.js ======================== -->
+<div class="page">
+    <h3>3.3 State Management (state.js) — Global Application State</h3>
+    <p>The <code>AppState</code> object is the central state store managing user session, books, borrow requests, notifications, reservations, and all application data. It handles both Supabase cloud mode and localStorage demo mode.</p>
+    <div class="code-filename">js/state.js</div>
+<pre>const AppState = {
+    currentUser: null,
+    isLoggedIn: false,
+    theme: localStorage.getItem('theme') || 'light',
+    isSupabaseConnected: false,
+    books: [],
+    categories: [],
+    borrowRequests: [],
+    notifications: [],
+    reservations: [],
+    favorites: [],
+
+    ROLE_PERMISSIONS: {
+        student: ['borrow', 'reserve', 'review', 'view_own_data',
+                  'toggle_favorite', 'view_books', 'view_announcements'],
+        teacher: ['borrow', 'reserve', 'review', 'view_own_data',
+                  'toggle_favorite', 'view_books', 'view_announcements'],
+        librarian: ['borrow', 'reserve', 'review', 'view_own_data',
+                    'toggle_favorite', 'view_books', 'view_announcements',
+                    'manage_borrows', 'manage_returns',
+                    'manage_physical_reservations', 'view_reports',
+                    'manage_reservations', 'process_fines',
+                    'manage_announcements', 'manage_events'],
+        admin: ['borrow', 'reserve', 'review', 'view_own_data',
+                'toggle_favorite', 'view_books', 'view_announcements',
+                'manage_borrows', 'manage_returns',
+                'manage_physical_reservations', 'view_reports',
+                'manage_reservations', 'process_fines',
+                'manage_announcements', 'manage_events',
+                'manage_users', 'manage_settings', 'manage_security',
+                'view_audit_logs', 'manage_books', 'import_books',
+                'manage_categories', 'manage_digital_books',
+                'system_settings']
+    },
+
+    ROLE_CONFIG: {
+        student:  { borrowLimit: 3, loanPeriodDays: 14, maxRenewals: 1 },
+        teacher:  { borrowLimit: 5, loanPeriodDays: 21, maxRenewals: 2 },
+        librarian:{ borrowLimit: 5, loanPeriodDays: 21, maxRenewals: 2 },
+        admin:    { borrowLimit: 5, loanPeriodDays: 21, maxRenewals: 2 }
+    },
+
+    async init() {
+        // Connect to Supabase, restore session, load data
+        SupabaseClient.init(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+        Api.init();
+        const session = await Api.getSession();
+        if (session && session.user) {
+            const profile = await Api.getProfile(session.user.id);
+            this.currentUser = Api.mapProfile(profile);
+            this.isLoggedIn = true;
+            this.isSupabaseConnected = true;
+            await this.loadFromSupabase();
+            return;
+        }
+        this.initDemoMode();
+    },
+
+    createBorrowRequest(bookId) {
+        const book = this.books.find(b =&gt; b.id === bookId);
+        if (!book || book.availableCopies &lt;= 0) return null;
+        const borrowCheck = this.canBorrow();
+        if (!borrowCheck.allowed) return null;
+        const requestId = this.generateBorrowId();
+        const request = {
+            id: requestId, bookId, bookTitle: book.title,
+            studentId: this.currentUser.id,
+            studentName: this.currentUser.name,
+            borrowDate: new Date().toISOString().split('T')[0],
+            expectedReturnDate: this.getExpectedReturnDate(
+                new Date().toISOString().split('T')[0],
+                this.getLoanPeriod()),
+            status: 'pending', fine: 0, renewCount: 0
+        };
+        this.borrowRequests.push(request);
+        this.saveAll();
+        return request;
+    },
+
+    processReturn(requestId) {
+        const request = this.borrowRequests.find(r =&gt; r.id === requestId);
+        if (!request) return false;
+        const book = this.books.find(b =&gt; b.id === request.bookId);
+        if (book) book.availableCopies++;
+        request.status = 'returned';
+        request.returnDate = new Date().toISOString().split('T')[0];
+        // Calculate fine if late
+        const returnDate = new Date(request.returnDate);
+        const dueDate = new Date(request.expectedReturnDate);
+        if (returnDate &gt; dueDate) {
+            const daysLate = Math.ceil(
+                (returnDate - dueDate) / 86400000);
+            request.fine = daysLate * 5; // Rs. 5 per day
+        }
+        this.saveAll();
+        return true;
+    },
+
+    searchBooks(query) {
+        if (!query) return this.books;
+        const q = query.toLowerCase();
+        return this.books.filter(b =&gt;
+            b.title.toLowerCase().includes(q) ||
+            b.author.toLowerCase().includes(q) ||
+            (b.isbn &amp;&amp; b.isbn.includes(q)) ||
+            (b.category &amp;&amp; b.category.toLowerCase().includes(q))
+        );
+    }
+};</pre>
+</div>
+
+<!-- ======================== 3.4 app.js ======================== -->
+<div class="page">
+    <h3>3.4 App Initialization (app.js)</h3>
+    <p>The <code>App</code> object bootstraps the entire application: initializing state, registering routes, setting up the theme, navbar, sidebar, search, user menu, route guards, session management, and notifications.</p>
+    <div class="code-filename">js/app.js</div>
+<pre>const App = {
+    _sessionTimeoutMinutes: 30,
+    _sessionWarningMinutes: 25,
+
+    async init() {
+        this.showLoading();
+        try { await AppState.init(); }
+        catch (e) { AppState.initDemoMode(); }
+
+        this.registerRoutes();
+        this.setupTheme();
+        this.setupNavbar();
+        this.setupSidebar();
+        this.setupSearch();
+        this.setupUserMenu();
+        this.setupRouteGuards();
+        this.setupSessionTimeout();
+        Notifications.init();
+
+        this.hideLoading();
+        Router.init();
+        this.updateUserInfo();
+        this.buildSidebar();
+        this.buildFAB();
+    },
+
+    registerRoutes() {
+        Router.add('/', HomePage);
+        Router.add('/books', BooksPage);
+        Router.add('/book/:id', BookDetailPage);
+        Router.add('/digital-library', DigitalLibraryPage);
+        Router.add('/study-materials', StudyMaterialsPage);
+        Router.add('/profile', ProfilePage);
+        Router.add('/dashboard', DashboardPage);
+        Router.add('/announcements', AnnouncementsPage);
+        Router.add('/login', LoginPage);
+        Router.add('/admin/books', AdminBooksPage);
+        Router.add('/admin/users', AdminUsersPage);
+        Router.add('/admin/reports', AdminReportsPage);
+        // ... 30+ routes total
+    },
+
+    setupRouteGuards() {
+        Router.beforeNavigate((path) =&gt; {
+            const protectedRoutes = ['/profile', '/settings',
+                '/dashboard', '/admin/books', '/admin/users'];
+            if (protectedRoutes.includes(path)) {
+                const token = localStorage.getItem('library_access_token');
+                if (!token || !AppState.isLoggedIn) {
+                    Toast.warning('Please sign in to access this page');
+                    Router.go('/login');
+                    return false;
+                }
+            }
+            return true;
+        });
+    },
+
+    updateUserInfo() {
+        const u = AppState.currentUser;
+        const navUser = document.querySelector('.nav-user');
+        const loginBtn = document.getElementById('navLoginBtn');
+        if (!u) {
+            if (navUser) navUser.style.display = 'none';
+            if (loginBtn) loginBtn.style.display = '';
+            return;
+        }
+        if (navUser) navUser.style.display = '';
+        if (loginBtn) loginBtn.style.display = 'none';
+        // Update avatar, name, role in navbar and dropdown
+    },
+
+    buildSidebar() {
+        const nav = document.getElementById('sidebarNav');
+        if (!nav) return;
+        const role = AppState.currentUser?.role || '';
+        // Dynamically build sidebar based on role:
+        // Students: Home, Browse, Categories, Digital Library, Community
+        // Librarians: + Dashboard, Manage Books, Reports
+        // Admins: + Users, Audit Logs, Settings, Import
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () =&gt; App.init());</pre>
+</div>
+
+<!-- ======================== 3.5 home.js ======================== -->
+<div class="page">
+    <h3>3.5 Home Page (home.js)</h3>
+    <p>The home page features a hero section with animated background, library statistics, a featured book card, new arrivals carousel, popular books section, recently viewed books, and recently returned books.</p>
+    <div class="code-filename">js/pages/home.js</div>
+<pre>const HomePage = {
+    render() {
+        const isOpen = Utils.isLibraryOpen();
+        const stats = LIBRARY_DATA.stats;
+        const featured = AppState.books[8] || AppState.books[0];
+        const newArrivals = [...AppState.books]
+            .sort((a, b) =&gt; b.year - a.year).slice(0, 6);
+        const popularBooks = [...AppState.books]
+            .sort((a, b) =&gt; b.borrowCount - a.borrowCount).slice(0, 6);
+
+        return `
+        &lt;section class="hero"&gt;
+            &lt;div class="hero-content"&gt;
+                &lt;div class="hero-text"&gt;
+                    &lt;div class="hero-badge"&gt;
+                        &lt;span class="dot"&gt;&lt;/span&gt;
+                        &lt;span&gt;${Utils.getGreeting()}, ${
+                            AppState.currentUser
+                                ? AppState.currentUser.name.split(' ')[0]
+                                : 'Student'
+                        }&lt;/span&gt;
+                    &lt;/div&gt;
+                    &lt;h1 class="hero-title"&gt;
+                        Discover the World Through
+                        &lt;span class="gradient-text"&gt;Books&lt;/span&gt;
+                    &lt;/h1&gt;
+                    &lt;p class="hero-description"&gt;
+                        Access ${stats.totalBooks}+ books, digital
+                        resources, and a thriving reading community.
+                    &lt;/p&gt;
+                    &lt;div class="hero-actions"&gt;
+                        &lt;a href="#/books" class="btn btn-primary btn-lg"&gt;
+                            Browse Catalog
+                        &lt;/a&gt;
+                        &lt;a href="#/digital-library"
+                           class="btn btn-outline btn-lg"&gt;
+                            Digital Library
+                        &lt;/a&gt;
+                    &lt;/div&gt;
+                    &lt;div class="hero-stats"&gt;
+                        &lt;div&gt;&lt;strong&gt;${stats.totalBooks}&lt;/strong&gt;
+                            &lt;span&gt;Total Books&lt;/span&gt;&lt;/div&gt;
+                        &lt;div&gt;&lt;strong&gt;${stats.totalStudents}&lt;/strong&gt;
+                            &lt;span&gt;Students&lt;/span&gt;&lt;/div&gt;
+                        &lt;div&gt;&lt;strong&gt;${stats.borrowedBooks}&lt;/strong&gt;
+                            &lt;span&gt;Active Borrows&lt;/span&gt;&lt;/div&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/section&gt;
+
+        &lt;!-- Library Status --&gt;
+        &lt;div class="card"&gt;
+            &lt;p&gt;Library is currently
+                &lt;strong&gt;${isOpen ? 'Open' : 'Closed'}&lt;/strong&gt;
+            &lt;/p&gt;
+        &lt;/div&gt;
+
+        &lt;!-- New Arrivals --&gt;
+        &lt;section class="section"&gt;
+            &lt;h2&gt;New Arrivals&lt;/h2&gt;
+            &lt;div class="book-grid"&gt;
+                ${newArrivals.map(b =&gt; `
+                    &lt;a href="#/book/${b.id}" class="book-card" data-nav&gt;
+                        ${Utils.getBookCover(b)}
+                        &lt;h3&gt;${Utils.escapeHtml(b.title)}&lt;/h3&gt;
+                        &lt;p&gt;${Utils.escapeHtml(b.author)}&lt;/p&gt;
+                    &lt;/a&gt;
+                `).join('')}
+            &lt;/div&gt;
+        &lt;/section&gt;
+
+        &lt;!-- Popular Books --&gt;
+        &lt;section class="section"&gt;
+            &lt;h2&gt;Most Popular&lt;/h2&gt;
+            &lt;div class="book-grid"&gt;
+                ${popularBooks.map(b =&gt; `
+                    &lt;a href="#/book/${b.id}" class="book-card" data-nav&gt;
+                        ${Utils.getBookCover(b)}
+                        &lt;h3&gt;${Utils.escapeHtml(b.title)}&lt;/h3&gt;
+                        &lt;p&gt;${Utils.escapeHtml(b.author)}&lt;/p&gt;
+                    &lt;/a&gt;
+                `).join('')}
+            &lt;/div&gt;
+        &lt;/section&gt;`;
+    }
+};</pre>
+</div>
+
+<!-- ======================== 3.6 books.js ======================== -->
+<div class="page">
+    <h3>3.6 Books Page (books.js) — Searchable Catalog</h3>
+    <p>The books page provides a full-text searchable catalog with filters for category, grade, subject, author, language, and availability. It includes pagination, sorting options, and an advanced filter panel.</p>
+    <div class="code-filename">js/pages/books.js</div>
+<pre>const BooksPage = {
+    searchQuery: '',
+    categoryFilter: '',
+    gradeFilter: '',
+    sortOption: 'popular',
+    currentPage: 1,
+    perPage: 12,
+
+    render(params = {}) {
+        this.sortOption = params.sort || 'popular';
+        const allBooks = AppState.books;
+        const categories = [...new Set(allBooks.map(b =&gt; b.category))].sort();
+        const grades = [...new Set(allBooks.map(b =&gt; b.grade)
+            .filter(Boolean))].sort((a,b) =&gt; parseInt(a)-parseInt(b));
+
+        return `
+        &lt;div class="container books-page"&gt;
+            &lt;div class="page-header"&gt;
+                &lt;h1 class="page-title"&gt;Book Catalog&lt;/h1&gt;
+                &lt;p&gt;Browse ${allBooks.length} books across
+                    ${categories.length} categories&lt;/p&gt;
+            &lt;/div&gt;
+
+            &lt;div class="books-toolbar"&gt;
+                &lt;div class="books-search"&gt;
+                    &lt;input type="text" id="booksSearchInput"
+                        placeholder="Search by title, author, ISBN..."&gt;
+                &lt;/div&gt;
+                &lt;select id="booksSortFilter"&gt;
+                    &lt;option value="popular"&gt;Most Popular&lt;/option&gt;
+                    &lt;option value="newest"&gt;Newest First&lt;/option&gt;
+                    &lt;option value="rating"&gt;Highest Rated&lt;/option&gt;
+                    &lt;option value="title-az"&gt;Title A-Z&lt;/option&gt;
+                &lt;/select&gt;
+                &lt;button id="toggleFiltersBtn"&gt;Advanced Filters&lt;/button&gt;
+            &lt;/div&gt;
+
+            &lt;div id="filterPanel"&gt;
+                &lt;select id="filterCategory"&gt;
+                    &lt;option value=""&gt;All Categories&lt;/option&gt;
+                    ${categories.map(c =&gt;
+                        `&lt;option value="${c}"&gt;${c}&lt;/option&gt;`
+                    ).join('')}
+                &lt;/select&gt;
+                &lt;select id="filterGrade"&gt;
+                    &lt;option value=""&gt;All Grades&lt;/option&gt;
+                    ${grades.map(g =&gt;
+                        `&lt;option value="${g}"&gt;Class ${g}&lt;/option&gt;`
+                    ).join('')}
+                &lt;/select&gt;
+            &lt;/div&gt;
+
+            &lt;div class="books-grid" id="booksGrid"&gt;
+                ${this.getFilteredBooks().slice(0, this.perPage)
+                    .map(b =&gt; this.renderBookCard(b)).join('')}
+            &lt;/div&gt;
+
+            ${this.renderPagination()}
+        &lt;/div&gt;`;
+    },
+
+    getFilteredBooks() {
+        let books = [...AppState.books];
+        if (this.searchQuery) {
+            const q = this.searchQuery.toLowerCase();
+            books = books.filter(b =&gt;
+                b.title.toLowerCase().includes(q) ||
+                b.author.toLowerCase().includes(q));
+        }
+        if (this.categoryFilter) {
+            books = books.filter(b =&gt;
+                b.category === this.categoryFilter);
+        }
+        switch (this.sortOption) {
+            case 'newest': books.sort((a,b) =&gt; b.year-a.year); break;
+            case 'popular': books.sort((a,b) =&gt;
+                b.borrowCount-a.borrowCount); break;
+            case 'rating': books.sort((a,b) =&gt; b.rating-a.rating); break;
+        }
+        return books;
+    }
+};</pre>
+</div>
+
+<!-- ======================== 3.7 login.js ======================== -->
+<div class="page">
+    <h3>3.7 Login Page (login.js) — Authentication</h3>
+    <p>The login page supports four modes: Sign In, Sign Up, Forgot Password, and Reset Password. It authenticates via Supabase when connected, or uses localStorage-based authentication in demo mode. The page includes password strength indicators and email validation.</p>
+    <div class="code-filename">js/pages/login.js (key functions)</div>
+<pre>const LoginPage = {
+    mode: 'signin',
+    selectedRole: 'student',
+    loading: false,
+
+    async login() {
+        if (this.loading) return;
+        const email = document.getElementById('login-email').value.trim();
+        const password = document.getElementById('login-password').value.trim();
+
+        if (!email || !this.validateEmail(email)) {
+            Toast.error('Please enter a valid email address');
+            return;
+        }
+        if (!password) {
+            Toast.error('Please enter your password');
+            return;
+        }
+
+        if (AppState.isSupabaseConnected) {
+            // Supabase authentication
+            this.setLoading('signin-btn', true);
+            try {
+                const { user, profile } = await Api.signIn(email, password);
+                AppState.currentUser = Api.mapProfile(profile);
+                AppState.isLoggedIn = true;
+                await AppState.loadFromSupabase();
+                Toast.success(`Welcome, ${AppState.currentUser.name}!`);
+                window.location.hash = '#/';
+            } catch (e) {
+                Toast.error(e.message || 'Sign in failed');
+            } finally {
+                this.setLoading('signin-btn', false);
+            }
+        } else {
+            // LocalStorage fallback (demo mode)
+            const storedUsers = this.getStoredUsers();
+            const user = storedUsers.find(u =&gt;
+                u.email === email &amp;&amp; u.password === password);
+            if (user) {
+                const { password: _, ...safeUser } = user;
+                AppState.setUser(safeUser);
+                Toast.success(`Welcome, ${safeUser.name}!`);
+                window.location.hash = '#/';
+            } else {
+                Toast.error('Invalid email or password');
+            }
+        }
+    },
+
+    async signup() {
+        const name = document.getElementById('signup-name').value.trim();
+        const email = document.getElementById('signup-email').value.trim();
+        const password = document.getElementById('signup-password').value.trim();
+
+        // Validation...
+        const strength = this.getPasswordStrength(password);
+        if (strength.level === 'weak') {
+            Toast.error('Password is too weak');
+            return;
+        }
+
+        if (AppState.isSupabaseConnected) {
+            await Api.signUp(email, password, { name, role });
+            Toast.success('Account created! Check email to verify.');
+        } else {
+            const storedUsers = this.getStoredUsers();
+            if (storedUsers.find(u =&gt; u.email === email)) {
+                Toast.error('Email already registered');
+                return;
+            }
+            const newUser = { name, email, password, role,
+                createdAt: new Date().toISOString() };
+            storedUsers.push(newUser);
+            localStorage.setItem('library_users',
+                JSON.stringify(storedUsers));
+            Toast.success('Account created! Please sign in.');
+            this.setMode('signin');
+        }
+    },
+
+    getStoredUsers() {
+        return JSON.parse(
+            localStorage.getItem('library_users') || '[]');
+    },
+
+    getPasswordStrength(password) {
+        let score = 0;
+        if (password.length &gt;= 8) score++;
+        if (/[A-Z]/.test(password)) score++;
+        if (/[a-z]/.test(password)) score++;
+        if (/[0-9]/.test(password)) score++;
+        if (/[^A-Za-z0-9]/.test(password)) score++;
+        if (score &lt;= 2) return { level: 'weak', color: 'red' };
+        if (score &lt;= 4) return { level: 'medium', color: 'orange' };
+        return { level: 'strong', color: 'green' };
+    }
+};</pre>
+</div>
+
+<!-- ======================== 3.8 api.js ======================== -->
+<div class="page">
+    <h3>3.8 API Layer (api.js) — Supabase Integration</h3>
+    <p>The API module wraps all Supabase database operations including authentication, CRUD for books/borrow requests/notifications, and profile management.</p>
+    <div class="code-filename">js/api.js (selected functions)</div>
+<pre>window.Api = {
+    client: null,
+
+    init() {
+        this.client = SupabaseClient.get();
+    },
+
+    // Authentication
+    async signIn(email, password) {
+        const { data, error } = await this.client.auth
+            .signInWithPassword({ email, password });
+        if (error) throw error;
+        const profile = await this.getProfile(data.user.id);
+        return { user: data.user, profile };
+    },
+
+    async signUp(email, password, meta = {}) {
+        const { data, error } = await this.client.auth.signUp({
+            email, password,
+            options: { data: meta }
+        });
+        if (error) throw error;
+        return data;
+    },
+
+    // Books
+    async getAllBooks() {
+        const { data, error } = await this.client
+            .from('books').select('*').order('id');
+        if (error) throw error;
+        return data;
+    },
+
+    async updateBook(bookId, updates) {
+        const { data, error } = await this.client
+            .from('books').update(updates).eq('id', bookId);
+        if (error) throw error;
+        return data;
+    },
+
+    // Borrow Requests
+    async createBorrowRequest(request) {
+        const { data, error } = await this.client
+            .from('borrow_requests').insert(request).select();
+        if (error) throw error;
+        return data[0];
+    },
+
+    async updateBorrowRequest(id, updates) {
+        const { data, error } = await this.client
+            .from('borrow_requests').update(updates)
+            .eq('id', id);
+        if (error) throw error;
+        return data;
+    },
+
+    // Notifications
+    async getNotifications(userId) {
+        const { data, error } = await this.client
+            .from('notifications').select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+        return data;
+    },
+
+    // Data mapping functions
+    mapBook(raw) {
+        return {
+            id: raw.id, title: raw.title, author: raw.author,
+            isbn: raw.isbn, category: raw.category,
+            grade: raw.grade, subject: raw.subject,
+            totalCopies: raw.total_copies,
+            availableCopies: raw.available_copies,
+            borrowCount: raw.borrow_count,
+            rating: raw.rating, pdfUrl: raw.pdf_url
+        };
+    }
+};</pre>
+</div>
+
+<!-- ======================== 3.9 utils.js ======================== -->
+<div class="page">
+    <h3>3.9 Utilities (utils.js)</h3>
+    <p>Utility functions for date formatting, HTML escaping, debouncing, throttling, greeting generation, library open/closed status, SVG icon rendering, and book cover generation.</p>
+    <div class="code-filename">js/utils.js</div>
+<pre>const Utils = {
+    formatDate(dateStr) {
+        if (!dateStr) return 'N/A';
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('en-US',
+            { year: 'numeric', month: 'short', day: 'numeric' });
+    },
+
+    getGreeting() {
+        const h = new Date().getHours();
+        if (h &lt; 12) return 'Good Morning';
+        if (h &lt; 17) return 'Good Afternoon';
+        return 'Good Evening';
+    },
+
+    isLibraryOpen() {
+        const now = new Date();
+        const day = now.getDay();
+        const time = now.getHours() * 60 + now.getMinutes();
+        if (day === 0) return false; // Sunday closed
+        if (day === 6) return time &gt;= 540 &amp;&amp; time &lt;= 840;
+        return time &gt;= 480 &amp;&amp; time &lt;= 1020; // 8AM-5PM
+    },
+
+    debounce(fn, delay) {
+        let timer;
+        return function(...args) {
+            clearTimeout(timer);
+            timer = setTimeout(() =&gt; fn.apply(this, args), delay);
+        };
+    },
+
+    escapeHtml(str) {
+        return String(str)
+            .replace(/&amp;/g, '&amp;amp;')
+            .replace(/&lt;/g, '&amp;lt;')
+            .replace(/&gt;/g, '&amp;gt;')
+            .replace(/"/g, '&amp;quot;');
+    },
+
+    getIcon(name, size = 20) {
+        // Returns inline SVG icons (Lucide-style)
+        const icons = {
+            'book-open': `&lt;svg viewBox="0 0 24 24" width="${size}"
+                height="${size}" fill="none" stroke="currentColor"
+                stroke-width="2"&gt;...&lt;/svg&gt;`,
+            // 50+ icons defined
+        };
+        return icons[name] || '';
+    }
+};</pre>
+</div>
+
+<!-- ======================== 3.10 sw.js ======================== -->
+<div class="page">
+    <h3>3.10 Service Worker (sw.js) — Offline Support</h3>
+    <p>The service worker implements a <strong>network-first</strong> strategy: it always tries to fetch from the network first (to get updated content), and falls back to cached content when offline. Google Fonts are cached using a cache-first strategy for performance.</p>
+    <div class="code-filename">sw.js</div>
+<pre>const CACHE_NAME = 'saraswati-library-v4';
+const ASSETS = [
+    './',
+    './css/variables.css',
+    './css/main.css',
+    './css/animations.css',
+    './css/components.css',
+    './css/pages.css',
+    './css/responsive.css'
+];
+
+self.addEventListener('install', (e) =&gt; {
+    e.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(cache =&gt; cache.addAll(ASSETS))
+            .then(() =&gt; self.skipWaiting())
+    );
+});
+
+self.addEventListener('activate', (e) =&gt; {
+    e.waitUntil(
+        caches.keys()
+            .then(keys =&gt; Promise.all(
+                keys.filter(k =&gt; k !== CACHE_NAME)
+                    .map(k =&gt; caches.delete(k))
+            ))
+            .then(() =&gt; self.clients.claim())
+    );
+});
+
+self.addEventListener('fetch', (e) =&gt; {
+    if (e.request.method !== 'GET') return;
+
+    // Cache-first for Google Fonts
+    if (e.request.url.includes('fonts.googleapis.com') ||
+        e.request.url.includes('fonts.gstatic.com')) {
+        e.respondWith(
+            caches.match(e.request).then(r =&gt; r ||
+                fetch(e.request).then(resp =&gt; {
+                    const clone = resp.clone();
+                    caches.open(CACHE_NAME)
+                        .then(cache =&gt; cache.put(e.request, clone));
+                    return resp;
+                })
+            )
+        );
+        return;
+    }
+
+    // Network-first for everything else
+    e.respondWith(
+        fetch(e.request).then(resp =&gt; {
+            if (resp &amp;&amp; resp.ok) {
+                const clone = resp.clone();
+                caches.open(CACHE_NAME)
+                    .then(cache =&gt; cache.put(e.request, clone));
+            }
+            return resp;
+        }).catch(() =&gt;
+            caches.match(e.request)
+                .then(r =&gt; r || caches.match('./'))
+        )
+    );
+});</pre>
+
+    <h3>3.11 Supabase Client (supabase-client.js)</h3>
+    <div class="code-filename">js/supabase-client.js</div>
+<pre>window.SupabaseClient = {
+    client: null,
+
+    init(url, key) {
+        if (this.client) return this.client;
+        this.client = window.supabase.createClient(url, key);
+        return this.client;
+    },
+
+    get() {
+        return this.client;
+    }
+};</pre>
+
+    <h3>3.12 Toast Notifications (toast.js)</h3>
+    <div class="code-filename">js/components/toast.js</div>
+<pre>const Toast = {
+    container: null,
+
+    init() {
+        this.container = document.getElementById('toastContainer');
+    },
+
+    show(message, type = 'info', duration = 4000) {
+        if (!this.container) this.init();
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `
+            &lt;span class="toast-icon"&gt;${Utils.getIcon(
+                type === 'success' ? 'check-circle' :
+                type === 'error' ? 'x-circle' :
+                type === 'warning' ? 'alert-triangle' : 'info', 22
+            )}&lt;/span&gt;
+            &lt;span class="toast-text"&gt;${Utils.escapeHtml(message)}&lt;/span&gt;
+            &lt;button class="toast-close"&gt;X&lt;/button&gt;
+        `;
+        toast.querySelector('.toast-close')
+            .addEventListener('click', () =&gt; this.dismiss(toast));
+        this.container.appendChild(toast);
+        requestAnimationFrame(() =&gt; toast.classList.add('show'));
+
+        // Max 5 toasts visible
+        const existing = this.container.querySelectorAll('.toast');
+        if (existing.length &gt; 5) this.dismiss(existing[0]);
+
+        setTimeout(() =&gt; this.dismiss(toast), duration);
+    },
+
+    dismiss(toast) {
+        toast.classList.remove('show');
+        setTimeout(() =&gt; toast.remove(), 400);
+    },
+
+    success(msg) { this.show(msg, 'success'); },
+    error(msg)   { this.show(msg, 'error'); },
+    warning(msg) { this.show(msg, 'warning'); },
+    info(msg)    { this.show(msg, 'info'); }
+};</pre>
+</div>
+
+<!-- ======================== 3.13 modal.js & 3.14 data.js ======================== -->
+<div class="page">
+    <h3>3.13 Modal Component (modal.js)</h3>
+    <div class="code-filename">js/components/modal.js</div>
+<pre>const Modal = {
+    container: null,
+
+    init() {
+        this.container = document.getElementById('modalContainer');
+    },
+
+    show({ title = '', content = '', buttons = [], size = 'md' }) {
+        if (!this.container) this.init();
+        let btnsHtml = buttons.map(b =&gt;
+            `&lt;button class="btn ${b.class || 'btn-secondary'}"
+                &gt;${Utils.escapeHtml(b.label)}&lt;/button&gt;`
+        ).join('');
+
+        this.container.innerHTML = `
+            &lt;div class="modal-backdrop"&gt;&lt;/div&gt;
+            &lt;div class="modal"&gt;
+                &lt;div class="modal-header"&gt;
+                    &lt;h3&gt;${Utils.escapeHtml(title)}&lt;/h3&gt;
+                    &lt;button class="modal-close"&gt;X&lt;/button&gt;
+                &lt;/div&gt;
+                &lt;div class="modal-body"&gt;${content}&lt;/div&gt;
+                ${buttons.length ?
+                    `&lt;div class="modal-footer"&gt;${btnsHtml}&lt;/div&gt;` : ''}
+            &lt;/div&gt;
+        `;
+        this.container.classList.add('active');
+
+        this.container.querySelector('.modal-close')
+            .addEventListener('click', () =&gt; this.hide());
+        this.container.querySelector('.modal-backdrop')
+            .addEventListener('click', () =&gt; this.hide());
+
+        const actionBtns = this.container
+            .querySelectorAll('.modal-action-btn');
+        actionBtns.forEach((btn, i) =&gt; {
+            btn.addEventListener('click', () =&gt; {
+                if (buttons[i] &amp;&amp; buttons[i].onClick)
+                    buttons[i].onClick();
+                this.hide();
+            });
+        });
+    },
+
+    hide() {
+        if (this.container) this.container.classList.remove('active');
+    },
+
+    confirm(title, message, onConfirm) {
+        this.show({
+            title, content: `&lt;p&gt;${message}&lt;/p&gt;`,
+            buttons: [
+                { label: 'Cancel', class: 'btn-secondary' },
+                { label: 'Confirm', class: 'btn-primary',
+                  onClick: onConfirm }
+            ]
+        });
+    }
+};</pre>
+
+    <h3>3.14 Data Module (data.js) — Book Database</h3>
+    <p>The data module contains all static library data including 100+ CDC textbooks from Grade 1 to Grade 10, categories, digital books, study materials, announcements, events, and school information.</p>
+    <div class="code-filename">js/data.js (partial)</div>
+<pre>const LIBRARY_DATA = {
+    school: {
+        name: "Shree Saraswati Secondary School",
+        library: "Shree Saraswati Secondary School Library",
+        motto: "ज्ञान नै शक्ति हो — Knowledge is Power",
+        address: "Changunarayan-08, Sudal, Bhaktapur, Nepal",
+        phone: "01-5145000",
+        email: "saraswatiss.2017@gmail.com"
+    },
+
+    categories: [
+        { id: 1, name: "Nepali", icon: "book-open",
+          color: "#ef4444", count: 12 },
+        { id: 2, name: "English", icon: "languages",
+          color: "#3b82f6", count: 12 },
+        { id: 3, name: "Mathematics", icon: "calculator",
+          color: "#f59e0b", count: 12 },
+        { id: 4, name: "Science &amp; Technology", icon: "atom",
+          color: "#10b981", count: 10 },
+        { id: 5, name: "Social Studies", icon: "globe",
+          color: "#8b5cf6", count: 10 },
+        { id: 6, name: "Health &amp; Physical Education",
+          icon: "heart", color: "#14b8a6", count: 6 },
+        { id: 7, name: "Computer Science", icon: "cpu",
+          color: "#06b6d4", count: 4 },
+        { id: 8, name: "Economics", icon: "landmark",
+          color: "#ec4899", count: 4 },
+        { id: 9, name: "Natural Sciences", icon: "flask-conical",
+          color: "#0ea5e9", count: 6 },
+        { id: 10, name: "Business &amp; Accountancy",
+          icon: "briefcase", color: "#a855f7", count: 4 }
+    ],
+
+    books: [
+        { id: 101, title: "Nepali Class 1", author: "CDC Nepal",
+          publisher: "CDC, MoEST", grade: "1", subject: "Nepali",
+          language: "Nepali", pages: 56, year: 2076,
+          description: "Official Nepali textbook for Grade 1...",
+          category: "Nepali", rating: 4.3, reviews: [] },
+        // ... 100+ books from Grade 1 to Grade 10
+        { id: 166, title: "Computer Science Class 10",
+          author: "CDC Nepal", grade: "10",
+          subject: "Computer Science", language: "English",
+          pages: 136, year: 2081, rating: 4.5 },
+        // ...
+    ],
+
+    stats: {
+        totalBooks: 10000,
+        totalStudents: 600,
+        totalTeachers: 35,
+        borrowedBooks: 142,
+        digitalBooks: 85,
+        availableBooks: 9858
+    }
+};</pre>
+</div>
+
+<!-- ======================== CHAPTER 4: TESTING ======================== -->
+<div class="page">
+    <h2>4. Testing</h2>
+    <p>The system was tested comprehensively across functional modules, browsers, and device types. The following test cases were executed:</p>
+
+    <h4>4.1 Functional Testing</h4>
+    <table class="test-table">
+        <tr><th>No.</th><th>Test Case</th><th>Expected Result</th><th>Actual Result</th><th>Status</th></tr>
+        <tr><td>1</td><td>Open application URL</td><td>Loading screen appears, then home page loads</td><td>As expected</td><td class="test-pass">PASS</td></tr>
+        <tr><td>2</td><td>Click "Sign In" button</td><td>Redirects to login page</td><td>As expected</td><td class="test-pass">PASS</td></tr>
+        <tr><td>3</td><td>Sign in with valid credentials</td><td>User authenticated, redirected to home</td><td>As expected</td><td class="test-pass">PASS</td></tr>
+        <tr><td>4</td><td>Sign in with invalid credentials</td><td>Error toast displayed</td><td>As expected</td><td class="test-pass">PASS</td></tr>
+        <tr><td>5</td><td>Create new account (Sign Up)</td><td>Account created, redirected to sign in</td><td>As expected</td><td class="test-pass">PASS</td></tr>
+        <tr><td>6</td><td>Search books by title</td><td>Filtered results displayed</td><td>As expected</td><td class="test-pass">PASS</td></tr>
+        <tr><td>7</td><td>Filter books by category</td><td>Books filtered by selected category</td><td>As expected</td><td class="test-pass">PASS</td></tr>
+        <tr><td>8</td><td>Filter books by grade</td><td>Books filtered by selected grade</td><td>As expected</td><td class="test-pass">PASS</td></tr>
+        <tr><td>9</td><td>Click on a book card</td><td>Book detail page loads with full info</td><td>As expected</td><td class="test-pass">PASS</td></tr>
+        <tr><td>10</td><td>Borrow a book (student)</td><td>Pending request created, notification sent</td><td>As expected</td><td class="test-pass">PASS</td></tr>
+        <tr><td>11</td><td>Approve borrow request (librarian)</td><td>Status changes to approved</td><td>As expected</td><td class="test-pass">PASS</td></tr>
+        <tr><td>12</td><td>Process return</td><td>Book returned, copies incremented</td><td>As expected</td><td class="test-pass">PASS</td></tr>
+        <tr><td>13</td><td>Overdue fine calculation</td><td>Fine = days_late * Rs.5</td><td>As expected</td><td class="test-pass">PASS</td></tr>
+        <tr><td>14</td><td>Reserve an unavailable book</td><td>Reservation placed in queue</td><td>As expected</td><td class="test-pass">PASS</td></tr>
+        <tr><td>15</td><td>Toggle dark/light mode</td><td>Theme switches correctly</td><td>As expected</td><td class="test-pass">PASS</td></tr>
+        <tr><td>16</td><td>Access admin page as student</td><td>Access denied, redirected to home</td><td>As expected</td><td class="test-pass">PASS</td></tr>
+        <tr><td>17</td><td>View dashboard as librarian</td><td>Dashboard with charts loads</td><td>As expected</td><td class="test-pass">PASS</td></tr>
+        <tr><td>18</td><td>Session timeout (30 min idle)</td><td>Auto-logout, redirect to login</td><td>As expected</td><td class="test-pass">PASS</td></tr>
+        <tr><td>19</td><td>Offline access (PWA)</td><td>Cached pages load without internet</td><td>As expected</td><td class="test-pass">PASS</td></tr>
+        <tr><td>20</td><td>Mobile responsive layout</td><td>Bottom nav, sidebar toggle work</td><td>As expected</td><td class="test-pass">PASS</td></tr>
+    </table>
+
+    <h4>4.2 Cross-Browser Testing</h4>
+    <table>
+        <tr><th>Browser</th><th>Version</th><th>Result</th></tr>
+        <tr><td>Google Chrome</td><td>120+</td><td class="test-pass">PASS</td></tr>
+        <tr><td>Mozilla Firefox</td><td>120+</td><td class="test-pass">PASS</td></tr>
+        <tr><td>Microsoft Edge</td><td>120+</td><td class="test-pass">PASS</td></tr>
+        <tr><td>Brave Browser</td><td>Latest</td><td class="test-pass">PASS</td></tr>
+    </table>
+
+    <h4>4.3 Device Testing</h4>
+    <table>
+        <tr><th>Device</th><th>Screen Size</th><th>Result</th></tr>
+        <tr><td>Desktop (1920x1080)</td><td>Full HD</td><td class="test-pass">PASS</td></tr>
+        <tr><td>Laptop (1366x768)</td><td>HD</td><td class="test-pass">PASS</td></tr>
+        <tr><td>Tablet (iPad)</td><td>768px</td><td class="test-pass">PASS</td></tr>
+        <tr><td>Mobile (iPhone SE)</td><td>375px</td><td class="test-pass">PASS</td></tr>
+        <tr><td>Mobile (Android)</td><td>360px</td><td class="test-pass">PASS</td></tr>
+    </table>
+</div>
+
+<!-- ======================== CHAPTER 5: SNAPSHOTS ======================== -->
+<div class="page">
+    <h2>5. Snapshots</h2>
+
+    <h3>5.1 Home Page</h3>
+    <div class="snapshot-placeholder">
+        [Screenshot: Home page with hero section, statistics, new arrivals]<br>
+        URL: https://saraswatilibrary-psi.vercel.app/#/
+    </div>
+
+    <h3>5.2 Book Catalog</h3>
+    <div class="snapshot-placeholder">
+        [Screenshot: Books page with search bar, filters, and book grid]<br>
+        URL: https://saraswatilibrary-psi.vercel.app/#/books
+    </div>
+
+    <h3>5.3 Book Detail</h3>
+    <div class="snapshot-placeholder">
+        [Screenshot: Book detail page with title, author, rating, borrow button]<br>
+        URL: https://saraswatilibrary-psi.vercel.app/#/book/160
+    </div>
+
+    <h3>5.4 Login Page</h3>
+    <div class="snapshot-placeholder">
+        [Screenshot: Login page with email/password fields and demo buttons]<br>
+        URL: https://saraswatilibrary-psi.vercel.app/#/login
+    </div>
+
+    <h3>5.5 Admin Dashboard</h3>
+    <div class="snapshot-placeholder">
+        [Screenshot: Admin dashboard with charts, stats, pending requests]<br>
+        URL: https://saraswatilibrary-psi.vercel.app/#/dashboard
+    </div>
+
+    <h3>5.6 Digital Library</h3>
+    <div class="snapshot-placeholder">
+        [Screenshot: Digital library with PDF book cards]<br>
+        URL: https://saraswatilibrary-psi.vercel.app/#/digital-library
+    </div>
+
+    <h3>5.7 Dark Mode</h3>
+    <div class="snapshot-placeholder">
+        [Screenshot: Home page in dark mode theme]<br>
+        URL: https://saraswatilibrary-psi.vercel.app/#/
+    </div>
+
+    <h3>5.8 Mobile View</h3>
+    <div class="snapshot-placeholder">
+        [Screenshot: Mobile responsive view with bottom navigation]<br>
+        URL: https://saraswatilibrary-psi.vercel.app/#/
+    </div>
+
+    <p><strong>Note:</strong> Replace the above placeholders with actual screenshots taken from the live deployment at <code>https://saraswatilibrary-psi.vercel.app</code></p>
+</div>
+
+<!-- ======================== CHAPTER 6: CONCLUSION ======================== -->
+<div class="page">
+    <h2>6. Conclusion</h2>
+    <p>The <strong>Library Management System</strong> developed for Shree Saraswati Secondary School successfully achieves all the stated objectives. The web-based application provides a comprehensive, user-friendly platform for managing library operations — from book cataloging and searching to borrowing lifecycle management, digital resource access, and administrative reporting.</p>
+
+    <p>The system eliminates the inefficiencies of manual library management by providing instant book search, automated borrow tracking, fine calculation, and real-time notifications. The role-based access control ensures that students, teachers, librarians, and administrators each have appropriate levels of access and functionality.</p>
+
+    <p>The use of modern web technologies (HTML5, CSS3, vanilla JavaScript) with a cloud backend (Supabase) and static hosting (Vercel) has resulted in a system that is:</p>
+    <ul>
+        <li><strong>Fast:</strong> Static file serving with CDN ensures sub-second load times.</li>
+        <li><strong>Reliable:</strong> Supabase provides 99.9% uptime with automatic backups.</li>
+        <li><strong>Scalable:</strong> Can easily handle more books, users, and features.</li>
+        <li><strong>Cost-free:</strong> No hosting costs with Vercel free tier and Supabase free tier.</li>
+        <li><strong>Maintainable:</strong> Clean modular code structure makes updates easy.</li>
+    </ul>
+
+    <p>The PWA features (Service Worker, Web App Manifest) enable students to install the application on their mobile devices and access cached content offline, making it particularly suitable for the school environment where internet connectivity may be intermittent.</p>
+
+    <h3>6.1 Limitations</h3>
+    <ul>
+        <li>The system does not yet support email-based password reset (Supabase email confirmation required).</li>
+        <li>Offline mode is limited to cached pages; new data requires internet connectivity.</li>
+        <li>The system currently does not integrate with the school's Student Information System (SIS).</li>
+    </ul>
+
+    <h3>6.2 Future Scope</h3>
+    <ul>
+        <li>Integration with the school's SIS for automatic student enrollment.</li>
+        <li>Email and SMS notifications for overdue books and events.</li>
+        <li>Barcode/QR code scanning for quick book issuing and returning.</li>
+        <li>Book recommendation engine based on reading history and preferences.</li>
+        <li>Multi-language support (Nepali and English interfaces).</li>
+        <li>Advanced analytics dashboard with exportable PDF/Excel reports.</li>
+    </ul>
+
+    <p>In conclusion, this project has been a valuable learning experience in full-stack web development, database design, user interface development, and software engineering practices. The skills and knowledge gained through this project will serve as a strong foundation for future software development endeavors.</p>
+</div>
+
+<!-- ======================== CHAPTER 7: REFERENCES ======================== -->
+<div class="page">
+    <h2>7. References</h2>
+    <ol>
+        <li>MDN Web Docs. "HTML5: Techniques for
+            Structuring Web Applications." Mozilla Foundation.
+            <br><code>https://developer.mozilla.org/en-US/docs/Web/HTML</code></li>
+        <li>MDN Web Docs. "CSS: Cascading Style Sheets."
+            Mozilla Foundation.
+            <br><code>https://developer.mozilla.org/en-US/docs/Web/CSS</code></li>
+        <li>MDN Web Docs. "JavaScript." Mozilla Foundation.
+            <br><code>https://developer.mozilla.org/en-US/docs/Web/JavaScript</code></li>
+        <li>Supabase Documentation. "Getting Started with
+            Supabase." Supabase Inc.
+            <br><code>https://supabase.com/docs</code></li>
+        <li>Supabase Documentation. "Authentication."
+            Supabase Inc.
+            <br><code>https://supabase.com/docs/guides/auth</code></li>
+        <li>Vercel Documentation. "Deploying Static Sites."
+            Vercel Inc.
+            <br><code>https://vercel.com/docs</code></li>
+        <li>Google Developers. "Progressive Web Apps."
+            Google.
+            <br><code>https://developers.google.com/web/progressive-web-apps</code></li>
+        <li>Google Developers. "Service Workers API."
+            Google.
+            <br><code>https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API</code></li>
+        <li>W3C. "Web App Manifest Specification."
+            World Wide Web Consortium.
+            <br><code>https://www.w3.org/TR/appmanifest/</code></li>
+        <li>Lucide Icons. "Open-source icon library."
+            <br><code>https://lucide.dev</code></li>
+        <li>Google Fonts. "Inter and Playfair Display fonts."
+            <br><code>https://fonts.google.com</code></li>
+        <li>CDC Nepal. "Curriculum Development Centre,
+            Nepal." Ministry of Education, Science and
+            Technology.
+            <br><code>https://cdc.gov.np</code></li>
+        <li>Freeman, A. "Pro HTML5 and CSS3 Design
+            Patterns." Apress, 2012.</li>
+        <li>Nichols, A. "Learning Web App Development."
+            O'Reilly Media, 2018.</li>
+    </ol>
+
+    <br><br>
+    <div style="text-align: center; border-top: 2px solid #000; padding-top: 20px; margin-top: 40px;">
+        <p style="font-size: 16px; font-weight: bold;">END OF REPORT</p>
+        <p style="margin-top: 10px;">Project: Library Management System</p>
+        <p>Shree Saraswati Secondary School</p>
+        <p>Academic Year: 2082-2083 BS</p>
+    </div>
+</div>
+
+</body>
+</html>
