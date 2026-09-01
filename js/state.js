@@ -11,6 +11,8 @@ const AppState = {
     isDemoMode: false,
 
     notifications: [],
+    borrowRequests: [],
+    reservations: [],
     favorites: [],
     readingProgress: {},
     recentlyViewed: [],
@@ -178,45 +180,52 @@ const AppState = {
     },
 
     async loadFromSupabase() {
-        try {
-            const [books, categories, borrowRequests, notifications, reservations, favorites, recentlyViewed, announcements, events, digitalBooks, studyMaterials, settings, allProfiles] = await Promise.all([
-                Api.getAllBooks().then(arr => arr.map(Api.mapBook)),
-                Api.getAllCategories(),
-                Api.getAllBorrowRequests().then(arr => arr.map(Api.mapBorrowRequest)),
-                Api.getNotifications(this.currentUser.id).then(arr => arr.map(Api.mapNotification)),
-                Api.getReservationsByStudent(this.currentUser.id).then(arr => arr.map(Api.mapReservation)),
-                Api.getFavorites(this.currentUser.id).then(arr => arr.map(Api.mapFavorite)),
-                Api.getRecentlyViewed(this.currentUser.id),
-                Api.getAllAnnouncements().then(arr => arr.map(Api.mapAnnouncement)),
-                Api.getAllEvents().then(arr => arr.map(Api.mapEvent)),
-                Api.getAllDigitalBooks().then(arr => arr.map(Api.mapDigitalBook)),
-                Api.getAllStudyMaterials().then(arr => arr.map(Api.mapStudyMaterial)),
-                Api.getAllSettings(),
-                (this.currentUser.role === 'admin' || this.currentUser.role === 'librarian')
-                    ? Api.getAllProfiles().catch(() => [])
-                    : Promise.resolve([])
-            ]);
+        const safe = async (promise, fallback = []) => {
+            try { return await promise; } catch (e) {
+                console.warn('Supabase sub-query failed, using fallback:', e);
+                return fallback;
+            }
+        };
 
-            this.books = books;
-            this.categories = categories;
-            this.borrowRequests = borrowRequests;
-            this.notifications = notifications;
-            this.reservations = reservations;
-            this.favorites = favorites.map(f => f.bookId);
-            this.recentlyViewed = recentlyViewed.map(rv => rv.book_id);
-            this.announcements = announcements;
-            this.events = events;
-            this.digitalBooks = digitalBooks;
-            this.studyMaterials = studyMaterials;
-            this.settings = settings;
-            this.allProfiles = allProfiles;
-            this.lastBorrowSeq = borrowRequests.length;
+        const [
+            books, categories, borrowRequests, notifications, reservations,
+            favorites, recentlyViewed, announcements, events,
+            digitalBooks, studyMaterials, settings, allProfiles
+        ] = await Promise.all([
+            safe(Api.getAllBooks().then(arr => arr.map(Api.mapBook))),
+            safe(Api.getAllCategories()),
+            safe(Api.getAllBorrowRequests().then(arr => arr.map(Api.mapBorrowRequest))),
+            safe(Api.getNotifications(this.currentUser ? this.currentUser.id : null).then(arr => arr.map(Api.mapNotification))),
+            safe(Api.getReservationsByStudent(this.currentUser ? this.currentUser.id : null).then(arr => arr.map(Api.mapReservation))),
+            safe(Api.getFavorites(this.currentUser ? this.currentUser.id : null).then(arr => arr.map(Api.mapFavorite))),
+            safe(Api.getRecentlyViewed(this.currentUser ? this.currentUser.id : null)),
+            safe(Api.getAllAnnouncements().then(arr => arr.map(Api.mapAnnouncement))),
+            safe(Api.getAllEvents().then(arr => arr.map(Api.mapEvent))),
+            safe(Api.getAllDigitalBooks().then(arr => arr.map(Api.mapDigitalBook))),
+            safe(Api.getAllStudyMaterials().then(arr => arr.map(Api.mapStudyMaterial))),
+            safe(Api.getAllSettings(), {}),
+            safe((this.currentUser && (this.currentUser.role === 'admin' || this.currentUser.role === 'librarian'))
+                ? Api.getAllProfiles()
+                : Promise.resolve([]))
+        ]);
 
-            this.checkDueReminders();
-            this.autoExpireReservations();
-        } catch (e) {
-            console.warn('Error loading from Supabase:', e);
-        }
+        this.books = books || [];
+        this.categories = categories || [];
+        this.borrowRequests = borrowRequests || [];
+        this.notifications = notifications || [];
+        this.reservations = reservations || [];
+        this.favorites = (favorites || []).map(f => f && f.bookId).filter(Boolean);
+        this.recentlyViewed = (recentlyViewed || []).map(rv => rv && (rv.book_id || rv.bookId)).filter(Boolean);
+        this.announcements = announcements || [];
+        this.events = events || [];
+        this.digitalBooks = digitalBooks || [];
+        this.studyMaterials = studyMaterials || [];
+        this.settings = settings || {};
+        this.allProfiles = allProfiles || [];
+        this.lastBorrowSeq = (this.borrowRequests || []).length;
+
+        try { this.checkDueReminders(); } catch (e) { console.warn('checkDueReminders failed:', e); }
+        try { this.autoExpireReservations(); } catch (e) { console.warn('autoExpireReservations failed:', e); }
     },
 
     loadFromStorage() {
@@ -949,6 +958,7 @@ const AppState = {
     },
 
     checkDueReminders() {
+        if (!Array.isArray(this.borrowRequests)) return;
         const now = new Date();
         const active = this.borrowRequests.filter(r => r.status === 'borrowed');
         active.forEach(r => {
@@ -1049,11 +1059,11 @@ const AppState = {
     },
 
     getAllPendingRequests() {
-        return this.borrowRequests.filter(r => r.status === 'pending');
+        return (this.borrowRequests || []).filter(r => r.status === 'pending');
     },
 
     getAllActiveBorrows() {
-        return this.borrowRequests.filter(r => r.status === 'borrowed' || r.status === 'overdue');
+        return (this.borrowRequests || []).filter(r => r.status === 'borrowed' || r.status === 'overdue');
     },
 
     getBookBorrowStatus(bookId) {

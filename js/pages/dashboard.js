@@ -14,11 +14,11 @@ const DashboardPage = {
         const stats = LIBRARY_DATA.stats || {};
         const pending = AppState.getAllPendingRequests();
         const active = AppState.getAllActiveBorrows();
-        const allReturned = AppState.borrowRequests.filter(r => r.status === 'returned');
-        const allOverdue = AppState.borrowRequests.filter(r => r.status === 'overdue');
-        const totalFines = AppState.borrowRequests.reduce((s, r) => s + (r.fine || 0), 0);
-        const recentBorrows = [...AppState.borrowRequests].slice(-10).reverse();
-        const reservations = AppState.reservations.filter(r => r.status === 'waiting');
+        const allReturned = (AppState.borrowRequests || []).filter(r => r.status === 'returned');
+        const allOverdue = (AppState.borrowRequests || []).filter(r => r.status === 'overdue');
+        const totalFines = (AppState.borrowRequests || []).reduce((s, r) => s + (r.fine || 0), 0);
+        const recentBorrows = [...(AppState.borrowRequests || [])].slice(-10).reverse();
+        const reservations = (AppState.reservations || []).filter(r => r.status === 'waiting');
         const studentCount = (LIBRARY_DATA.students || []).length;
         const teacherCount = (LIBRARY_DATA.teachers || []).length;
         const totalBooks = (AppState.books || []).length;

@@ -84,6 +84,7 @@ const Utils = {
     },
 
     getBookCover(book) {
+        if (!book || !book.id) return '<div class="book-cover-placeholder" style="background:linear-gradient(135deg,#cbd5e1,#94a3b8);color:#fff;display:flex;align-items:center;justify-content:center"><span>—</span></div>';
         if (book.cover) {
             return `<img src="${book.cover}" alt="${Utils.escapeHtml(book.title)}" loading="lazy"
                 data-fb-title="${Utils.escapeHtml(book.title)}"

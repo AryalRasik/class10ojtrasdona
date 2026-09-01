@@ -2,10 +2,11 @@ const HomePage = {
     render() {
         const isOpen = Utils.isLibraryOpen();
         const quote = LIBRARY_DATA.quotes[Math.floor(Math.random() * LIBRARY_DATA.quotes.length)];
-        const featured = AppState.books[8] || AppState.books[0];
-        const newArrivals = [...AppState.books].sort((a, b) => b.year - a.year).slice(0, 6);
-        const popularBooks = [...AppState.books].sort((a, b) => b.borrowCount - a.borrowCount).slice(0, 6);
-        const recentBooks = AppState.recentlyViewed.map(id => AppState.books.find(b => b.id === id)).filter(Boolean).slice(0, 6);
+        const books = Array.isArray(AppState.books) ? AppState.books : [];
+        const featured = books[8] || books[0];
+        const newArrivals = [...books].sort((a, b) => b.year - a.year).slice(0, 6);
+        const popularBooks = [...books].sort((a, b) => (b.borrowCount || 0) - (a.borrowCount || 0)).slice(0, 6);
+        const recentBooks = AppState.recentlyViewed.map(id => books.find(b => b.id === id)).filter(Boolean).slice(0, 6);
 
         const returnedBooks = LIBRARY_DATA.borrowedBooks
             .filter(b => b.status === 'returned')
@@ -70,13 +71,13 @@ const HomePage = {
                         </div>
                         <div class="hero-featured">
                             <div class="hero-featured-cover">
-                                ${Utils.getBookCover(featured)}
+                                ${featured ? Utils.getBookCover(featured) : '<div class="book-cover-placeholder" style="background:linear-gradient(135deg,#cbd5e1,#94a3b8);color:#fff;display:flex;align-items:center;justify-content:center"><span>—</span></div>'}
                             </div>
                             <div class="hero-featured-info">
                                 <div class="featured-tag">Today's Featured</div>
-                                <h4>${Utils.escapeHtml(featured.title)}</h4>
-                                <p>${Utils.escapeHtml(featured.author)}</p>
-                                <div style="margin-top:6px">${Utils.generateStars(featured.rating)}</div>
+                                <h4>${featured ? Utils.escapeHtml(featured.title) : 'No books available'}</h4>
+                                <p>${featured ? Utils.escapeHtml(featured.author) : 'Check back soon'}</p>
+                                <div style="margin-top:6px">${featured ? Utils.generateStars(featured.rating) : ''}</div>
                             </div>
                         </div>
                         <div class="hero-quote">
