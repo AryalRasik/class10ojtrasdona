@@ -178,15 +178,17 @@ window.Api = {
     return data;
   },
 
-  async updateBook(bookId, updates) {
+async updateBook(bookId, updates) {
     const { data, error } = await this.client
       .from('books')
       .update(updates)
       .eq('id', bookId)
-      .select()
-      .single();
-    if (error) throw error;
-    return data;
+      .select();
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      throw error;
+    }
+    return data ? (data[0] || null) : null;
   },
 
   async deleteBook(bookId) {

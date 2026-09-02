@@ -211,7 +211,6 @@ const AppState = {
 
         this.books = books || [];
         this.categories = categories || [];
-        this.borrowRequests = borrowRequests || [];
         this.notifications = notifications || [];
         this.reservations = reservations || [];
         this.favorites = (favorites || []).map(f => f && f.bookId).filter(Boolean);
@@ -223,6 +222,24 @@ const AppState = {
         this.settings = settings || {};
         this.allProfiles = allProfiles || [];
         this.lastBorrowSeq = (this.borrowRequests || []).length;
+
+        // Merge locally-persisted borrow records (offline issues + imported records)
+        // with the remote borrow_requests table, so offline data survives refresh.
+        const localBorrows = this._loadLocal('library_borrowRequests');
+        const remoteBorrows = borrowRequests || [];
+        const remoteIds = new Set(remoteBorrows.map(r => r && r.id));
+        const localOffline = Array.isArray(localBorrows)
+            ? localBorrows.filter(r => r && r.isOffline && !remoteIds.has(r.id))
+            : [];
+        this.borrowRequests = [...remoteBorrows, ...localOffline];
+
+        // Merge locally-persisted borrow history (processed returns)
+        const localHistory = this._loadLocal('library_borrowHistory');
+        if (Array.isArray(localHistory) && localHistory.length) {
+            this.borrowHistory = Array.isArray(this.borrowHistory) ? this.borrowHistory : [];
+            const histIds = new Set(this.borrowHistory.map(r => r && r.id));
+            localHistory.forEach(r => { if (r && r.id && !histIds.has(r.id)) { this.borrowHistory.push(r); histIds.add(r.id); } });
+        }
 
         try {
             this.offlineUsers = JSON.parse(localStorage.getItem('library_offlineUsers') || '[]');
@@ -318,8 +335,14 @@ const AppState = {
         }).slice(0, 15);
     },
 
+    _loadLocal(key) {
+        try {
+            const val = localStorage.getItem(key);
+            return val ? JSON.parse(val) : [];
+        } catch (e) { return []; }
+    },
+
     saveAll() {
-        if (this.isSupabaseConnected) return;
         const save = (key, data) => {
             try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) { }
         };
