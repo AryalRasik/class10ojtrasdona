@@ -92,6 +92,7 @@ const App = {
         Router.add('/admin/audit-logs', AdminAuditLogsPage);
         Router.add('/admin/import', AdminImportPage);
         Router.add('/admin/study-materials', AdminStudyMaterialsPage);
+        Router.add('/admin/offline-issue', OfflineIssuePage);
     },
 
     setupRouteGuards() {
@@ -99,12 +100,12 @@ const App = {
             '/profile', '/settings', '/notifications', '/feedback',
             '/dashboard', '/admin/books', '/admin/users', '/admin/reports',
             '/admin/settings', '/admin/audit-logs', '/admin/import',
-            '/admin/study-materials'
+            '/admin/study-materials', '/admin/offline-issue'
         ];
         const adminRoutes = [
             '/admin/books', '/admin/users', '/admin/reports',
             '/admin/settings', '/admin/audit-logs', '/admin/import',
-            '/admin/study-materials'
+            '/admin/study-materials', '/admin/offline-issue'
         ];
         const dashboardRoute = '/dashboard';
 
@@ -540,6 +541,7 @@ const App = {
         if (role === 'librarian' || role === 'admin') {
             sections.push({ label: 'Management', items: [
                 { page: 'dashboard', icon: 'bar-chart', label: 'Dashboard', href: '#/dashboard' },
+                { page: 'admin-offline-issue', icon: 'book-open', label: 'Offline Book Issue', href: '#/admin/offline-issue' },
                 { page: 'admin-books', icon: 'book-open', label: 'Manage Books', href: '#/admin/books' },
                 { page: 'admin-study-materials', icon: 'file-text', label: 'Study Materials', href: '#/admin/study-materials' },
                 { page: 'admin-users', icon: 'users', label: 'Manage Users', href: '#/admin/users' },

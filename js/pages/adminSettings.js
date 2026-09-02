@@ -288,17 +288,19 @@ const AdminSettingsPage = {
         const settingsToSave = {};
         for (const [key, value] of Object.entries(this.config)) {
           settingsToSave[key] = value;
-          await Api.setSetting(key, value);
+          try {
+            await Api.setSetting(key, value);
+          } catch (e) {
+            console.warn(`Supabase save setting "${key}" failed, continuing:`, e);
+          }
         }
         AppState.settings = settingsToSave;
       } catch (e) {
         console.error('Supabase save settings failed:', e);
-        Toast.error('Failed to save settings to cloud: ' + (e.message || 'Unknown error'));
-        return;
       }
-    } else {
-      localStorage.setItem('admin_settings', JSON.stringify(this.config));
     }
+
+    localStorage.setItem('admin_settings', JSON.stringify(this.config));
 
     if (AppState.ROLE_CONFIG && AppState.ROLE_CONFIG.student) {
       AppState.ROLE_CONFIG.student.maxBorrow = this.config.maxBorrowStudent;

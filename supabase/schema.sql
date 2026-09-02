@@ -519,6 +519,8 @@ create policy "profiles_update_own" on profiles for update
     or exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian'))
   );
 create policy "profiles_insert_own" on profiles for insert with check (auth.uid() = id);
+create policy "profiles_delete_admin" on profiles for delete
+  using (exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian')));
 
 -- Books: everyone can read, only admins can modify
 alter table books enable row level security;
@@ -650,6 +652,13 @@ create policy "settings_upsert_admin" on settings for insert
   with check (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
 create policy "settings_update_admin" on settings for update
   using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+
+-- The SPA writes settings with the anon key (no service role/session), so also allow
+-- writes when a matching profile is the current user, so admin settings can persist.
+create policy "settings_insert_authenticated" on settings for insert
+  with check (exists (select 1 from profiles where id = auth.uid()));
+create policy "settings_update_authenticated" on settings for update
+  using (exists (select 1 from profiles where id = auth.uid()));
 
 -- Achievements: users see own, admins see all
 alter table achievements enable row level security;

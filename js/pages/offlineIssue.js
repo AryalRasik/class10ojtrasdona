@@ -8,6 +8,8 @@ const OfflineIssuePage = {
     returnDate: '',
     notes: '',
     lastIssued: null,
+    userSearchQuery: '',
+    selectedUser: null,
 
     render() {
         const isLibrarian = AppState.currentUser && (AppState.currentUser.role === 'librarian' || AppState.currentUser.role === 'admin');
@@ -124,14 +126,27 @@ const OfflineIssuePage = {
 
     renderStep1() {
         const d = this.userDetails;
+        const existing = !!this.selectedUser;
         return `
       <div class="card">
         <div class="card-header-flex">
           <h3 style="margin:0;">${Utils.getIcon('users', 20)} Step 1: User Details</h3>
-          <span class="badge badge-info">Walk-in User</span>
+          ${existing
+            ? '<span class="badge badge-success">Existing Member</span>'
+            : '<span class="badge badge-info">Walk-in User</span>'}
+        </div>
+        <div style="padding:1.25rem 1.5rem 0;">
+          <label class="form-label">Find Existing Member (optional) ${Utils.getIcon('search', 13)}</label>
+          <input class="form-input" id="oi-user-search" placeholder="Search imported students / members by name, email, grade or class..." value="${Utils.escapeHtml(this.userSearchQuery)}" oninput="OfflineIssuePage.onUserSearch(this.value)" autocomplete="off">
+          <div id="oi-user-results"></div>
+          ${existing ? `
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0.6rem 0.9rem;margin-top:0.5rem;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;">
+              <span style="font-size:0.85rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${Utils.getIcon('check-circle', 14)} <strong>${Utils.escapeHtml(this.selectedUser.name || '')}</strong>${this.selectedUser.email ? ' <span style="color:var(--text-secondary);">· ' + Utils.escapeHtml(this.selectedUser.email) + '</span>' : ''}</span>
+              <button class="btn btn-ghost btn-sm" onclick="OfflineIssuePage.clearUserSelection()" title="Choose a different member">${Utils.getIcon('x', 13)} Change</button>
+            </div>` : ''}
         </div>
         <div style="padding:0 1.5rem 1.5rem;">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
             <div class="form-group">
               <label class="form-label">Full Name *</label>
               <input class="form-input" id="oi-name" placeholder="e.g. Hari Adhikari" value="${Utils.escapeHtml(d.name)}">
@@ -447,6 +462,64 @@ const OfflineIssuePage = {
         if (roleEl) this.userDetails.role = roleEl.value;
     },
 
+    onUserSearch(value) {
+        this.userSearchQuery = value;
+        const results = this.userSearchQuery.trim()
+            ? (AppState.searchLookupUsers ? AppState.searchLookupUsers(this.userSearchQuery) : [])
+            : [];
+        const box = document.getElementById('oi-user-results');
+        if (box) box.innerHTML = this._renderUserResults(results);
+    },
+
+    _renderUserResults(results) {
+        if (!results.length) {
+            return `<div style="margin-top:0.5rem;padding:0.75rem;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;color:var(--text-secondary);">No members found. Type a new name below to add a walk-in user.</div>`;
+        }
+        return `<div style="margin-top:0.5rem;border:1px solid var(--border);border-radius:8px;overflow:hidden;max-height:260px;overflow-y:auto;">
+            ${results.map(u => `
+              <div onclick="OfflineIssuePage.selectUser('${String(u.id || u.email || u.name || '').replace(/'/g, "\\'")}')" style="display:flex;align-items:center;gap:10px;padding:0.6rem 0.9rem;cursor:pointer;border-bottom:1px solid var(--border);background:var(--bg-primary);" onmouseenter="this.style.background='var(--bg-secondary)'" onmouseleave="this.style.background='var(--bg-primary)'">
+                <div class="avatar-sm" style="width:30px;height:30px;font-size:0.6rem;">${Utils.escapeHtml(u.avatar || (u.name || '?').split(' ').map(n => n[0]).join('').substring(0, 2))}</div>
+                <div style="flex:1;min-width:0;">
+                  <strong style="font-size:0.85rem;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${Utils.escapeHtml(u.name || '')}</strong>
+                  <span style="font-size:0.75rem;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">${Utils.escapeHtml(u.email || '')}${u.grade || u.class || u.className ? ' · ' + Utils.escapeHtml((u.grade || '') + ' ' + (u.class || u.className || '')) : ''}</span>
+                </div>
+                <span class="badge ${u.role === 'student' ? 'badge-info' : u.role === 'teacher' ? 'badge-warning' : 'badge-primary'}">${Utils.escapeHtml(u.role || 'student')}</span>
+              </div>`).join('')}
+          </div>`;
+    },
+
+    selectUser(key) {
+        const found = (AppState.getLookupUsers ? AppState.getLookupUsers() : []).find(u => String(u.id || '') === key || String(u.email || '') === key || String(u.name || '') === key);
+        if (!found) return;
+        this.selectedUser = found;
+        this.userSearchQuery = '';
+        this.userDetails = {
+            name: found.name || '',
+            email: found.email || '',
+            grade: found.grade || found.grade_level || '',
+            className: found.class || found.className || '',
+            phone: found.phone || '',
+            role: found.role || 'student'
+        };
+        const input = document.getElementById('oi-user-search');
+        if (input) input.value = '';
+        const box = document.getElementById('oi-user-results');
+        if (box) box.innerHTML = '';
+        this.rerenderStep1();
+    },
+
+    clearUserSelection() {
+        this.selectedUser = null;
+        this.userSearchQuery = '';
+        this.rerenderStep1();
+    },
+
+    rerenderStep1() {
+        const content = document.getElementById('step-content');
+        if (content) content.innerHTML = this.renderStepContent();
+        this.afterStepRender();
+    },
+
     goToStep(step) {
         if (step === 2 || step === 3) this.captureUserDetails();
 
@@ -539,7 +612,7 @@ const OfflineIssuePage = {
 
     issueBook(returnDate) {
         const userDetails = { ...this.userDetails };
-        const result = AppState.createOfflineBorrow(userDetails, this.selectedBook.id, Math.max(1, this.borrowPeriod));
+        const result = AppState.createOfflineBorrow(userDetails, this.selectedBook.id, Math.max(1, this.borrowPeriod), this.selectedUser);
 
         if (result) {
             result.expectedReturnDate = returnDate;
@@ -563,6 +636,8 @@ const OfflineIssuePage = {
         this.borrowPeriod = 14;
         this.returnDate = '';
         this.notes = '';
+        this.userSearchQuery = '';
+        this.selectedUser = null;
     },
 
     afterStepRender() {

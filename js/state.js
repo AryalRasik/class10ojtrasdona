@@ -224,6 +224,14 @@ const AppState = {
         this.allProfiles = allProfiles || [];
         this.lastBorrowSeq = (this.borrowRequests || []).length;
 
+        try {
+            this.offlineUsers = JSON.parse(localStorage.getItem('library_offlineUsers') || '[]');
+        } catch (e) { this.offlineUsers = []; }
+        if (typeof LIBRARY_DATA !== 'undefined' && LIBRARY_DATA.students && this.offlineUsers.length) {
+            const ids = new Set(LIBRARY_DATA.students.map(s => String(s.id)));
+            this.offlineUsers.forEach(u => { if (!ids.has(String(u.id))) LIBRARY_DATA.students.push(u); });
+        }
+
         try { this.checkDueReminders(); } catch (e) { console.warn('checkDueReminders failed:', e); }
         try { this.autoExpireReservations(); } catch (e) { console.warn('autoExpireReservations failed:', e); }
     },
@@ -274,6 +282,40 @@ const AppState = {
                 if (!ids.has(String(u.id))) LIBRARY_DATA.students.push(u);
             });
         }
+    },
+
+    saveOfflineUsers() {
+        try { localStorage.setItem('library_offlineUsers', JSON.stringify(this.offlineUsers || [])); } catch (e) {}
+    },
+
+    getLookupUsers() {
+        const map = new Map();
+        const add = (u) => {
+            if (!u) return;
+            const key = String(u.email || u.id || u.name || '').toLowerCase();
+            if (key && !map.has(key)) map.set(key, u);
+        };
+        if (typeof LIBRARY_DATA !== 'undefined') {
+            (LIBRARY_DATA.students || []).forEach(add);
+            (LIBRARY_DATA.teachers || []).forEach(add);
+        }
+        (this.offlineUsers || []).forEach(add);
+        if (typeof LoginPage !== 'undefined' && LoginPage.getStoredUsers) LoginPage.getStoredUsers().forEach(add);
+        (this.allProfiles || []).forEach(add);
+        return Array.from(map.values());
+    },
+
+    searchLookupUsers(query) {
+        if (!query) return [];
+        const q = String(query).toLowerCase();
+        const gradeKeys = [String(q).replace(/\s*(class|grade)\s*/gi, ''), q];
+        return this.getLookupUsers().filter(u => {
+            if ((u.name || '').toLowerCase().includes(q)) return true;
+            if ((u.email || '').toLowerCase().includes(q)) return true;
+            const grade = String(u.grade || u.grade_level || '');
+            const klass = String(u.class || u.className || '');
+            return gradeKeys.some(k => k && (grade.includes(k) || klass.includes(k)));
+        }).slice(0, 15);
     },
 
     saveAll() {
@@ -1231,7 +1273,7 @@ const AppState = {
         return res;
     },
 
-    createOfflineBorrow(userDetails, bookId, borrowDays = 14) {
+    createOfflineBorrow(userDetails, bookId, borrowDays = 14, existingUser = null) {
         if (!this.hasPermission('manage_borrows')) return null;
 
         const book = this.books.find(b => b.id === bookId);
@@ -1241,33 +1283,36 @@ const AppState = {
         const name = (userDetails.name || '').trim();
         if (!name) return null;
 
-        const studentId = this.isSupabaseConnected
-            ? 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-                const r = Math.random() * 16 | 0;
-                return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-            })
-            : Date.now();
+        const studentId = existingUser && existingUser.id
+            ? String(existingUser.id)
+            : (this.isSupabaseConnected
+                ? 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                    const r = Math.random() * 16 | 0;
+                    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+                })
+                : Date.now());
 
         const student = {
             id: studentId,
             name: name,
-            email: userDetails.email || `${name.toLowerCase().replace(/\s+/g, '.')}@offline.saraswatischool.edu.np`,
-            grade: userDetails.grade || '',
-            class: userDetails.className || '',
-            role: userDetails.role || 'student',
-            avatar: name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase(),
-            phone: userDetails.phone || '',
-            borrowCount: 0,
-            readingStreak: 0,
+            email: userDetails.email || (existingUser ? existingUser.email : '') || `${name.toLowerCase().replace(/\s+/g, '.')}@offline.saraswatischool.edu.np`,
+            grade: userDetails.grade || (existingUser ? existingUser.grade : '') || '',
+            class: userDetails.className || (existingUser ? (existingUser.className || existingUser.class) : '') || '',
+            role: userDetails.role || (existingUser ? existingUser.role : undefined) || 'student',
+            avatar: (userDetails.name || name).split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase(),
+            phone: userDetails.phone || (existingUser ? existingUser.phone : '') || '',
+            borrowCount: existingUser ? (existingUser.borrowCount || 0) : 0,
+            readingStreak: existingUser ? (existingUser.readingStreak || 0) : 0,
             isOffline: true
         };
 
-        if (!this.offlineUsers.some(u => String(u.id) === String(studentId))) {
+        if (!this.offlineUsers.some(u => String(u.id) === String(studentId) || (u.email && student.email && String(u.email).toLowerCase() === String(student.email).toLowerCase()))) {
             this.offlineUsers.push(student);
         }
-        if (typeof LIBRARY_DATA !== 'undefined' && LIBRARY_DATA.students && !LIBRARY_DATA.students.some(s => String(s.id) === String(studentId))) {
+        if (typeof LIBRARY_DATA !== 'undefined' && LIBRARY_DATA.students && !LIBRARY_DATA.students.some(s => String(s.id) === String(studentId) || (s.email && student.email && String(s.email).toLowerCase() === String(student.email).toLowerCase()))) {
             LIBRARY_DATA.students.push(student);
         }
+        this.saveOfflineUsers();
 
         const today = new Date().toISOString().split('T')[0];
         const requestId = this.generateBorrowId();

@@ -104,13 +104,16 @@ const DashboardPage = {
           <div>
             <div class="card" style="margin-bottom:1rem;">
               <div style="padding:1rem 1.5rem;border-bottom:1px solid var(--border);"><h3 style="margin:0;">Quick Actions</h3></div>
-              <div style="padding:1rem 1.5rem;display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
-                <a href="#/admin/books" data-nav class="btn btn-outline" style="justify-content:center;">${Utils.getIcon('plus', 16)} Add Book</a>
-                <a href="#/admin/users" data-nav class="btn btn-outline" style="justify-content:center;">${Utils.getIcon('user-plus', 16)} Add User</a>
-                <a href="#/admin/reports" data-nav class="btn btn-outline" style="justify-content:center;">${Utils.getIcon('bar-chart', 16)} Reports</a>
-                <a href="#/physical-reservation" data-nav class="btn btn-outline" style="justify-content:center;">${Utils.getIcon('bookmark', 16)} Reserve</a>
-                <a href="#/book-return" data-nav class="btn btn-outline" style="justify-content:center;">${Utils.getIcon('rotate-ccw', 16)} Returns</a>
-                <a href="#/admin/settings" data-nav class="btn btn-outline" style="justify-content:center;">${Utils.getIcon('settings', 16)} Settings</a>
+              <div style="padding:1rem 1.5rem;">
+                <a href="#/admin/offline-issue" data-nav class="btn btn-primary" style="justify-content:center;width:100%;margin-bottom:0.75rem;padding:0.7rem;">${Utils.getIcon('book-plus', 17)} Offline Book Issue</a>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                  <a href="#/admin/books" data-nav class="btn btn-outline" style="justify-content:center;">${Utils.getIcon('plus', 16)} Add Book</a>
+                  <a href="#/admin/users" data-nav class="btn btn-outline" style="justify-content:center;">${Utils.getIcon('user-plus', 16)} Add User</a>
+                  <a href="#/admin/reports" data-nav class="btn btn-outline" style="justify-content:center;">${Utils.getIcon('bar-chart', 16)} Reports</a>
+                  <a href="#/physical-reservation" data-nav class="btn btn-outline" style="justify-content:center;">${Utils.getIcon('bookmark', 16)} Reserve</a>
+                  <a href="#/book-return" data-nav class="btn btn-outline" style="justify-content:center;">${Utils.getIcon('rotate-ccw', 16)} Returns</a>
+                  <a href="#/admin/settings" data-nav class="btn btn-outline" style="justify-content:center;">${Utils.getIcon('settings', 16)} Settings</a>
+                </div>
               </div>
             </div>
             <div class="card">

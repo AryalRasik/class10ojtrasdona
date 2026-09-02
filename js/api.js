@@ -83,11 +83,28 @@ window.Api = {
   },
 
   async rejectUser(userId) {
+    await this.deleteUser(userId);
+  },
+
+  async deleteUser(userId) {
+    // Try the security-definer RPC first (removes auth user + cascades to profile)
+    try {
+      const { error } = await this.client.rpc('delete_account', { p_user_id: userId });
+      if (!error) return;
+      console.warn('delete_account RPC failed, falling back to direct profile delete:', error);
+    } catch (e) {
+      console.warn('delete_account RPC threw, falling back to direct profile delete:', e);
+    }
+    // Fallback: delete the profiles row directly
     const { error } = await this.client
       .from('profiles')
       .delete()
       .eq('id', userId);
     if (error) throw error;
+  },
+
+  async deleteAccount(userId) {
+    await this.deleteUser(userId);
   },
 
   async addLibrarian({ email, password, name, role = 'librarian', department }) {
@@ -97,14 +114,6 @@ window.Api = {
       p_name: name,
       p_role: role,
       p_department: department || ''
-    });
-    if (error) throw error;
-    return data;
-  },
-
-  async deleteAccount(userId) {
-    const { data, error } = await this.client.rpc('delete_account', {
-      p_user_id: userId
     });
     if (error) throw error;
     return data;
