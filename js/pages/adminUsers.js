@@ -623,20 +623,34 @@ const AdminUsersPage = {
   // ── Bulk Import ──────────────────────────────────────────
   importState: { file: null, headers: [], data: [], mapping: {}, preview: [] },
 
-  showImportModal() {
-    this.importState = { file: null, headers: [], data: [], mapping: {}, preview: [] };
-    Modal.show({
-      title: 'Bulk Import Users',
-      content: this._renderImportStep1(),
-      buttons: [],
-      size: 'lg'
-    });
-  },
+    showImportModal() {
+        this.importState = { mode: 'users', file: null, headers: [], data: [], mapping: {}, preview: [] };
+        Modal.show({
+            title: 'Bulk Import',
+            content: this._renderImportStep1(),
+            buttons: [],
+            size: 'lg'
+        });
+    },
 
-  _renderImportStep1() {
-    return `
-      <div id="import-step1">
-        <p style="color:var(--text-secondary);margin-bottom:1rem;">Upload a CSV or Excel (.xlsx) file with user data. Expected columns: <strong>Name, Email, Role</strong> (required). Optional: ID, Grade, Department, Class, Password.</p>
+    setImportMode(mode) {
+        this.importState.mode = mode;
+        const el = document.getElementById('import-step1');
+        if (el) el.outerHTML = this._renderImportStep1();
+    },
+
+    _renderImportStep1() {
+        const mode = this.importState.mode;
+        const isRecords = mode === 'records';
+        return `
+        <div id="import-step1">
+        <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
+          <button class="btn ${!isRecords ? 'btn-primary' : 'btn-outline'}" onclick="AdminUsersPage.setImportMode('users')">${Utils.getIcon('users', 15)} Import Users</button>
+          <button class="btn ${isRecords ? 'btn-primary' : 'btn-outline'}" onclick="AdminUsersPage.setImportMode('records')">${Utils.getIcon('book-open', 15)} Borrow Records</button>
+        </div>
+        ${isRecords
+          ? `<p style="color:var(--text-secondary);margin-bottom:1rem;">Upload records showing <strong>which user borrowed which book</strong>. Expected: <strong>Name/Email, Book Title/ISBN, Borrow Date, Due Date</strong>. This records how many books each user has borrowed.</p>`
+          : `<p style="color:var(--text-secondary);margin-bottom:1rem;">Upload a CSV or Excel (.xlsx) file with user data. Expected columns: <strong>Name, Email, Role</strong> (required). Optional: ID, Grade, Department, Class, Password.</p>`}
         <div id="import-dropzone" style="border:2px dashed var(--border-color);border-radius:12px;padding:2.5rem;text-align:center;cursor:pointer;transition:all 0.2s;" onclick="document.getElementById('import-file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent-primary)';this.style.background='var(--bg-hover)'" ondragleave="this.style.borderColor='var(--border-color)';this.style.background=''" ondrop="event.preventDefault();this.style.borderColor='var(--border-color)';this.style.background='';AdminUsersPage.handleImportFile(event.dataTransfer.files[0])">
           <div style="color:var(--text-tertiary);margin-bottom:0.5rem;">${Utils.getIcon('upload', 40)}</div>
           <p style="font-weight:600;margin-bottom:0.25rem;">Click or drag file here</p>
@@ -645,10 +659,12 @@ const AdminUsersPage = {
         <input type="file" id="import-file-input" accept=".csv,.xlsx,.xls" style="display:none" onchange="AdminUsersPage.handleImportFile(this.files[0])">
         <div id="import-preview-area" style="margin-top:1rem;"></div>
         <div style="margin-top:1rem;padding:0.75rem 1rem;background:var(--bg-tertiary);border-radius:8px;">
-          <p style="font-size:0.8rem;color:var(--text-secondary);margin:0;"><strong>Template format:</strong> Name, Email, Role (student/teacher/librarian/admin), ID (optional), Grade (optional), Department (optional), Class (optional), Password (optional - auto-generated if blank)</p>
+          ${isRecords
+            ? `<p style="font-size:0.8rem;color:var(--text-secondary);margin:0;"><strong>Template format:</strong> Name (or Email), Book Title (or ISBN), Borrow/Borrowed Date, Due Date (optional). One row per borrowed book.</p>`
+            : `<p style="font-size:0.8rem;color:var(--text-secondary);margin:0;"><strong>Template format:</strong> Name, Email, Role (student/teacher/librarian/admin), ID (optional), Grade (optional), Department (optional), Class (optional), Password (optional - auto-generated if blank)</p>`}
         </div>
       </div>`;
-  },
+    },
 
   handleImportFile(file) {
     if (!file) return;
@@ -691,35 +707,57 @@ const AdminUsersPage = {
   },
 
   _autoMapColumns(headers) {
-    const mapping = {};
-    const lower = headers.map(h => h.toLowerCase().trim());
-    const find = (terms) => {
-      const idx = lower.findIndex(h => terms.some(t => h === t || h.includes(t)));
-      return idx >= 0 ? headers[idx] : '';
-    };
-    mapping.name    = find(['name', 'full name', 'student name', 'user name', 'nama']);
-    mapping.email   = find(['email', 'e-mail', 'mail', 'email address']);
-    mapping.role    = find(['role', 'type', 'user type', 'position']);
-    mapping.id      = find(['id', 'user id', 'student id', 'roll', 'roll no', 'employee id']);
-    mapping.grade   = find(['grade', 'class grade', 'section']);
-    mapping.dept    = find(['department', 'dept', 'faculty']);
-    mapping.className = find(['class', 'section', 'room', 'className']);
-    mapping.password = find(['password', 'pass', 'pwd']);
-    return mapping;
-  },
+        const mapping = {};
+        const lower = headers.map(h => h.toLowerCase().trim());
+        const find = (terms) => {
+        const idx = lower.findIndex(h => terms.some(t => h === t || h.includes(t)));
+        return idx >= 0 ? headers[idx] : '';
+        };
+        const isRecords = this.importState.mode === 'records';
+        if (isRecords) {
+            mapping.name    = find(['name', 'full name', 'student name', 'user name', 'borrower', 'member']);
+            mapping.email   = find(['email', 'e-mail', 'mail', 'email address', 'user email']);
+            mapping.bookTitle = find(['book title', 'title', 'book', 'book name']);
+            mapping.bookIsbn = find(['isbn', 'isbn no', 'isbn no.', 'accession']);
+            mapping.borrowDate = find(['borrow date', 'borrowed', 'borrowed date', 'issue date', 'issued date', 'date issued']);
+            mapping.dueDate = find(['due date', 'return date', 'expected return', 'due']);
+            mapping.status = find(['status']);
+            return mapping;
+        }
+        mapping.name    = find(['name', 'full name', 'student name', 'user name', 'nama']);
+        mapping.email   = find(['email', 'e-mail', 'mail', 'email address']);
+        mapping.role    = find(['role', 'type', 'user type', 'position']);
+        mapping.id      = find(['id', 'user id', 'student id', 'roll', 'roll no', 'employee id']);
+        mapping.grade   = find(['grade', 'class grade', 'section']);
+        mapping.dept    = find(['department', 'dept', 'faculty']);
+        mapping.className = find(['class', 'section', 'room', 'className']);
+        mapping.password = find(['password', 'pass', 'pwd']);
+        return mapping;
+    },
 
   _renderImportStep2() {
-    const { headers, mapping, data } = this.importState;
-    const fields = [
-      { key: 'name', label: 'Name *', required: true },
-      { key: 'email', label: 'Email *', required: true },
-      { key: 'role', label: 'Role *', required: true },
-      { key: 'id', label: 'ID', required: false },
-      { key: 'grade', label: 'Grade', required: false },
-      { key: 'dept', label: 'Department', required: false },
-      { key: 'className', label: 'Class', required: false },
-      { key: 'password', label: 'Password', required: false }
-    ];
+        const { headers, mapping, data, mode } = this.importState;
+        const isRecords = mode === 'records';
+        const fields = isRecords
+            ? [
+                { key: 'name', label: 'User Name', required: false },
+                { key: 'email', label: 'User Email', required: false },
+                { key: 'bookTitle', label: 'Book Title *', required: true },
+                { key: 'bookIsbn', label: 'Book ISBN', required: false },
+                { key: 'borrowDate', label: 'Borrow Date', required: false },
+                { key: 'dueDate', label: 'Due Date', required: false },
+                { key: 'status', label: 'Status (borrowed/returned)', required: false }
+            ]
+            : [
+                { key: 'name', label: 'Name *', required: true },
+                { key: 'email', label: 'Email *', required: true },
+                { key: 'role', label: 'Role *', required: true },
+                { key: 'id', label: 'ID', required: false },
+                { key: 'grade', label: 'Grade', required: false },
+                { key: 'dept', label: 'Department', required: false },
+                { key: 'className', label: 'Class', required: false },
+                { key: 'password', label: 'Password', required: false }
+            ];
 
     const mappingHtml = fields.map(f => `
       <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem;">
@@ -740,12 +778,13 @@ const AdminUsersPage = {
       </div>
       <p style="font-size:0.8rem;color:var(--text-tertiary);margin-top:0.5rem;">Showing first 5 of ${data.length} rows</p>` : '';
 
-    document.getElementById('import-step1').innerHTML = `
+        document.getElementById('import-step1').innerHTML = `
       <div id="import-step2">
         <p style="color:var(--text-secondary);margin-bottom:1rem;">Map columns from <strong>${Utils.escapeHtml(this.importState.file.name)}</strong> (${data.length} rows found)</p>
         <div style="margin-bottom:1rem;">
           ${mappingHtml}
         </div>
+        ${isRecords ? '' : `
         <div style="margin-bottom:1rem;">
           <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:0.35rem;">Default Role (if not mapped)</label>
           <select class="form-input" id="imap-default-role" style="max-width:220px;">
@@ -762,17 +801,21 @@ const AdminUsersPage = {
             <span style="font-size:0.85rem;">Yes, skip approval and activate immediately</span>
           </label>
         </div>
+        `}
         <h4 style="margin:1rem 0 0.5rem;font-size:0.9rem;">Preview</h4>
         ${previewHtml}
         <div id="import-result-area" style="margin-top:1rem;"></div>
         <div style="display:flex;gap:0.75rem;margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border-color);">
           <button class="btn btn-outline" onclick="Modal.hide()">Cancel</button>
-          <button class="btn btn-primary" id="import-run-btn" onclick="AdminUsersPage.runImport()">${Utils.getIcon('upload', 16)} Import ${data.length} Users</button>
+          <button class="btn btn-primary" id="import-run-btn" onclick="AdminUsersPage.runImport()">${Utils.getIcon('upload', 16)} Import ${data.length} ${isRecords ? 'Records' : 'Users'}</button>
         </div>
       </div>`;
-  },
+    },
 
   async runImport() {
+    if (this.importState.mode === 'records') {
+      return this.runRecordImport();
+    }
     const { data, mapping } = this.importState;
     const defaultRole = document.getElementById('imap-default-role')?.value || 'student';
     const autoApprove = document.getElementById('imap-auto-approve')?.checked !== false;
@@ -890,6 +933,132 @@ const AdminUsersPage = {
         </div>`;
     }
     Toast.success(`Import complete: ${imported} added, ${skipped} skipped${failed ? `, ${failed} failed` : ''}`);
+  },
+
+  async runRecordImport() {
+    const { data, mapping } = this.importState;
+    const runBtn = document.getElementById('import-run-btn');
+    if (runBtn) { runBtn.disabled = true; runBtn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.6s linear infinite;"></span> Importing...'; }
+    const resultArea = document.getElementById('import-result-area');
+
+    let imported = 0, skipped = 0, failed = 0, errors = [];
+
+    for (const row of data) {
+      let name  = mapping.name ? String(row[mapping.name] || '').trim() : '';
+      let email = mapping.email ? String(row[mapping.email] || '').trim().toLowerCase() : '';
+      const bookTitle = mapping.bookTitle ? String(row[mapping.bookTitle] || '').trim() : '';
+      const bookIsbn  = mapping.bookIsbn ? String(row[mapping.bookIsbn] || '').trim() : '';
+      let borrowDate  = mapping.borrowDate ? String(row[mapping.borrowDate] || '').trim() : '';
+      let dueDate     = mapping.dueDate ? String(row[mapping.dueDate] || '').trim() : '';
+      const statusRaw = mapping.status ? String(row[mapping.status] || '').trim().toLowerCase() : 'borrowed';
+      const status = (statusRaw.includes('return') || statusRaw.includes('ret')) ? 'returned' : 'borrowed';
+
+      if (!bookTitle) { skipped++; continue; }
+      if (!name && !email) { skipped++; continue; }
+
+      const user = this._matchRecordUser(name, email);
+      if (user) {
+        name = user.name || name;
+        email = user.email || email;
+      }
+
+      const book = this._matchRecordBook(bookTitle, bookIsbn);
+      if (!book) {
+        failed++;
+        if (errors.length < 5) errors.push(`Book not found: ${bookTitle}`);
+        continue;
+      }
+
+      if (!borrowDate) borrowDate = new Date().toISOString().split('T')[0];
+      const borrowDateIso = this._toIsoDate(borrowDate);
+      if (!dueDate) {
+        const d = new Date(borrowDateIso);
+        d.setDate(d.getDate() + 14);
+        dueDate = d.toISOString().split('T')[0];
+      }
+      const dueDateIso = this._toIsoDate(dueDate);
+
+      try {
+        const result = AppState.createOfflineBorrow({
+          name: name || 'Walk-in User', email: email || '', role: 'student',
+          grade: '', className: '', phone: ''
+        }, book.id, 14, user || undefined);
+
+        if (result) {
+          AppState.borrowRequests.forEach(r => {
+            if (r.id === result.id) {
+              r.borrowDate = borrowDateIso;
+              r.status = status;
+              if (status === 'returned') r.returnDate = dueDateIso;
+            }
+          });
+          if (status === 'returned') {
+            const b = AppState.books.find(x => x.id === book.id);
+            if (b && b.availableCopies < b.totalCopies) b.availableCopies++;
+          }
+          imported++;
+        } else {
+          failed++;
+          if (errors.length < 5) errors.push(`Could not create record for: ${bookTitle}`);
+        }
+      } catch (e) {
+        failed++;
+        if (errors.length < 5) errors.push(`${bookTitle}: ${e.message || 'Unknown error'}`);
+      }
+    }
+
+    AppState.saveAll();
+
+    if (runBtn) { runBtn.disabled = false; runBtn.innerHTML = `${Utils.getIcon('upload', 16)} Import Done`; }
+    if (resultArea) {
+      resultArea.innerHTML = `
+        <div style="padding:1rem;border-radius:8px;background:var(--bg-tertiary);">
+          <div style="display:flex;gap:1.5rem;flex-wrap:wrap;margin-bottom:${errors.length ? '0.75rem' : '0'};">
+            <span style="font-size:0.9rem;"><strong style="color:var(--success);">${imported}</strong> records added</span>
+            <span style="font-size:0.9rem;"><strong style="color:var(--warning);">${skipped}</strong> skipped (empty or duplicate)</span>
+            ${failed ? `<span style="font-size:0.9rem;"><strong style="color:var(--danger);">${failed}</strong> failed</span>` : ''}
+          </div>
+          ${errors.length ? `<div style="font-size:0.8rem;color:var(--danger);">${errors.map(e => `<div>- ${Utils.escapeHtml(e)}</div>`).join('')}</div>` : ''}
+        </div>`;
+    }
+    Toast.success(`Borrow records import complete: ${imported} added, ${skipped} skipped, ${failed} failed`);
+  },
+
+  _toIsoDate(value) {
+    const match = String(value).match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+    const parsed = new Date(value);
+    if (!isNaN(parsed.getTime())) return parsed.toISOString().split('T')[0];
+    return new Date().toISOString().split('T')[0];
+  },
+
+  _matchRecordUser(name, email) {
+    const lookup = (AppState.getLookupUsers ? AppState.getLookupUsers() : []);
+    if (email) {
+      const byEmail = lookup.find(u => (u.email || '').toLowerCase() === email.toLowerCase());
+      if (byEmail) return byEmail;
+    }
+    if (name) {
+      const byName = lookup.find(u => (u.name || '').trim().toLowerCase() === name.trim().toLowerCase());
+      if (byName) return byName;
+    }
+    return null;
+  },
+
+  _matchRecordBook(title, isbn) {
+    const books = AppState.books || [];
+    const t = title.trim().toLowerCase();
+    if (isbn) {
+      const byIsbn = books.find(b => (b.isbn || '').toLowerCase() === isbn.toLowerCase());
+      if (byIsbn) return byIsbn;
+    }
+    if (t) {
+      const byTitle = books.find(b => (b.title || '').trim().toLowerCase() === t);
+      if (byTitle) return byTitle;
+      const byPartial = books.find(b => (b.title || '').toLowerCase().includes(t) || t.includes((b.title || '').toLowerCase()));
+      if (byPartial) return byPartial;
+    }
+    return null;
   },
 
   afterRender() {

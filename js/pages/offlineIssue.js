@@ -1,7 +1,7 @@
 const OfflineIssuePage = {
     currentStep: 1,
     userDetails: { name: '', email: '', grade: '', className: '', phone: '', role: 'student' },
-    selectedBook: null,
+    selectedBooks: [],
     bookSearchQuery: '',
     bookSearchResults: [],
     borrowPeriod: 14,
@@ -78,13 +78,17 @@ const OfflineIssuePage = {
 
     renderSuccess() {
         const i = this.lastIssued;
+        const list = this.lastIssuedList;
+        const count = list ? list.length : 1;
         return `
         <div class="card" style="padding:1.5rem;margin-bottom:1.5rem;border-left:4px solid var(--success);">
           <div style="display:flex;align-items:center;gap:12px;">
             <div style="width:44px;height:44px;border-radius:50%;background:rgba(16,185,129,0.1);color:var(--success);display:flex;align-items:center;justify-content:center;flex-shrink:0;">${Utils.getIcon('check-circle', 24)}</div>
             <div style="flex:1;">
-              <h3 style="margin:0;color:var(--success);">Book Issued Offline</h3>
-              <p style="margin:2px 0 0;font-size:0.85rem;color:var(--text-secondary);">"${Utils.escapeHtml(i.bookTitle)}" issued to ${Utils.escapeHtml(i.studentName)}. Due by ${Utils.formatDate(i.expectedReturnDate)}.</p>
+              <h3 style="margin:0;color:var(--success);">${count > 1 ? count + ' Books' : 'Book'} Issued Offline</h3>
+              ${count > 1
+                  ? `<p style="margin:2px 0 0;font-size:0.85rem;color:var(--text-secondary);">${count} books issued to ${Utils.escapeHtml(i.studentName)}. Due by ${Utils.formatDate(i.expectedReturnDate)}.</p>`
+                  : `<p style="margin:2px 0 0;font-size:0.85rem;color:var(--text-secondary);">"${Utils.escapeHtml(i.bookTitle)}" issued to ${Utils.escapeHtml(i.studentName)}. Due by ${Utils.formatDate(i.expectedReturnDate)}.</p>`}
             </div>
             <button class="btn btn-outline btn-sm" onclick="OfflineIssuePage.resetForm()">${Utils.getIcon('plus', 14)} New Issue</button>
           </div>
@@ -188,23 +192,27 @@ const OfflineIssuePage = {
     },
 
     renderStep2() {
+        const count = this.selectedBooks.length;
+        const selectedIds = new Set(this.selectedBooks.map(b => b.id));
         let resultsHtml = '';
         if (this.bookSearchQuery && this.bookSearchResults.length > 0) {
             resultsHtml = `
           <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:1rem;margin-top:0.75rem;max-height:400px;overflow-y:auto;">
             ${this.bookSearchResults.map(b => {
                 const isAvailable = b.availableCopies > 0;
+                const isSelected = selectedIds.has(b.id);
                 return `
-              <div style="display:flex;gap:12px;padding:1rem;border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all 0.15s;${isAvailable ? '' : 'opacity:0.6;'}"
-                   onmouseenter="this.style.borderColor='var(--primary)';this.style.background='var(--bg-secondary)'" onmouseleave="this.style.borderColor='var(--border)';this.style.background=''"
+              <div style="display:flex;gap:12px;padding:1rem;border:2px solid ${isSelected ? 'var(--primary)' : 'var(--border)'};border-radius:8px;cursor:pointer;transition:all 0.15s;${isAvailable ? '' : 'opacity:0.6;'}background:${isSelected ? 'var(--primary)08' : ''}"
+                   onmouseenter="this.style.borderColor='var(--primary)'" onmouseleave="if(!${isSelected})this.style.borderColor='var(--border)'"
                    onclick="${isAvailable ? `OfflineIssuePage.selectBook(${b.id})` : ''}">
                 <div style="width:60px;min-height:80px;flex-shrink:0;font-size:0;">${Utils.getBookCover(b)}</div>
                 <div style="flex:1;min-width:0;">
                   <strong style="font-size:0.9rem;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${Utils.escapeHtml(b.title)}</strong>
                   <p style="margin:2px 0;font-size:0.8rem;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${Utils.escapeHtml(b.author)}</p>
-                  <div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px;">
+                  <div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;">
                     <span class="badge ${isAvailable ? 'badge-success' : 'badge-danger'}">${isAvailable ? b.availableCopies + ' avail' : 'None'}</span>
                     <span class="badge badge-info">${Utils.escapeHtml(b.shelf || 'N/A')}</span>
+                    ${isSelected ? '<span class="badge badge-primary">' + Utils.getIcon('check', 12) + ' Selected</span>' : ''}
                   </div>
                 </div>
               </div>`;
@@ -214,17 +222,17 @@ const OfflineIssuePage = {
             resultsHtml = `<div class="card" style="margin-top:0.75rem;padding:1.5rem;text-align:center;color:var(--text-secondary);">No books found matching "${Utils.escapeHtml(this.bookSearchQuery)}"</div>`;
         }
 
-        const selectedHtml = this.selectedBook ? this.renderSelectedBookCard() : '';
+        const selectedHtml = count > 0 ? this.renderSelectedBooksList() : '';
 
         return `
       <div class="card">
         <div class="card-header-flex">
-          <h3 style="margin:0;">${Utils.getIcon('book-open', 20)} Step 2: Select Book</h3>
-          ${this.selectedBook ? '<span class="badge badge-success">Selected</span>' : '<span class="badge badge-warning">Not Selected</span>'}
+          <h3 style="margin:0;">${Utils.getIcon('book-open', 20)} Step 2: Select Book${count > 1 ? 's' : ''}</h3>
+          ${count > 0 ? `<span class="badge badge-success">${count} selected</span>` : '<span class="badge badge-warning">Not Selected</span>'}
         </div>
         <div style="padding:0 1.5rem 1.5rem;">
           <div style="position:relative;margin-bottom:0.5rem;">
-            <input class="form-input" id="oi-book-search" placeholder="Search by Title, Author, ISBN, or Shelf..." value="${Utils.escapeHtml(this.bookSearchQuery)}" oninput="OfflineIssuePage.onBookSearch(this.value)" style="padding-left:2.5rem;">
+            <input class="form-input" id="oi-book-search" placeholder="Search and select multiple books..." value="${Utils.escapeHtml(this.bookSearchQuery)}" oninput="OfflineIssuePage.onBookSearch(this.value)" style="padding-left:2.5rem;">
             <span style="position:absolute;left:1.75rem;top:50%;transform:translateY(-50%);color:var(--text-secondary);">${Utils.getIcon('search', 16)}</span>
           </div>
           ${resultsHtml}
@@ -233,57 +241,45 @@ const OfflineIssuePage = {
       ${selectedHtml}
       <div style="display:flex;justify-content:space-between;margin-top:1rem;">
         <button class="btn btn-outline" onclick="OfflineIssuePage.goToStep(1)">${Utils.getIcon('arrow-left', 16)} Back</button>
-        ${this.selectedBook ? `<button class="btn btn-primary" onclick="OfflineIssuePage.goToStep(3)">Next: Confirm & Issue ${Utils.getIcon('arrow-right', 16)}</button>` : ''}
+        ${count > 0 ? `<button class="btn btn-primary" onclick="OfflineIssuePage.goToStep(3)">Next: Confirm & Issue (${count} book${count > 1 ? 's' : ''}) ${Utils.getIcon('arrow-right', 16)}</button>` : ''}
       </div>`;
     },
 
-    renderSelectedBookCard() {
-        const b = this.selectedBook;
-        const isAvailable = b.availableCopies > 0;
-
+    renderSelectedBooksList() {
         return `
-      <div class="card glass-card" style="margin-top:1rem;border-left:3px solid ${isAvailable ? 'var(--success)' : 'var(--danger)'};">
-        <div style="padding:1.25rem;">
-          <div style="display:flex;gap:16px;">
-            <div style="width:80px;min-height:110px;flex-shrink:0;font-size:0;">${Utils.getBookCover(b)}</div>
-            <div style="flex:1;">
-              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
-                <div>
-                  <h3 style="margin:0;font-size:1.1rem;">${Utils.escapeHtml(b.title)}</h3>
-                  <p style="margin:2px 0;font-size:0.85rem;color:var(--text-secondary);">by ${Utils.escapeHtml(b.author)}</p>
-                </div>
-                <button class="btn btn-ghost btn-sm" onclick="OfflineIssuePage.clearBook()" title="Change book">${Utils.getIcon('x', 14)} Change</button>
-              </div>
-              <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:8px;margin-top:12px;">
-                <div style="text-align:center;padding:0.5rem;background:var(--bg-secondary);border-radius:6px;">
-                  <div style="font-size:0.95rem;font-weight:700;color:${isAvailable ? 'var(--success)' : 'var(--danger)'};">${b.availableCopies}/${b.totalCopies}</div>
-                  <div style="font-size:0.7rem;color:var(--text-secondary);">Copies</div>
-                </div>
-                <div style="text-align:center;padding:0.5rem;background:var(--bg-secondary);border-radius:6px;">
-                  <div style="font-size:0.95rem;font-weight:700;color:var(--primary);">${Utils.escapeHtml(b.shelf || 'N/A')}</div>
-                  <div style="font-size:0.7rem;color:var(--text-secondary);">Shelf</div>
-                </div>
-                <div style="text-align:center;padding:0.5rem;background:var(--bg-secondary);border-radius:6px;">
-                  <div style="font-size:0.95rem;font-weight:700;color:var(--info);">${Utils.escapeHtml(b.rack || 'N/A')}</div>
-                  <div style="font-size:0.7rem;color:var(--text-secondary);">Rack</div>
-                </div>
-              </div>
-              ${!isAvailable ? `<p style="color:var(--danger);font-size:0.8rem;margin:8px 0 0;font-weight:600;">No copies available to issue.</p>` : ''}
-            </div>
+      <div class="card glass-card" style="margin-top:1rem;border-left:3px solid var(--primary);">
+        <div style="padding:1rem 1.5rem;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+            <strong style="font-size:0.9rem;">${Utils.getIcon('book-open', 16)} Selected Books (${this.selectedBooks.length})</strong>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0.5rem;">
+            ${this.selectedBooks.map(b => {
+                const isAvailable = b.availableCopies > 0;
+                return `<div style="display:flex;gap:10px;padding:0.6rem 0.75rem;border:1px solid var(--border);border-radius:6px;align-items:center;">
+                  <div style="width:32px;min-height:44px;flex-shrink:0;font-size:0;">${Utils.getBookCover(b)}</div>
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-weight:600;font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${Utils.escapeHtml(b.title)}</div>
+                    <div style="font-size:0.75rem;color:var(--text-secondary);">${Utils.escapeHtml(b.author)} · <span class="badge ${isAvailable ? 'badge-success' : 'badge-danger'}" style="font-size:0.65rem;">${b.availableCopies} avail</span></div>
+                  </div>
+                  <button class="btn btn-ghost btn-sm" onclick="OfflineIssuePage.removeBook(${b.id})" title="Remove">${Utils.getIcon('x', 14)}</button>
+                </div>`;
+            }).join('')}
           </div>
         </div>
       </div>`;
     },
 
     renderStep3() {
-        const b = this.selectedBook;
+        const books = this.selectedBooks;
         const returnDate = this.returnDate || this.getDefaultReturnDate();
         const name = this.userDetails.name;
+        const allAvailable = books.every(b => b.availableCopies > 0);
 
         return `
       <div class="card">
         <div class="card-header-flex">
           <h3 style="margin:0;">${Utils.getIcon('check-circle', 20)} Step 3: Confirm & Issue</h3>
+          <span class="badge badge-info">${books.length} book${books.length > 1 ? 's' : ''}</span>
         </div>
         <div style="padding:0 1.5rem 1.5rem;">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
@@ -299,14 +295,19 @@ const OfflineIssuePage = {
             <div style="padding:1rem;background:var(--bg-secondary);border-radius:8px;">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                 <span style="color:var(--primary);">${Utils.getIcon('book-open', 16)}</span>
-                <strong style="font-size:0.85rem;">Book</strong>
+                <strong style="font-size:0.85rem;">Books (${books.length})</strong>
               </div>
-              <div style="display:flex;gap:8px;">
-                <div style="width:40px;min-height:55px;flex-shrink:0;font-size:0;">${Utils.getBookCover(b)}</div>
-                <div>
-                  <div style="font-weight:600;font-size:0.9rem;">${Utils.escapeHtml(b.title)}</div>
-                  <div style="font-size:0.8rem;color:var(--text-secondary);">${Utils.escapeHtml(b.author)}</div>
-                </div>
+              <div style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;">
+                ${books.map(b => {
+                    const avail = b.availableCopies > 0;
+                    return `<div style="display:flex;gap:8px;align-items:center;">
+                      <div style="width:28px;min-height:38px;flex-shrink:0;font-size:0;">${Utils.getBookCover(b)}</div>
+                      <div style="flex:1;min-width:0;">
+                        <div style="font-weight:600;font-size:0.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${Utils.escapeHtml(b.title)}</div>
+                        <div style="font-size:0.72rem;color:var(--text-secondary);">${Utils.escapeHtml(b.author)} · <span style="color:${avail ? 'var(--success)' : 'var(--danger)'};">${avail ? b.availableCopies + ' avail' : 'No copies'}</span></div>
+                      </div>
+                    </div>`;
+                }).join('')}
               </div>
             </div>
           </div>
@@ -334,15 +335,15 @@ const OfflineIssuePage = {
 
           <div style="display:flex;gap:8px;padding:0.75rem 1rem;background:var(--bg-secondary);border-radius:8px;margin-bottom:1.5rem;">
             <span style="color:var(--primary);">${Utils.getIcon('info', 16)}</span>
-            <span style="font-size:0.85rem;color:var(--text-secondary);">The book will be marked as borrowed immediately and the user will be added to the library records with the details above.</span>
+            <span style="font-size:0.85rem;color:var(--text-secondary);">All ${books.length} book${books.length > 1 ? 's will' : ' will'} be marked as borrowed immediately and the user will be added to the library records.</span>
           </div>
         </div>
       </div>
 
       <div style="display:flex;justify-content:space-between;margin-top:1rem;">
         <button class="btn btn-outline" onclick="OfflineIssuePage.goToStep(2)">${Utils.getIcon('arrow-left', 16)} Back</button>
-        <button class="btn btn-primary" onclick="OfflineIssuePage.confirmIssue()" ${b.availableCopies <= 0 ? 'disabled' : ''}>
-          ${Utils.getIcon('check-circle', 16)} Issue Book Offline
+        <button class="btn btn-primary" onclick="OfflineIssuePage.confirmIssue()" ${!allAvailable ? 'disabled title="One or more books have no available copies"' : ''}>
+          ${Utils.getIcon('check-circle', 16)} Issue ${books.length > 1 ? 'All ' + books.length + ' Books' : 'Book'} Offline
         </button>
       </div>`;
     },
@@ -366,6 +367,7 @@ const OfflineIssuePage = {
                 <th>Borrow Date</th>
                 <th>Due Date</th>
                 <th>Status</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -376,6 +378,7 @@ const OfflineIssuePage = {
                     : r.status === 'overdue'
                         ? '<span class="badge badge-danger">Overdue</span>'
                         : '<span class="badge badge-success">Returned</span>';
+                const canReturn = r.status === 'borrowed' || r.status === 'overdue';
                 return `<tr>
                   <td>
                     <div style="display:flex;align-items:center;gap:10px;">
@@ -391,6 +394,7 @@ const OfflineIssuePage = {
                   <td>${Utils.formatDate(r.borrowDate)}</td>
                   <td>${Utils.formatDate(r.expectedReturnDate)}</td>
                   <td>${statusBadge}</td>
+                  <td>${canReturn ? `<button class="btn btn-success btn-sm" onclick="OfflineIssuePage.returnOfflineBook('${r.id}')" style="white-space:nowrap;">${Utils.getIcon('corner-down-left', 14)} Returned</button>` : '<span style="color:var(--text-tertiary);font-size:0.8rem;">—</span>'}</td>
                 </tr>`;
               }).join('')}
             </tbody>
@@ -425,17 +429,21 @@ const OfflineIssuePage = {
 
     selectBook(id) {
         const found = (AppState.books || []).find(b => b.id === id);
-        if (found) {
-            this.selectedBook = found;
-            this.bookSearchQuery = '';
-            this.bookSearchResults = [];
-            const content = document.getElementById('step-content');
-            if (content) content.innerHTML = this.renderStep2();
+        if (!found || found.availableCopies <= 0) return;
+        const idx = this.selectedBooks.findIndex(b => b.id === id);
+        if (idx >= 0) {
+            this.selectedBooks.splice(idx, 1);
+        } else {
+            this.selectedBooks.push(found);
         }
+        this.bookSearchQuery = '';
+        this.bookSearchResults = [];
+        const content = document.getElementById('step-content');
+        if (content) content.innerHTML = this.renderStep2();
     },
 
-    clearBook() {
-        this.selectedBook = null;
+    removeBook(id) {
+        this.selectedBooks = this.selectedBooks.filter(b => b.id !== id);
         const content = document.getElementById('step-content');
         if (content) content.innerHTML = this.renderStep2();
     },
@@ -527,8 +535,8 @@ const OfflineIssuePage = {
             Toast.warning('Please enter the user\'s full name first.');
             return;
         }
-        if (step === 3 && !this.selectedBook) {
-            Toast.warning('Please select a book.');
+        if (step === 3 && this.selectedBooks.length === 0) {
+            Toast.warning('Please select at least one book.');
             return;
         }
         this.currentStep = step;
@@ -557,15 +565,21 @@ const OfflineIssuePage = {
             return;
         }
 
-        const b = this.selectedBook;
+        const books = this.selectedBooks;
         const name = this.userDetails.name;
 
         if (!name) {
             Toast.error('Please enter the user\'s full name');
             return;
         }
-        if (b.availableCopies <= 0) {
-            Toast.error('No available copies of this book');
+        if (books.length === 0) {
+            Toast.error('Please select at least one book');
+            return;
+        }
+
+        const unavailable = books.filter(b => b.availableCopies <= 0);
+        if (unavailable.length > 0) {
+            Toast.error(`"${unavailable[0].title}" has no available copies`);
             return;
         }
 
@@ -573,20 +587,21 @@ const OfflineIssuePage = {
         const period = Math.max(1, Math.round((new Date(returnDate) - new Date()) / 86400000));
 
         Modal.show({
-            title: 'Confirm Offline Issue',
+            title: `Confirm Offline Issue (${books.length} book${books.length > 1 ? 's' : ''})`,
             content: `
-              <p style="color:var(--text-secondary);margin:0 0 1rem;">Please confirm issuing this book to a walk-in user:</p>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
-                <div style="padding:0.75rem;background:var(--bg-secondary);border-radius:8px;">
-                  <small style="color:var(--text-tertiary);">User</small>
-                  <p style="margin:2px 0 0;font-weight:600;">${Utils.escapeHtml(name)}</p>
-                  ${this.userDetails.grade ? `<p style="margin:2px 0;font-size:0.8rem;color:var(--text-secondary);">Grade ${Utils.escapeHtml(this.userDetails.grade)} - ${Utils.escapeHtml(this.userDetails.className || '?')}</p>` : ''}
-                </div>
-                <div style="padding:0.75rem;background:var(--bg-secondary);border-radius:8px;">
-                  <small style="color:var(--text-tertiary);">Book</small>
-                  <p style="margin:2px 0 0;font-weight:600;">${Utils.escapeHtml(b.title)}</p>
-                  <p style="margin:2px 0;font-size:0.8rem;color:var(--text-secondary);">${Utils.escapeHtml(b.author)}</p>
-                </div>
+              <p style="color:var(--text-secondary);margin:0 0 1rem;">Please confirm issuing ${books.length > 1 ? 'these books' : 'this book'} to a walk-in user:</p>
+              <div style="padding:0.75rem;background:var(--bg-secondary);border-radius:8px;margin-bottom:1rem;">
+                <small style="color:var(--text-tertiary);">User</small>
+                <p style="margin:2px 0 0;font-weight:600;">${Utils.escapeHtml(name)}</p>
+                ${this.userDetails.grade ? `<p style="margin:2px 0;font-size:0.8rem;color:var(--text-secondary);">Grade ${Utils.escapeHtml(this.userDetails.grade)} - ${Utils.escapeHtml(this.userDetails.className || '?')}</p>` : ''}
+              </div>
+              <div style="padding:0.75rem;background:var(--bg-secondary);border-radius:8px;margin-bottom:1rem;max-height:180px;overflow-y:auto;">
+                <small style="color:var(--text-tertiary);">Books (${books.length})</small>
+                ${books.map(b => `<div style="display:flex;gap:8px;align-items:center;margin-top:6px;padding-top:6px;border-top:1px solid var(--border);">
+                  <div style="width:28px;min-height:38px;flex-shrink:0;font-size:0;">${Utils.getBookCover(b)}</div>
+                  <div><div style="font-weight:600;font-size:0.85rem;">${Utils.escapeHtml(b.title)}</div>
+                  <div style="font-size:0.75rem;color:var(--text-secondary);">${Utils.escapeHtml(b.author)}</div></div>
+                </div>`).join('')}
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
                 <div style="padding:0.75rem;background:var(--bg-secondary);border-radius:8px;">
@@ -605,32 +620,48 @@ const OfflineIssuePage = {
             size: 'md',
             buttons: [
                 { label: 'Cancel', class: 'btn-secondary' },
-                { label: 'Confirm Issue', class: 'btn-primary', onClick: () => this.issueBook(returnDate) }
+                { label: `Issue ${books.length > 1 ? 'All ' + books.length + ' Books' : 'Book'}`, class: 'btn-primary', onClick: () => this.issueBook(returnDate) }
             ]
         });
     },
 
     issueBook(returnDate) {
         const userDetails = { ...this.userDetails };
-        const result = AppState.createOfflineBorrow(userDetails, this.selectedBook.id, Math.max(1, this.borrowPeriod), this.selectedUser);
+        const issued = [];
+        const failed = [];
 
-        if (result) {
-            result.expectedReturnDate = returnDate;
-            if (result.expectedReturnDate) AppState.updateBorrowDueDate(result.id, returnDate);
-            Modal.hide();
-            this.lastIssued = result;
+        for (const book of this.selectedBooks) {
+            const result = AppState.createOfflineBorrow(userDetails, book.id, Math.max(1, this.borrowPeriod), this.selectedUser);
+            if (result) {
+                result.expectedReturnDate = returnDate;
+                if (result.expectedReturnDate) AppState.updateBorrowDueDate(result.id, returnDate);
+                issued.push(result);
+            } else {
+                failed.push(book.title);
+            }
+        }
+
+        Modal.hide();
+
+        if (issued.length > 0) {
+            this.lastIssued = issued[0];
+            this.lastIssuedList = issued;
             this.resetForm();
             Router.resolve();
-            Toast.success(`Book issued offline to "${this.userDetails.name}"`);
+            if (failed.length > 0) {
+                Toast.warning(`${issued.length} issued, ${failed.length} failed: ${failed.join(', ')}`);
+            } else {
+                Toast.success(`${issued.length > 1 ? issued.length + ' books' : '"'+issued[0].bookTitle+'"'} issued offline to "${userDetails.name}"`);
+            }
         } else {
-            Toast.error('Failed to issue the book. Please try again.');
+            Toast.error('Failed to issue any books. Please try again.');
         }
     },
 
     resetForm() {
         this.currentStep = 1;
         this.userDetails = { name: '', email: '', grade: '', className: '', phone: '', role: 'student' };
-        this.selectedBook = null;
+        this.selectedBooks = [];
         this.bookSearchQuery = '';
         this.bookSearchResults = [];
         this.borrowPeriod = 14;
@@ -638,6 +669,22 @@ const OfflineIssuePage = {
         this.notes = '';
         this.userSearchQuery = '';
         this.selectedUser = null;
+    },
+
+    returnOfflineBook(requestId) {
+        const request = (AppState.borrowRequests || []).find(r => r.id === requestId);
+        if (!request) return;
+
+        const bookTitle = request.bookTitle;
+        Modal.confirm('Confirm Return', `Mark "${bookTitle}" as returned?`, () => {
+            const ok = AppState.processReturn(requestId);
+            if (ok) {
+                Toast.success(`"${bookTitle}" marked as returned`);
+                Router.resolve();
+            } else {
+                Toast.error('Failed to process return. Please try again.');
+            }
+        });
     },
 
     afterStepRender() {

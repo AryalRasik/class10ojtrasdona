@@ -97,6 +97,7 @@ const DashboardPage = {
                   <div style="width:32px;height:32px;border-radius:50%;background:${color}15;color:${color};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${Utils.getIcon(icons[r.status] || 'bell', 14)}</div>
                   <div style="flex:1;min-width:0;"><p style="margin:0;font-size:0.85rem;">${Utils.escapeHtml(r.studentName)} — ${Utils.escapeHtml(r.bookTitle)}</p><small style="color:var(--text-secondary);">${r.id} · ${Utils.formatDate(r.borrowDate)}</small></div>
                   <span class="badge badge-${r.status === 'returned' ? 'success' : r.status === 'overdue' ? 'danger' : r.status === 'pending' ? 'warning' : r.status === 'rejected' ? 'danger' : 'primary'}" style="font-size:0.7rem;">${r.status}</span>
+                  ${(r.status === 'borrowed' || r.status === 'overdue') ? `<button class="btn btn-success btn-sm" onclick="DashboardPage.markReturned('${r.id}')" title="Confirm returned">${Utils.getIcon('corner-down-left', 13)} Returned</button>` : ''}
                 </div>`;
               }).join('') || '<p style="color:var(--text-secondary);text-align:center;padding:1rem;">No recent activity</p>'}
             </div>
@@ -460,5 +461,16 @@ const DashboardPage = {
                 <div><small style="color:var(--text-tertiary);">Expected Return</small><p style="margin:2px 0;">${Utils.formatDate(r.expectedReturnDate)}</p></div>
             </div>`;
         Modal.show({ title: 'Request Details', content, size: 'md', buttons: [{ label: 'Close', class: 'btn-secondary' }] });
+    },
+
+    markReturned(requestId) {
+        const r = AppState.borrowRequests.find(x => x.id === requestId);
+        if (!r) return;
+        Modal.confirm('Confirm Return', `Mark "${r.bookTitle}" as returned?`, () => {
+            if (AppState.processReturn(requestId)) {
+                Toast.success(`"${r.bookTitle}" marked as returned`);
+                Router.resolve();
+            }
+        });
     }
 };
