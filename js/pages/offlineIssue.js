@@ -194,18 +194,21 @@ const OfflineIssuePage = {
     renderStep2() {
         const count = this.selectedBooks.length;
         const selectedIds = new Set(this.selectedBooks.map(b => b.id));
+        const hasQuery = !!this.bookSearchQuery.trim();
+        const showing = hasQuery ? this.bookSearchResults : (AppState.books || []).filter(b => b.availableCopies > 0);
         let resultsHtml = '';
-        if (this.bookSearchQuery && this.bookSearchResults.length > 0) {
+
+        if (showing.length > 0) {
             resultsHtml = `
-          <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:1rem;margin-top:0.75rem;max-height:400px;overflow-y:auto;">
-            ${this.bookSearchResults.map(b => {
+          <div class="oi-book-grid">
+            ${showing.map(b => {
                 const isAvailable = b.availableCopies > 0;
                 const isSelected = selectedIds.has(b.id);
                 return `
-              <div style="display:flex;gap:12px;padding:1rem;border:2px solid ${isSelected ? 'var(--primary)' : 'var(--border)'};border-radius:8px;cursor:pointer;transition:all 0.15s;${isAvailable ? '' : 'opacity:0.6;'}background:${isSelected ? 'var(--primary)08' : ''}"
+              <div class="oi-book-card ${isSelected ? 'oi-book-card-selected' : ''}" style="display:flex;gap:12px;padding:1rem;border:2px solid ${isSelected ? 'var(--primary)' : 'var(--border)'};border-radius:8px;cursor:pointer;transition:all 0.15s;${isAvailable ? '' : 'opacity:0.6;'}background:${isSelected ? 'var(--primary)08' : ''}"
                    onmouseenter="this.style.borderColor='var(--primary)'" onmouseleave="if(!${isSelected})this.style.borderColor='var(--border)'"
                    onclick="${isAvailable ? `OfflineIssuePage.selectBook(${b.id})` : ''}">
-                <div style="width:60px;min-height:80px;flex-shrink:0;font-size:0;">${Utils.getBookCover(b)}</div>
+                <div class="oi-book-cover" style="width:60px;min-height:80px;flex-shrink:0;font-size:0;">${Utils.getBookCover(b)}</div>
                 <div style="flex:1;min-width:0;">
                   <strong style="font-size:0.9rem;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${Utils.escapeHtml(b.title)}</strong>
                   <p style="margin:2px 0;font-size:0.8rem;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${Utils.escapeHtml(b.author)}</p>
@@ -217,9 +220,12 @@ const OfflineIssuePage = {
                 </div>
               </div>`;
             }).join('')}
-          </div>`;
-        } else if (this.bookSearchQuery && this.bookSearchResults.length === 0) {
+          </div>
+          ${hasQuery ? `<p style="font-size:0.8rem;color:var(--text-tertiary);margin-top:0.5rem;">${showing.length} result${showing.length > 1 ? 's' : ''}</p>` : `<p style="font-size:0.8rem;color:var(--text-tertiary);margin-top:0.5rem;">${showing.length} book${showing.length > 1 ? 's' : ''} available to issue</p>`}`;
+        } else if (hasQuery) {
             resultsHtml = `<div class="card" style="margin-top:0.75rem;padding:1.5rem;text-align:center;color:var(--text-secondary);">No books found matching "${Utils.escapeHtml(this.bookSearchQuery)}"</div>`;
+        } else {
+            resultsHtml = `<div class="card" style="margin-top:0.75rem;padding:1.5rem;text-align:center;color:var(--text-secondary);">No books are currently available to issue.</div>`;
         }
 
         const selectedHtml = count > 0 ? this.renderSelectedBooksList() : '';
@@ -231,9 +237,10 @@ const OfflineIssuePage = {
           ${count > 0 ? `<span class="badge badge-success">${count} selected</span>` : '<span class="badge badge-warning">Not Selected</span>'}
         </div>
         <div style="padding:0 1.5rem 1.5rem;">
-          <div style="position:relative;margin-bottom:0.5rem;">
-            <input class="form-input" id="oi-book-search" placeholder="Search and select multiple books..." value="${Utils.escapeHtml(this.bookSearchQuery)}" oninput="OfflineIssuePage.onBookSearch(this.value)" style="padding-left:2.5rem;">
-            <span style="position:absolute;left:1.75rem;top:50%;transform:translateY(-50%);color:var(--text-secondary);">${Utils.getIcon('search', 16)}</span>
+          <div class="oi-search-box">
+            <svg class="oi-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="oi-search-input" id="oi-book-search" placeholder="Search by title, author, ISBN, or shelf..." value="${Utils.escapeHtml(this.bookSearchQuery)}" oninput="OfflineIssuePage.onBookSearch(this.value)" autocomplete="off">
+            ${this.bookSearchQuery ? `<button class="oi-search-clear" onclick="OfflineIssuePage.clearSearch()" title="Clear">${Utils.getIcon('x', 14)}</button>` : ''}
           </div>
           ${resultsHtml}
         </div>
@@ -423,6 +430,13 @@ const OfflineIssuePage = {
     onBookSearch(value) {
         this.bookSearchQuery = value;
         this.bookSearchResults = this.searchBooks(value);
+        const content = document.getElementById('step-content');
+        if (content) content.innerHTML = this.renderStep2();
+    },
+
+    clearSearch() {
+        this.bookSearchQuery = '';
+        this.bookSearchResults = [];
         const content = document.getElementById('step-content');
         if (content) content.innerHTML = this.renderStep2();
     },
