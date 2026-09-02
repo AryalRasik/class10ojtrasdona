@@ -195,7 +195,7 @@ const OfflineIssuePage = {
         const count = this.selectedBooks.length;
         const selectedIds = new Set(this.selectedBooks.map(b => b.id));
         const hasQuery = !!this.bookSearchQuery.trim();
-        const showing = hasQuery ? this.bookSearchResults : (AppState.books || []).filter(b => b.availableCopies > 0);
+        const showing = hasQuery ? this.bookSearchResults : (AppState.books || []);
         let resultsHtml = '';
 
         if (showing.length > 0) {
@@ -221,7 +221,7 @@ const OfflineIssuePage = {
               </div>`;
             }).join('')}
           </div>
-          ${hasQuery ? `<p style="font-size:0.8rem;color:var(--text-tertiary);margin-top:0.5rem;">${showing.length} result${showing.length > 1 ? 's' : ''}</p>` : `<p style="font-size:0.8rem;color:var(--text-tertiary);margin-top:0.5rem;">${showing.length} book${showing.length > 1 ? 's' : ''} available to issue</p>`}`;
+          ${hasQuery ? `<p style="font-size:0.8rem;color:var(--text-tertiary);margin-top:0.5rem;">${showing.length} result${showing.length > 1 ? 's' : ''}</p>` : `<p style="font-size:0.8rem;color:var(--text-tertiary);margin-top:0.5rem;">${showing.filter(b => b.availableCopies > 0).length} available of ${showing.length} total books</p>`}`;
         } else if (hasQuery) {
             resultsHtml = `<div class="card" style="margin-top:0.75rem;padding:1.5rem;text-align:center;color:var(--text-secondary);">No books found matching "${Utils.escapeHtml(this.bookSearchQuery)}"</div>`;
         } else {
