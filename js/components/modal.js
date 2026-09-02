@@ -31,8 +31,16 @@ const Modal = {
         const actionBtns = this.container.querySelectorAll('.modal-action-btn');
         actionBtns.forEach((btn, i) => {
             btn.addEventListener('click', () => {
-                if (buttons[i] && buttons[i].onClick) buttons[i].onClick();
-                this.hide();
+                try {
+                    if (buttons[i] && buttons[i].onClick) buttons[i].onClick();
+                } catch (e) {
+                    console.error('Modal button error:', e);
+                    if (typeof Toast !== 'undefined' && Toast.error) {
+                        Toast.error('Something went wrong. Please try again.');
+                    }
+                } finally {
+                    this.hide();
+                }
             });
         });
 
