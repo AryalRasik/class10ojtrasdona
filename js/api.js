@@ -281,10 +281,12 @@ window.Api = {
       .from('borrow_requests')
       .update(updates)
       .eq('id', id)
-      .select()
-      .single();
-    if (error) throw error;
-    return data;
+      .select();
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      throw error;
+    }
+    return data ? (data[0] || null) : null;
   },
 
   // ── Notifications ─────────────────────────────────────
