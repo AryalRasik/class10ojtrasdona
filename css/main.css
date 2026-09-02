@@ -303,8 +303,9 @@ ul, ol { list-style: none; }
     border-right: 1px solid var(--border-color);
     z-index: var(--z-sidebar);
     transform: translateX(-100%);
-    transition: transform var(--transition-smooth);
+    transition: transform var(--transition-smooth), width var(--transition-smooth), box-shadow var(--transition-smooth);
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 16px 12px;
 }
 
@@ -313,15 +314,17 @@ ul, ol { list-style: none; }
 .sidebar-header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 8px 12px 16px;
+    min-height: 40px;
 }
 
-.sidebar-header h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-tertiary); font-weight: 600; }
+.sidebar-header h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-tertiary); font-weight: 600; white-space: nowrap; overflow: hidden; transition: opacity var(--transition-fast); }
 
 .sidebar-close {
     width: 32px; height: 32px;
     display: flex; align-items: center; justify-content: center;
     border-radius: var(--radius-sm);
     transition: background var(--transition-fast);
+    flex-shrink: 0;
 }
 
 .sidebar-close:hover { background: var(--bg-hover); }
@@ -338,6 +341,7 @@ ul, ol { list-style: none; }
     transition: all var(--transition-fast);
     color: var(--text-secondary);
     position: relative;
+    white-space: nowrap;
 }
 
 .sidebar-nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
@@ -345,7 +349,58 @@ ul, ol { list-style: none; }
 .sidebar-nav-item svg { width: 20px; height: 20px; flex-shrink: 0; }
 .sidebar-nav-item .sidebar-badge { margin-left: auto; font-size: 0.7rem; padding: 2px 8px; background: var(--danger); color: white; border-radius: var(--radius-full); font-weight: 600; }
 .sidebar-nav-divider { height: 1px; background: var(--border-color); margin: 8px 12px; }
-.sidebar-nav-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-tertiary); padding: 12px 14px 4px; font-weight: 600; }
+.sidebar-nav-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-tertiary); padding: 12px 14px 4px; font-weight: 600; white-space: nowrap; overflow: hidden; transition: opacity var(--transition-fast); }
+
+/* Desktop: compact icon rail */
+@media (min-width: 769px) {
+    .sidebar {
+        width: 64px;
+        transform: translateX(0);
+        padding: 16px 8px;
+        overflow: visible;
+    }
+
+    .sidebar-overlay { display: none !important; }
+    .sidebar-close { display: none; }
+
+    .sidebar-header h3 { opacity: 0; width: 0; height: 0; padding: 0; margin: 0; overflow: hidden; }
+    .sidebar-header { justify-content: center; padding: 8px 0 16px; }
+
+    .sidebar-nav { gap: 2px; align-items: center; }
+
+    .sidebar-nav-item {
+        justify-content: center;
+        padding: 10px;
+        width: 44px;
+        height: 44px;
+        overflow: hidden;
+    }
+
+    .sidebar-nav-item .sidebar-nav-item-text,
+    .sidebar-nav-item .sidebar-badge { display: none; }
+
+    .sidebar-nav-label { opacity: 0; height: 0; padding: 0; margin: 0; overflow: hidden; }
+    .sidebar-nav-divider { margin: 4px 8px; }
+
+    /* Expand on hover */
+    .sidebar:hover {
+        width: var(--sidebar-width);
+        box-shadow: var(--shadow-xl);
+    }
+
+    .sidebar:hover .sidebar-header h3 { opacity: 1; width: auto; height: auto; padding: initial; margin: initial; }
+    .sidebar:hover .sidebar-header { justify-content: space-between; padding: 8px 12px 16px; }
+    .sidebar:hover .sidebar-nav-item {
+        justify-content: flex-start;
+        padding: 10px 14px;
+        width: auto;
+        height: auto;
+    }
+    .sidebar:hover .sidebar-nav-item .sidebar-nav-item-text,
+    .sidebar:hover .sidebar-nav-item .sidebar-badge { display: initial; }
+    .sidebar:hover .sidebar-nav-label { opacity: 1; height: auto; padding: 12px 14px 4px; margin: 0; }
+    .sidebar:hover .sidebar-nav-divider { margin: 8px 12px; }
+}
 
 .sidebar-overlay {
     position: fixed; inset: 0;

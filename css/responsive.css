@@ -130,14 +130,10 @@
     .hero-content { max-width: 1400px; }
 }
 
-/* Desktop: persistent sidebar as a left navigation rail. The off-canvas drawer
-   (hamburger) is only available on mobile, so on desktop we keep the sidebar
-   always visible and shift the main content to the right of it. */
+/* Desktop: compact icon-rail sidebar. Shift main content by rail width,
+   expanding only when the user hovers the rail. */
 @media (min-width: 769px) {
-    .sidebar { transform: translateX(0); }
-    .sidebar-overlay { display: none !important; }
-    .sidebar-close { display: none; }
-    .main-content { margin-left: var(--sidebar-width); }
+    .main-content { margin-left: 64px; }
 }
 
 /* Print Styles */

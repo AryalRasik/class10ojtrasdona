@@ -488,18 +488,18 @@ const App = {
             // Not logged in — show minimal sidebar with sign-in link
             nav.innerHTML = `
                 <div class="sidebar-nav-label">Main</div>
-                <a href="#/" class="sidebar-nav-item" data-page="home" data-nav>${Utils.getIcon('book-open', 20)} Home</a>
-                <a href="#/books" class="sidebar-nav-item" data-page="books" data-nav>${Utils.getIcon('search', 20)} Browse Books</a>
-                <a href="#/categories" class="sidebar-nav-item" data-page="categories" data-nav>${Utils.getIcon('layers', 20)} Categories</a>
-                <a href="#/digital-library" class="sidebar-nav-item" data-page="digital-library" data-nav>${Utils.getIcon('download', 20)} Digital Library</a>
+                <a href="#/" class="sidebar-nav-item" data-page="home" data-nav>${Utils.getIcon('book-open', 20)} <span class="sidebar-nav-item-text">Home</span></a>
+                <a href="#/books" class="sidebar-nav-item" data-page="books" data-nav>${Utils.getIcon('search', 20)} <span class="sidebar-nav-item-text">Browse Books</span></a>
+                <a href="#/categories" class="sidebar-nav-item" data-page="categories" data-nav>${Utils.getIcon('layers', 20)} <span class="sidebar-nav-item-text">Categories</span></a>
+                <a href="#/digital-library" class="sidebar-nav-item" data-page="digital-library" data-nav>${Utils.getIcon('download', 20)} <span class="sidebar-nav-item-text">Digital Library</span></a>
                 <div class="sidebar-nav-divider"></div>
                 <div class="sidebar-nav-label">Community</div>
-                <a href="#/announcements" class="sidebar-nav-item" data-page="announcements" data-nav>${Utils.getIcon('info', 20)} Announcements</a>
-                <a href="#/events" class="sidebar-nav-item" data-page="events" data-nav>${Utils.getIcon('calendar', 20)} Events</a>
-                <a href="#/rules" class="sidebar-nav-item" data-page="rules" data-nav>${Utils.getIcon('shield', 20)} Library Rules</a>
-                <a href="#/support" class="sidebar-nav-item" data-page="support" data-nav>${Utils.getIcon('phone', 20)} Support</a>
+                <a href="#/announcements" class="sidebar-nav-item" data-page="announcements" data-nav>${Utils.getIcon('info', 20)} <span class="sidebar-nav-item-text">Announcements</span></a>
+                <a href="#/events" class="sidebar-nav-item" data-page="events" data-nav>${Utils.getIcon('calendar', 20)} <span class="sidebar-nav-item-text">Events</span></a>
+                <a href="#/rules" class="sidebar-nav-item" data-page="rules" data-nav>${Utils.getIcon('shield', 20)} <span class="sidebar-nav-item-text">Library Rules</span></a>
+                <a href="#/support" class="sidebar-nav-item" data-page="support" data-nav>${Utils.getIcon('phone', 20)} <span class="sidebar-nav-item-text">Support</span></a>
                 <div class="sidebar-nav-divider"></div>
-                <a href="#/login" class="sidebar-nav-item" data-page="login" data-nav style="color:var(--primary);font-weight:600;">${Utils.getIcon('log-in', 20)} Sign In</a>
+                <a href="#/login" class="sidebar-nav-item" data-page="login" data-nav style="color:var(--primary);font-weight:600;">${Utils.getIcon('log-in', 20)} <span class="sidebar-nav-item-text">Sign In</span></a>
             `;
             nav.querySelectorAll('.sidebar-nav-item').forEach(el => el.addEventListener('click', () => this.closeSidebar()));
             return;
@@ -559,13 +559,13 @@ const App = {
         sections.forEach(s => {
             html += `<div class="sidebar-nav-label">${s.label}</div>`;
             s.items.forEach(item => {
-                html += `<a href="${item.href}" class="sidebar-nav-item" data-page="${item.page}" data-nav>${Utils.getIcon(item.icon, 20)} ${item.label}${item.badge ? `<span class="sidebar-badge">${item.badge}</span>` : ''}</a>`;
+                html += `<a href="${item.href}" class="sidebar-nav-item" data-page="${item.page}" data-nav>${Utils.getIcon(item.icon, 20)} <span class="sidebar-nav-item-text">${item.label}</span>${item.badge ? `<span class="sidebar-badge">${item.badge}</span>` : ''}</a>`;
             });
             html += '<div class="sidebar-nav-divider"></div>';
         });
 
-        html += `<a href="#/profile" class="sidebar-nav-item" data-page="profile" data-nav>${Utils.getIcon('users', 20)} Profile</a>`;
-        html += `<a href="#/settings" class="sidebar-nav-item" data-page="settings" data-nav>${Utils.getIcon('settings', 20)} Settings</a>`;
+        html += `<a href="#/profile" class="sidebar-nav-item" data-page="profile" data-nav>${Utils.getIcon('users', 20)} <span class="sidebar-nav-item-text">Profile</span></a>`;
+        html += `<a href="#/settings" class="sidebar-nav-item" data-page="settings" data-nav>${Utils.getIcon('settings', 20)} <span class="sidebar-nav-item-text">Settings</span></a>`;
 
         nav.innerHTML = html;
         nav.querySelectorAll('.sidebar-nav-item').forEach(el => el.addEventListener('click', () => this.closeSidebar()));

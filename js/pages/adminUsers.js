@@ -55,7 +55,7 @@ const AdminUsersPage = {
     const paged = filtered.slice((this.currentPage - 1) * this.perPage, this.currentPage * this.perPage);
 
     const pendingCount = allUsers.filter(u => u.approved === false).length;
-    const roleCounts = { all: allUsers.length, student: students.length, teacher: teachers.length, librarian: librarians.length, admin: admins.length, pending: pendingCount };
+    const roleCounts = { all: allUsers.length, student: allUsers.filter(u => u.role === 'student').length, teacher: allUsers.filter(u => u.role === 'teacher').length, librarian: allUsers.filter(u => u.role === 'librarian').length, admin: allUsers.filter(u => u.role === 'admin').length, pending: pendingCount };
 
     return `
       <div class="page-header">
