@@ -366,7 +366,7 @@ const AppState = {
         save('library_bookImports', this.bookImports);
         save('library_eventRegistrations', this.eventRegistrations);
         save('library_offlineUsers', this.offlineUsers);
-        localStorage.setItem('library_lastBorrowSeq', this.lastBorrowSeq.toString());
+        localStorage.setItem('library_lastBorrowSeq', (this.lastBorrowSeq == null ? 0 : this.lastBorrowSeq).toString());
     },
 
     seedInitialData() {
