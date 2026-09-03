@@ -386,7 +386,8 @@ const AdminSettingsPage = {
           if (data.activityLogs) AppState.activityLogs = data.activityLogs;
           if (data.auditLogs) AppState.auditLogs = data.auditLogs;
           if (data.finePayments) AppState.finePayments = data.finePayments;
-          localStorage.setItem('admin_settings', JSON.stringify(this.config));
+    localStorage.setItem('admin_settings', JSON.stringify(this.config));
+    if (typeof Utils !== 'undefined') Utils.applySchoolFromSettings(this.config);
           AppState.saveAll();
           Toast.success('Data restored successfully');
           Router.resolve();

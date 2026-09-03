@@ -27,6 +27,14 @@ const App = {
             AppState.initDemoMode();
         }
 
+        // Apply saved system settings (library name/motto/phone/email/address)
+        // onto LIBRARY_DATA.school so home/support/help/footer reflect them.
+        try {
+            const merged = Object.assign({}, AppState.settings || {});
+            try { Object.assign(merged, JSON.parse(localStorage.getItem('admin_settings') || '{}')); } catch (e) {}
+            if (typeof Utils !== 'undefined') Utils.applySchoolFromSettings(merged);
+        } catch (e) { console.warn('applySchoolFromSettings failed:', e); }
+
         try { this.registerRoutes(); } catch (e) { console.warn('registerRoutes failed:', e); }
         try { this.setupTheme(); } catch (e) { console.warn('setupTheme failed:', e); }
         try { this.setupNavbar(); } catch (e) { console.warn('setupNavbar failed:', e); }

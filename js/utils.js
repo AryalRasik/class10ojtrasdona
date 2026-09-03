@@ -39,6 +39,18 @@ const Utils = {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
     },
 
+    applySchoolFromSettings(settings) {
+        const s = settings || {};
+        if (typeof LIBRARY_DATA !== 'undefined' && LIBRARY_DATA.school) {
+            if (s.libraryName) LIBRARY_DATA.school.name = s.libraryName;
+            if (s.libraryName) LIBRARY_DATA.school.library = s.libraryName;
+            if (s.libraryMotto) LIBRARY_DATA.school.motto = s.libraryMotto;
+            if (s.libraryAddress) LIBRARY_DATA.school.address = s.libraryAddress;
+            if (s.libraryPhone) LIBRARY_DATA.school.phone = s.libraryPhone;
+            if (s.libraryEmail) LIBRARY_DATA.school.email = s.libraryEmail;
+        }
+    },
+
     debounce(fn, delay) {
         let timer;
         return function (...args) {
