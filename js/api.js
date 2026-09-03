@@ -10,6 +10,7 @@ window.Api = {
     const { data, error } = await this.client.auth.signInWithPassword({ email, password });
     if (error) throw error;
     const profile = await this.getProfile(data.user.id);
+    if (!profile) throw new Error('Profile not found for this account. Please contact the administrator.');
     return { user: data.user, profile };
   },
 
@@ -46,7 +47,7 @@ window.Api = {
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
     if (error) throw error;
     return data;
   },
@@ -77,7 +78,7 @@ window.Api = {
       .update({ approved: true })
       .eq('id', userId)
       .select()
-      .single();
+      .maybeSingle();
     if (error) throw error;
     return data;
   },

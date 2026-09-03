@@ -330,6 +330,7 @@ const AdminUsersPage = {
   async _notifyUserApproved(userId, name) {
     try {
       const profile = await Api.getProfile(userId);
+      if (!profile) return;
       const email = profile.email || '';
       await Api.createNotification({
         user_id: userId,

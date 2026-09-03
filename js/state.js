@@ -101,6 +101,7 @@ const AppState = {
                 const session = await Api.getSession();
                 if (session && session.user) {
                     const profile = await Api.getProfile(session.user.id);
+                    if (!profile) throw new Error('Profile not found for this session');
                     this.currentUser = Api.mapProfile(profile);
                     this.isLoggedIn = true;
                     this.isSupabaseConnected = true;
