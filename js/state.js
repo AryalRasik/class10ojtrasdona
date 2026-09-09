@@ -242,9 +242,9 @@ const AppState = {
         // with the remote borrow_requests table, so offline data survives refresh.
         const localBorrows = this._loadLocal('library_borrowRequests');
         const remoteBorrows = borrowRequests || [];
-        const remoteIds = new Set(remoteBorrows.map(r => r && r.id));
+        const remoteBorrowIds = new Set(remoteBorrows.map(r => r && r.id));
         const localOffline = Array.isArray(localBorrows)
-            ? localBorrows.filter(r => r && r.isOffline && !remoteIds.has(r.id))
+            ? localBorrows.filter(r => r && r.isOffline && !remoteBorrowIds.has(r.id))
             : [];
         this.borrowRequests = [...remoteBorrows, ...localOffline];
 
