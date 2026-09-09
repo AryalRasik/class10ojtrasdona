@@ -210,8 +210,22 @@ const AppState = {
                 : Promise.resolve([]))
         ]);
 
-        this.books = books || [];
-        this.categories = categories || [];
+        // Merge Supabase books with local LIBRARY_DATA books so all books are always shown.
+        // Supabase data takes priority for books that exist remotely; local books fill any gaps.
+        const localBooks = (typeof LIBRARY_DATA !== 'undefined') ? (LIBRARY_DATA.books || []) : [];
+        const remoteBooks = books || [];
+        const remoteIds = new Set(remoteBooks.map(b => b && b.id));
+        const mergedBooks = [...remoteBooks];
+        localBooks.forEach(lb => { if (!remoteIds.has(lb.id)) mergedBooks.push(lb); });
+        this.books = mergedBooks;
+
+        // Same merge logic for categories
+        const localCats = (typeof LIBRARY_DATA !== 'undefined') ? (LIBRARY_DATA.categories || []) : [];
+        const remoteCats = categories || [];
+        const remoteCatIds = new Set(remoteCats.map(c => c && c.id));
+        const mergedCats = [...remoteCats];
+        localCats.forEach(lc => { if (!remoteCatIds.has(lc.id)) mergedCats.push(lc); });
+        this.categories = mergedCats;
         this.notifications = notifications || [];
         this.reservations = reservations || [];
         this.favorites = (favorites || []).map(f => f && f.bookId).filter(Boolean);
