@@ -55,7 +55,7 @@ const App = {
         try { this.updateNavbarRole(); } catch (e) { console.warn('updateNavbarRole failed:', e); }
 
         if (!AppState.isLoggedIn) {
-            const protectedPages = ['profile','settings','notifications','feedback','dashboard','admin-books','admin-users','admin-reports','admin-settings','admin-audit-logs','admin-import','admin-study-materials'];
+            const protectedPages = ['profile','settings','notifications','dashboard','admin-books','admin-users','admin-reports','admin-settings','admin-audit-logs','admin-import','admin-study-materials'];
             const currentHash = window.location.hash.replace('#/', '') || '';
             const currentRoute = '/' + (currentHash.split('?')[0].split('/')[0]);
             const pathWithoutAdmin = currentHash.startsWith('admin/') ? '/admin/' + currentHash.split('/').slice(1).join('/') : currentRoute;
@@ -105,7 +105,7 @@ const App = {
 
     setupRouteGuards() {
         const protectedRoutes = [
-            '/profile', '/settings', '/notifications', '/feedback',
+            '/profile', '/settings', '/notifications',
             '/dashboard', '/admin/books', '/admin/users', '/admin/reports',
             '/admin/settings', '/admin/audit-logs', '/admin/import',
             '/admin/study-materials', '/admin/offline-issue'
@@ -494,19 +494,25 @@ const App = {
         const role = AppState.currentUser ? AppState.currentUser.role : '';
 
         if (!isLoggedIn) {
-            // Not logged in — show minimal sidebar with sign-in link
+            // Not logged in — show sidebar with all browsing features
             nav.innerHTML = `
                 <div class="sidebar-nav-label">Main</div>
                 <a href="#/" class="sidebar-nav-item" data-page="home" data-nav>${Utils.getIcon('book-open', 20)} <span class="sidebar-nav-item-text">Home</span></a>
                 <a href="#/books" class="sidebar-nav-item" data-page="books" data-nav>${Utils.getIcon('search', 20)} <span class="sidebar-nav-item-text">Browse Books</span></a>
                 <a href="#/categories" class="sidebar-nav-item" data-page="categories" data-nav>${Utils.getIcon('layers', 20)} <span class="sidebar-nav-item-text">Categories</span></a>
                 <a href="#/digital-library" class="sidebar-nav-item" data-page="digital-library" data-nav>${Utils.getIcon('download', 20)} <span class="sidebar-nav-item-text">Digital Library</span></a>
+                <a href="#/study-materials" class="sidebar-nav-item" data-page="study-materials" data-nav>${Utils.getIcon('file-text', 20)} <span class="sidebar-nav-item-text">Study Materials</span></a>
+                <div class="sidebar-nav-divider"></div>
+                <div class="sidebar-nav-label">Personal</div>
+                <a href="#/new-arrivals" class="sidebar-nav-item" data-page="new-arrivals" data-nav>${Utils.getIcon('zap', 20)} <span class="sidebar-nav-item-text">New Arrivals</span></a>
+                <a href="#/top-rated" class="sidebar-nav-item" data-page="top-rated" data-nav>${Utils.getIcon('award', 20)} <span class="sidebar-nav-item-text">Top Rated</span></a>
                 <div class="sidebar-nav-divider"></div>
                 <div class="sidebar-nav-label">Community</div>
                 <a href="#/announcements" class="sidebar-nav-item" data-page="announcements" data-nav>${Utils.getIcon('info', 20)} <span class="sidebar-nav-item-text">Announcements</span></a>
                 <a href="#/events" class="sidebar-nav-item" data-page="events" data-nav>${Utils.getIcon('calendar', 20)} <span class="sidebar-nav-item-text">Events</span></a>
                 <a href="#/rules" class="sidebar-nav-item" data-page="rules" data-nav>${Utils.getIcon('shield', 20)} <span class="sidebar-nav-item-text">Library Rules</span></a>
                 <a href="#/support" class="sidebar-nav-item" data-page="support" data-nav>${Utils.getIcon('phone', 20)} <span class="sidebar-nav-item-text">Support</span></a>
+                <a href="#/feedback" class="sidebar-nav-item" data-page="feedback" data-nav>${Utils.getIcon('message-square', 20)} <span class="sidebar-nav-item-text">Feedback</span></a>
                 <div class="sidebar-nav-divider"></div>
                 <a href="#/login" class="sidebar-nav-item" data-page="login" data-nav style="color:var(--primary);font-weight:600;">${Utils.getIcon('log-in', 20)} <span class="sidebar-nav-item-text">Sign In</span></a>
             `;
