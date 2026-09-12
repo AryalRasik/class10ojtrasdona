@@ -45,7 +45,7 @@ const HomePage = {
                         <a href="#/books" class="btn btn-primary btn-lg" data-nav>
                             ${Utils.getIcon('search', 20)} Browse Catalog
                         </a>
-                        <a href="#/digital-library" class="btn btn-outline btn-lg" data-nav>
+                        <a href="#/digital-library" class="btn btn-outline btn-lg" data-nav style="border-color:rgba(255,255,255,0.85);color:#ffffff;background:rgba(255,255,255,0.1);">
                             ${Utils.getIcon('book-open', 20)} Digital Library
                         </a>
                     </div>
