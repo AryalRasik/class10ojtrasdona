@@ -116,6 +116,7 @@ const AppState = {
                 }
                 this.isSupabaseConnected = true;
                 this.isDemoMode = false;
+                await this.loadFromSupabase();
                 this._startSessionManagement();
                 return;
             } catch (e) {
