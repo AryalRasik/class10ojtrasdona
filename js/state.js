@@ -10,6 +10,21 @@ const AppState = {
     isSupabaseConnected: false,
     isDemoMode: false,
 
+    DEVELOPER_EMAIL: 'admin@saraswatischool.edu.np',
+    DEVELOPER_PROFILE: {
+        name: 'Rasik Aryal',
+        email: 'admin@saraswatischool.edu.np',
+        address: 'Ullikhola',
+        age: 16,
+        school: 'Saraswati Secondary School',
+        projectClasses: ['Class 10', 'Class 11']
+    },
+
+    isDeveloper() {
+        const u = this.currentUser;
+        return !!u && String(u.email || '').toLowerCase() === this.DEVELOPER_EMAIL.toLowerCase();
+    },
+
     notifications: [],
     borrowRequests: [],
     reservations: [],
