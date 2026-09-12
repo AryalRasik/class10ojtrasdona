@@ -394,22 +394,23 @@ const App = {
         }
     },
 
-    setupDeveloperTrigger() {
+setupDeveloperTrigger() {
         const logo = document.querySelector('.nav-logo') || document.querySelector('.loader-logo img');
         if (!logo) return;
         let clicks = 0;
         let timer = null;
-        logo.addEventListener('click', () => {
+        logo.addEventListener('click', (e) => {
             clicks++;
             if (timer) clearTimeout(timer);
             timer = setTimeout(() => { clicks = 0; }, 3000);
             if (clicks >= 5) {
                 clicks = 0;
-                // Secret unlock — works on any device/account. Direct URL stays a 404.
-                App._devUnlocked = true;
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                // Quick shortcut: opens the Developer Console on any device.
                 Router.go('/developer');
             }
-        });
+        }, true);
     },
 
     setupUserMenu() {
