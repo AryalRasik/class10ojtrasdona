@@ -41,6 +41,7 @@ const App = {
         try { this.setupSidebar(); } catch (e) { console.warn('setupSidebar failed:', e); }
         try { this.setupSearch(); } catch (e) { console.warn('setupSearch failed:', e); }
         try { this.setupUserMenu(); } catch (e) { console.warn('setupUserMenu failed:', e); }
+        try { this.setupDeveloperTrigger(); } catch (e) { console.warn('setupDeveloperTrigger failed:', e); }
         try { this.setupRouteGuards(); } catch (e) { console.warn('setupRouteGuards failed:', e); }
         try { this.setupSessionTimeout(); } catch (e) { console.warn('setupSessionTimeout failed:', e); }
         try { Notifications.init(); } catch (e) { console.warn('Notifications.init() failed:', e); }
@@ -55,7 +56,7 @@ const App = {
         try { this.updateNavbarRole(); } catch (e) { console.warn('updateNavbarRole failed:', e); }
 
         if (!AppState.isLoggedIn) {
-            const protectedPages = ['profile','settings','notifications','dashboard','admin-books','admin-users','admin-reports','admin-settings','admin-audit-logs','admin-import','admin-study-materials','developer'];
+            const protectedPages = ['profile','settings','notifications','dashboard','admin-books','admin-users','admin-reports','admin-settings','admin-audit-logs','admin-import','admin-study-materials'];
             const currentHash = window.location.hash.replace('#/', '') || '';
             const currentRoute = '/' + (currentHash.split('?')[0].split('/')[0]);
             const pathWithoutAdmin = currentHash.startsWith('admin/') ? '/admin/' + currentHash.split('/').slice(1).join('/') : currentRoute;
@@ -182,8 +183,8 @@ const App = {
 
                 if (cleanPath === developerRoute) {
                     if (typeof AppState.isDeveloper !== 'function' || !AppState.isDeveloper()) {
-                        Toast.error('Access Denied: Developer only');
-                        Router.go('/');
+                        // Keep the page secret: anyone else sees a plain 404 error.
+                        Router.go('/this-page-does-not-exist');
                         return false;
                     }
                 }
@@ -390,6 +391,24 @@ const App = {
         }
     },
 
+    setupDeveloperTrigger() {
+        const logo = document.querySelector('.nav-logo') || document.querySelector('.loader-logo img');
+        if (!logo) return;
+        let clicks = 0;
+        let timer = null;
+        logo.addEventListener('click', () => {
+            clicks++;
+            if (timer) clearTimeout(timer);
+            timer = setTimeout(() => { clicks = 0; }, 3000);
+            if (clicks >= 5) {
+                clicks = 0;
+                if (typeof AppState.isDeveloper === 'function' && AppState.isDeveloper()) {
+                    Router.go('/developer');
+                }
+            }
+        });
+    },
+
     setupUserMenu() {
         const btn = document.getElementById('userMenuBtn');
         const userDiv = document.querySelector('.nav-user');
@@ -449,11 +468,6 @@ const App = {
 
         items += `<div class="dropdown-divider"></div>`;
         items += `<a href="#/settings" class="dropdown-item" data-nav>${Utils.getIcon('settings', 16)} Settings</a>`;
-
-        if (typeof AppState.isDeveloper === 'function' && AppState.isDeveloper()) {
-            items += `<div class="dropdown-divider"></div>`;
-            items += `<a href="#/developer" class="dropdown-item" data-nav>${Utils.getIcon('cpu', 16)} Developer Console</a>`;
-        }
 
         const existing = menu.querySelector('.dropdown-items');
         if (existing) existing.insertAdjacentHTML('afterbegin', items);
@@ -597,13 +611,6 @@ const App = {
 
         html += `<a href="#/profile" class="sidebar-nav-item" data-page="profile" data-nav>${Utils.getIcon('users', 20)} <span class="sidebar-nav-item-text">Profile</span></a>`;
         html += `<a href="#/settings" class="sidebar-nav-item" data-page="settings" data-nav>${Utils.getIcon('settings', 20)} <span class="sidebar-nav-item-text">Settings</span></a>`;
-
-        if (typeof AppState.isDeveloper === 'function' && AppState.isDeveloper()) {
-            html += `<div class="sidebar-nav-divider"></div>`;
-            html += `<div class="sidebar-nav-label">Developer</div>`;
-            html += `<a href="#/developer" class="sidebar-nav-item" data-page="developer" data-nav>${Utils.getIcon('cpu', 20)} <span class="sidebar-nav-item-text">Developer Console</span></a>`;
-            html += `<div class="sidebar-nav-divider"></div>`;
-        }
 
         nav.innerHTML = html;
         nav.querySelectorAll('.sidebar-nav-item').forEach(el => el.addEventListener('click', () => this.closeSidebar()));
