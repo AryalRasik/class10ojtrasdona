@@ -42,6 +42,7 @@ const App = {
         try { this.setupSearch(); } catch (e) { console.warn('setupSearch failed:', e); }
         try { this.setupUserMenu(); } catch (e) { console.warn('setupUserMenu failed:', e); }
         try { this.setupDeveloperTrigger(); } catch (e) { console.warn('setupDeveloperTrigger failed:', e); }
+        try { this.setupDeveloperShortcut(); } catch (e) { console.warn('setupDeveloperShortcut failed:', e); }
         try { this.setupRouteGuards(); } catch (e) { console.warn('setupRouteGuards failed:', e); }
         try { this.setupSessionTimeout(); } catch (e) { console.warn('setupSessionTimeout failed:', e); }
         try { Notifications.init(); } catch (e) { console.warn('Notifications.init() failed:', e); }
@@ -407,10 +408,25 @@ setupDeveloperTrigger() {
                 clicks = 0;
                 e.preventDefault();
                 e.stopImmediatePropagation();
+                App._devUnlocked = true;
                 // Quick shortcut: opens the Developer Console on any device.
                 Router.go('/developer');
             }
         }, true);
+    },
+
+    setupDeveloperShortcut() {
+        let buffer = '';
+        document.addEventListener('keydown', (e) => {
+            if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+            if (e.metaKey || e.ctrlKey || e.altKey) return;
+            buffer = (buffer + e.key.toLowerCase()).slice(-3);
+            if (buffer === 'dev') {
+                buffer = '';
+                App._devUnlocked = true;
+                Router.go('/developer');
+            }
+        });
     },
 
     setupUserMenu() {
