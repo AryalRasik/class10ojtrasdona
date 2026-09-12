@@ -182,8 +182,11 @@ const App = {
                 }
 
                 if (cleanPath === developerRoute) {
-                    if (typeof AppState.isDeveloper !== 'function' || !AppState.isDeveloper()) {
-                        // Keep the page secret: anyone else sees a plain 404 error.
+                    // Hidden page: only opens via the secret logo trigger (see
+                    // setupDeveloperTrigger). Any direct URL attempt gets a 404.
+                    if (App._devUnlocked) {
+                        App._devUnlocked = false;
+                    } else {
                         Router.go('/this-page-does-not-exist');
                         return false;
                     }
@@ -402,9 +405,9 @@ const App = {
             timer = setTimeout(() => { clicks = 0; }, 3000);
             if (clicks >= 5) {
                 clicks = 0;
-                if (typeof AppState.isDeveloper === 'function' && AppState.isDeveloper()) {
-                    Router.go('/developer');
-                }
+                // Secret unlock — works on any device/account. Direct URL stays a 404.
+                App._devUnlocked = true;
+                Router.go('/developer');
             }
         });
     },

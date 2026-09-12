@@ -109,7 +109,7 @@ const DeveloperPage = {
 
                 <div class="card" style="padding:1.25rem;margin-top:1.25rem;">
                     <h3 style="margin:0 0 0.75rem;font-size:0.95rem;display:flex;align-items:center;gap:0.5rem;">${Utils.getIcon('info', 16)} Access Control</h3>
-                    <p style="margin:0;font-size:0.85rem;color:var(--text-secondary);line-height:1.6;">This page is restricted to the site owner account (<strong>${this._ownerEmail()}</strong>). The route guard rejects everyone else, and the menu entry only appears for you. Direct URL access is blocked for all other accounts.</p>
+                    <p style="margin:0;font-size:0.85rem;color:var(--text-secondary);line-height:1.6;">This page is <strong>hidden</strong> — it has no menu entry and any direct URL attempt shows a fake "Page Not Found" error. It only opens through the secret trigger: click the navbar logo <strong>5 times</strong>. This works on any device, signed in or not.</p>
                 </div>
             </div>`;
     },
