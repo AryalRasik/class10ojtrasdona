@@ -15,6 +15,7 @@ const HomePage = {
             .filter(Boolean);
 
         const stats = LIBRARY_DATA.stats;
+        const live = AppState.getDashboardStats();
         const school = LIBRARY_DATA.school;
 
         return `
@@ -38,7 +39,7 @@ const HomePage = {
                         Discover the World<br>Through <span class="gradient-text">Books</span>
                     </h1>
                     <p class="hero-description reveal reveal-delay-2">
-                        Access ${stats.totalBooks.toLocaleString()}+ books, digital resources, and a thriving reading community. Your journey to knowledge starts here.
+                        Access ${live.totalBooks.toLocaleString()}+ books, digital resources, and a thriving reading community. Your journey to knowledge starts here.
                     </p>
                     <div class="hero-actions reveal reveal-delay-3">
                         <a href="#/books" class="btn btn-primary btn-lg" data-nav>
@@ -50,15 +51,15 @@ const HomePage = {
                     </div>
                     <div class="hero-stats reveal reveal-delay-4">
                         <div>
-                            <div class="hero-stat-value" data-count="${stats.totalBooks}">0</div>
+                            <div class="hero-stat-value" data-count="${live.totalBooks}">0</div>
                             <div class="hero-stat-label">Total Books</div>
                         </div>
                         <div>
-                            <div class="hero-stat-value" data-count="${stats.totalStudents}">0</div>
+                            <div class="hero-stat-value" data-count="${live.totalStudents}">0</div>
                             <div class="hero-stat-label">Students</div>
                         </div>
                         <div>
-                            <div class="hero-stat-value" data-count="${stats.borrowedBooks}">0</div>
+                            <div class="hero-stat-value" data-count="${live.activeBorrows}">0</div>
                             <div class="hero-stat-label">Active Borrows</div>
                         </div>
                     </div>
@@ -175,15 +176,15 @@ const HomePage = {
             <div class="container">
                 <div class="counter-grid">
                     <div class="counter-item reveal">
-                        <div class="counter-value" data-count="${stats.totalBooks}">0</div>
+                        <div class="counter-value" data-count="${live.totalBooks}">0</div>
                         <div class="counter-label">Total Books</div>
                     </div>
                     <div class="counter-item reveal reveal-delay-1">
-                        <div class="counter-value" data-count="${stats.totalStudents}">0</div>
+                        <div class="counter-value" data-count="${live.totalStudents}">0</div>
                         <div class="counter-label">Students</div>
                     </div>
                     <div class="counter-item reveal reveal-delay-2">
-                        <div class="counter-value" data-count="${stats.monthlyBorrowing}">0</div>
+                        <div class="counter-value" data-count="${live.monthlyBorrowing}">0</div>
                         <div class="counter-label">Monthly Borrows</div>
                     </div>
                     <div class="counter-item reveal reveal-delay-3">

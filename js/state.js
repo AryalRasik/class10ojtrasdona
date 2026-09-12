@@ -1147,6 +1147,38 @@ const AppState = {
         return (this.borrowRequests || []).filter(r => r.status === 'borrowed' || r.status === 'overdue');
     },
 
+    getDashboardStats() {
+        const students = new Map();
+        const addStudent = (u) => {
+            if (!u) return;
+            const key = u.email ? String(u.email).toLowerCase() : (u.id != null ? 'id:' + u.id : JSON.stringify(u));
+            if (key && !students.has(key)) students.set(key, u);
+        };
+        if (typeof LIBRARY_DATA !== 'undefined') (LIBRARY_DATA.students || []).forEach(addStudent);
+        (this.offlineUsers || []).forEach(addStudent);
+        (this.allProfiles || []).filter(p => p && p.role === 'student').forEach(addStudent);
+
+        const activeStatuses = ['pending', 'approved', 'borrowed', 'overdue', 'return_requested'];
+        const allBorrows = this.borrowRequests || [];
+        const activeBorrows = allBorrows.filter(r => r && activeStatuses.includes(r.status)).length;
+
+        const now = new Date();
+        const monthlyBorrowing = allBorrows.filter(r => {
+            if (!r || !r.requestTime) return false;
+            const d = new Date(r.requestTime);
+            return !isNaN(d.getTime()) && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+        }).length;
+
+        return {
+            totalBooks: (this.books || []).length,
+            availableBooks: (this.books || []).filter(b => b && b.availableCopies > 0).length,
+            totalStudents: students.size,
+            activeBorrows: activeBorrows,
+            totalBorrows: allBorrows.length,
+            monthlyBorrowing: monthlyBorrowing
+        };
+    },
+
     getBookBorrowStatus(bookId) {
         const user = this.currentUser;
         if (!user) return null;
