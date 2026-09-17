@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Management System - Frontend Report</title>
+    <style>
+        @page { margin: 1in; size: A4; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Times New Roman', Times, serif; font-size: 14px; line-height: 1.8; color: #000; background: #fff; }
+        .page { page-break-after: always; padding: 20px 40px; }
+        .page:last-child { page-break-after: auto; }
+        h1 { font-size: 24px; text-align: center; margin: 20px 0; }
+        h2 { font-size: 20px; margin: 25px 0 12px; border-bottom: 2px solid #000; padding-bottom: 5px; }
+        h3 { font-size: 16px; margin: 18px 0 8px; }
+        h4 { font-size: 14px; margin: 12px 0 6px; font-style: italic; }
+        p { text-align: justify; margin-bottom: 10px; }
+        ul, ol { margin: 8px 0 12px 24px; }
+        li { margin-bottom: 4px; }
+        .center { text-align: center; }
+        .cover-page { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 90vh; text-align: center; }
+        .cover-page h1 { font-size: 28px; margin-bottom: 10px; }
+        .cover-page h2 { font-size: 22px; border: none; margin-bottom: 5px; }
+        .cover-page .subtitle { font-size: 18px; margin: 8px 0; }
+        .cover-page .meta { font-size: 14px; margin-top: 40px; line-height: 2; }
+        .toc { list-style: none; margin-left: 0; }
+        .toc li { padding: 4px 0; border-bottom: 1px dotted #ccc; }
+        .toc li span { float: right; }
+        .toc .sub { padding-left: 24px; font-size: 13px; }
+        pre { background: #f4f4f4; border: 1px solid #ddd; border-left: 4px solid #333; padding: 12px; font-size: 11px; line-height: 1.5; overflow-x: auto; margin: 10px 0 16px; font-family: 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; }
+        code { font-family: 'Courier New', monospace; background: #f0f0f0; padding: 1px 4px; font-size: 12px; }
+        .code-filename { background: #333; color: #fff; padding: 4px 12px; font-size: 12px; font-family: 'Courier New', monospace; margin-bottom: -4px; display: inline-block; border-radius: 4px 4px 0 0; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        th, td { border: 1px solid #333; padding: 6px 10px; text-align: left; font-size: 13px; }
+        th { background: #e8e8e8; font-weight: bold; }
+        .snapshot-placeholder { border: 2px dashed #999; padding: 30px; text-align: center; color: #666; margin: 10px 0; font-style: italic; }
+        @media print {
+            .page { page-break-after: always; }
+            body { font-size: 12pt; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ======================== COVER PAGE ======================== -->
+<div class="page cover-page">
+    <div style="border: 3px double #000; padding: 40px 60px; width: 100%;">
+        <p style="font-size: 14px; margin-bottom: 5px;">Shree Saraswati Secondary School</p>
+        <p style="font-size: 13px; margin-bottom: 40px; color: #555;">Changunarayan-08, Sudal, Bhaktapur, Nepal</p>
+        <h1 style="font-size: 28px; margin-bottom: 10px;">Library Management System</h1>
+        <p class="subtitle" style="font-size: 18px;">Frontend Project Report<br>User Interface, SPA Architecture &amp; Design</p>
+        <div style="margin: 40px 0; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 20px 0;">
+            <p style="font-size: 15px; margin-bottom: 8px;">A Project Report Submitted in Partial Fulfillment of the Requirements for</p>
+            <p style="font-size: 16px; font-weight: bold;">Computer Science (Optional)</p>
+            <p style="font-size: 15px; margin-top: 4px;">Grade 10, National Examinations Board (NEB)</p>
+        </div>
+        <div class="meta">
+            <p><strong>Submitted By:</strong> Rasik Binayak Aryal</p>
+            <p><strong>Roll No:</strong> [Your Roll No]</p>
+            <p><strong>Supervisor:</strong> [Teacher's Name]</p>
+            <p><strong>Academic Year:</strong> 2082-2083 BS (2025-2026 AD)</p>
+        </div>
+    </div>
+</div>
+
+<!-- ======================== CERTIFICATE ======================== -->
+<div class="page">
+    <h2>Certificate</h2>
+    <p>This is to certify that the project report entitled <strong>"Library Management System Using HTML, CSS, JavaScript, and Supabase"</strong> prepared by <strong>Rasik Binayak Aryal</strong>, a legitimate student of Shree Saraswati Secondary School, has been completed as part of the partial fulfillment of the requirements for the Computer Science (Optional) course in the academic year 2082-2083 BS.</p>
+    <p>The report has been approved as it satisfies the academic requirements prescribed by the National Examinations Board (NEB) for Grade 10.</p>
+    <br><br>
+    <table style="border: none; width: 100%;">
+        <tr style="border: none;">
+            <td style="border: none; width: 50%; text-align: left;">
+                <p style="margin: 0;"><strong>[Teacher's Name]</strong></p>
+                <p style="margin: 0;">Supervisor</p>
+                <p style="margin: 0;">Department of Computer Science</p>
+                <p style="margin: 0;">Shree Saraswati Secondary School</p>
+            </td>
+            <td style="border: none; width: 50%; text-align: right;">
+                <p style="margin: 0;"><strong>[Principal's Name]</strong></p>
+                <p style="margin: 0;">Principal</p>
+                <p style="margin: 0;">Shree Saraswati Secondary School</p>
+                <p style="margin: 0;">Bhaktapur, Nepal</p>
+            </td>
+        </tr>
+    </table>
+    <br>
+    <p style="text-align: center;">Date: _______________</p>
+</div>
+
+<!-- ======================== ACKNOWLEDGEMENT ======================== -->
+<div class="page">
+    <h2>Acknowledgement</h2>
+    <p>I would like to express my sincere gratitude to all those who have contributed to the successful completion of this frontend project.</p>
+    <p>First and foremost, I am deeply grateful to <strong>God Almighty</strong> for providing me with the strength, wisdom, and perseverance to complete this project successfully.</p>
+    <p>I extend my heartfelt thanks to my supervisor <strong>[Teacher's Name]</strong>, Department of Computer Science, Shree Saraswati Secondary School, for their invaluable guidance, continuous encouragement, and constructive suggestions throughout the development of this project. Their insights into interface design and user experience have been instrumental in shaping this work.</p>
+    <p>I am also thankful to <strong>[Principal's Name]</strong>, Principal of Shree Saraswati Secondary School, for providing the necessary infrastructure and support for the completion of this project.</p>
+    <p>I express my gratitude to all my <strong>teachers</strong> of the Computer Science department for their support and cooperation. Their knowledge and teaching have been the foundation upon which this project is built.</p>
+    <p>I am also thankful to my <strong>friends and classmates</strong> who provided moral support, valuable suggestions, and encouragement during the development process.</p>
+    <p>Finally, I am deeply indebted to my <strong>parents and family members</strong> for their unconditional love, prayers, and support throughout my academic journey.</p>
+    <p style="text-align: right; margin-top: 30px;"><strong>Rasik Binayak Aryal</strong></p>
+    <p style="text-align: right;">Shree Saraswati Secondary School</p>
+    <p style="text-align: right;">Changunarayan-08, Bhaktapur, Nepal</p>
+</div>
+
+<!-- ======================== ABSTRACT ======================== -->
+<div class="page">
+    <h2>Abstract</h2>
+    <p>The <strong>frontend</strong> of the Library Management System (LMS) is the complete user-facing interface of the digital library platform for Shree Saraswati Secondary School. It is implemented as a <strong>Single Page Application (SPA)</strong> using pure HTML5, CSS3, and vanilla JavaScript — deliberately without heavyweight frameworks like React or Angular — to keep the application fast, easy to maintain, and understandable for school-level developers.</p>
+    <p>A custom hash-based router manages navigation across more than 30 pages organised into four groups: <strong>catalog pages</strong> (browse, book detail, categories, new arrivals, top rated), <strong>community and information pages</strong> (announcements, events, calendar, rules, FAQ, support, help, feedback), <strong>member pages</strong> (login, profile, my books, borrow history, notifications, settings), and a full <strong>admin panel</strong> with eight management screens for books, users, reports, settings, audit logs, import, study materials, and dashboard. Every page is an independent module exposing a <code>render()</code> method, giving the codebase a clean and testable structure.</p>
+    <p>The interface is designed for a broad audience of students and staff. It features <strong>dark and light themes</strong> driven by CSS custom properties, a fully <strong>responsive layout</strong> with a desktop sidebar, a mobile bottom navigation bar, and a floating action button, plus a custom component library — toast notifications, modal dialogs, star ratings, book covers, QR codes, and barcodes — all built from scratch without any external CSS or JS frameworks.</p>
+    <p>The frontend also behaves as a <strong>Progressive Web App (PWA)</strong>. A service worker caches the application shell and fonts using a network-first strategy so the library remains usable offline, and a web app manifest lets students install the app on their phones. The backend is powered by <strong>Supabase</strong>, a cloud-hosted PostgreSQL database with authentication and row-level security. The application is deployed as a static site on <strong>Vercel</strong>, and the source is organized into clear layers (router, state, API, utilities, components, pages) that have been tested across multiple browsers and device sizes.</p>
+    <p><strong>Keywords:</strong> Frontend, Single Page Application, Vanilla JavaScript, HTML5, CSS3, Hash Router, Responsive Design, Dark Mode, PWA, Service Worker, Supabase, Progressive Web App</p>
+</div>
+
+<!-- ======================== TABLE OF CONTENTS ======================== -->
+<div class="page">
+    <h2>Table of Contents</h2>
+    <ul class="toc">
+        <li>Certificate <span>...</span></li>
+        <li>Acknowledgement <span>...</span></li>
+        <li>Abstract <span>...</span></li>
+        <li><strong>1. Introduction</strong> <span>...</span></li>
+        <li class="sub">1.1 Outline of the Project <span>...</span></li>
+        <li class="sub">1.2 Objectives <span>...</span></li>
+        <li class="sub">1.3 Advantages <span>...</span></li>
+        <li><strong>2. Technology Stack</strong> <span>...</span></li>
+        <li class="sub">2.1 Vanilla JavaScript &amp; HTML5/CSS3</li>
+        <li class="sub">2.2 Supabase (PostgreSQL + Auth)</li>
+        <li class="sub">2.3 Custom CSS Theming with CSS Custom Properties</li>
+        <li><strong>3. Application — Frontend Pages</strong> <span>...</span></li>
+        <li class="sub">3.1 Home Page</li>
+        <li class="sub">3.2 Catalog Pages (Books, Book Detail, Categories, New Arrivals, Top Rated)</li>
+        <li class="sub">3.3 Community &amp; Information Pages</li>
+        <li class="sub">3.4 Member Pages (Login, Profile, My Books, Settings)</li>
+        <li class="sub">3.5 Digital Library &amp; Study Materials</li>
+        <li><strong>4. CMS Admin Panel</strong> <span>...</span></li>
+        <li class="sub">4.1 Dashboard &amp; Reports</li>
+        <li class="sub">4.2 Book Management (CRUD)</li>
+        <li class="sub">4.3 User Management</li>
+        <li class="sub">4.4 Settings, Audit Logs &amp; Import</li>
+        <li><strong>5. Component Architecture &amp; State Management</strong> <span>...</span></li>
+        <li class="sub">5.1 Modular Page Architecture</li>
+        <li class="sub">5.2 Reusable UI Components</li>
+        <li class="sub">5.3 Global State (state.js)</li>
+        <li class="sub">5.4 API Layer (api.js)</li>
+        <li><strong>6. UI/UX &amp; Responsive Design</strong> <span>...</span></li>
+        <li class="sub">6.1 CSS Custom Properties Theming</li>
+        <li class="sub">6.2 Layout &amp; Navigation</li>
+        <li class="sub">6.3 Responsive Behaviour</li>
+        <li class="sub">6.4 UX Conventions &amp; Micro-interactions</li>
+        <li><strong>7. PWA &amp; Deployment</strong> <span>...</span></li>
+        <li class="sub">7.1 Service Worker</li>
+        <li class="sub">7.2 Web App Manifest</li>
+        <li class="sub">7.3 Vercel Deployment</li>
+        <li><strong>8. Conclusion</strong> <span>...</span></li>
+        <li><strong>9. Snapshot</strong> <span>...</span></li>
+        <li><strong>10. References</strong> <span>...</span></li>
+    </ul>
+</div>
+
+<!-- ======================== CHAPTER 1: INTRODUCTION ======================== -->
+<div class="page">
+    <h2>1. Introduction</h2>
+    <h3>1.1 Outline of the Project</h3>
+    <p>The Library Management System project, built using vanilla HTML5, CSS3, and JavaScript, includes several essential components. Initially, the project outlines the background of the educational sector, defines its objectives, and sets its scope. The system will feature user authentication (Admin, Teacher, Librarian, and Student), book cataloging, borrow request management, digital library access, and administrative reporting. HTML5 will be used for structuring the web interface, CSS3 for styling and theming, and vanilla JavaScript for all application logic including routing, state management, and API communication, with data stored in a centralized Supabase PostgreSQL database.</p>
+    <p>The design phase covers the creation of an intuitive user interface using CSS custom properties for theming and the establishment of a custom hash-based SPA router. During implementation, the project involves coding the frontend components, integrating the Supabase backend logic, and thorough testing to ensure data accuracy and reliability. After deployment, the system will require ongoing maintenance and support to handle growing institutional data. The project concludes with an evaluation of its performance, collection of user feedback, and recommendations for future enhancements to improve the system's effectiveness and user satisfaction.</p>
+
+    <h3>1.2 Objectives</h3>
+    <p>The main objectives of the frontend development are as follows:</p>
+    <ul>
+        <li>To build a responsive and accessible Single Page Application (SPA) for Shree Saraswati Secondary School's library that works seamlessly on desktop, tablet, and mobile devices.</li>
+        <li>To implement a custom hash-based client-side router in approximately 130 lines, supporting parameterised routes (e.g., <code>/book/:id</code>), route guards, and page transition animations.</li>
+        <li>To implement role-based navigation so each user (Student, Teacher, Librarian, Admin) sees only the menus and pages relevant to their role.</li>
+        <li>To develop a searchable book catalog containing 100+ CDC curriculum textbooks with advanced filtering by category, grade, subject, author, publisher, language, and availability.</li>
+        <li>To develop a complete book borrowing lifecycle management system including request, approval, pickup, return, renewal, and fine calculation — all from the frontend.</li>
+        <li>To provide a digital library section for accessing PDF textbooks and study materials online.</li>
+        <li>To implement a notification system for timely communication of library events, due dates, and announcements.</li>
+        <li>To build an admin dashboard with borrowing reports, usage statistics, and audit trail logging.</li>
+        <li>To deploy the system as a Progressive Web App (PWA) for mobile installability and offline support via service worker caching.</li>
+        <li>To support light/dark themes and smooth transitions for a polished user experience.</li>
+        <li>To keep the codebase simple and modular enough that it can be maintained, extended, and studied by school students.</li>
+    </ul>
+
+    <h3>1.3 Advantages</h3>
+    <p>The Library Management System offers several advantages for both school administration and users such as students, teachers, and librarians. Here are the key benefits:</p>
+    <ol>
+        <li><strong>Time Saving:</strong> Instant book search and digital borrowing eliminates the need for physical browsing, saving time for both students and librarians.</li>
+        <li><strong>Easy Data Management:</strong> Stores all book, student, and borrow records in a centralized cloud database, making data easy to access, search, and update.</li>
+        <li><strong>Accuracy and Reliability:</strong> Automated fine calculation, due date tracking, and status updates eliminate human errors in manual record-keeping.</li>
+        <li><strong>Improved Communication:</strong> Real-time notifications and announcements help in sending notices and updates quickly between librarians, students, and teachers.</li>
+        <li><strong>Better Organization:</strong> The system organizes all library activities in a systematic way, keeping borrowing, reservations, and digital resources well structured.</li>
+        <li><strong>Secure Data Storage:</strong> Supabase's Row Level Security ensures important library data is safe and protected, reducing risk of data loss compared to manual records.</li>
+        <li><strong>Modern Technology Use:</strong> Built using vanilla JavaScript, HTML5, CSS3, and Supabase, providing a fast, responsive, and user-friendly interface.</li>
+        <li><strong>Offline Support:</strong> PWA capabilities with service worker caching allow basic access even without internet connection.</li>
+        <li><strong>Zero Hosting Cost:</strong> Because the frontend is static, it deploys free on Vercel with CDN-level speed worldwide.</li>
+    </ol>
+</div>
+
+<!-- ======================== CHAPTER 2: TECHNOLOGY STACK ======================== -->
+<div class="page">
+    <h2>2. Technology Stack</h2>
+    <p>The frontend deliberately uses free, open, and widely taught technologies. No commercial license or paid server is required anywhere.</p>
+    <table>
+        <tr><th>Technology</th><th>Role in the Frontend</th></tr>
+        <tr><td>HTML5</td><td>Structure of the application shell and all dynamically rendered pages; semantic markup, forms, SVG inline icons</td></tr>
+        <tr><td>CSS3</td><td>Styling, layout (Grid &amp; Flexbox), animations, media queries, and CSS custom properties for theming</td></tr>
+        <tr><td>Vanilla JavaScript (ES6+)</td><td>All application logic: router, state, API layer, page rendering, event handling</td></tr>
+        <tr><td>Custom Hash Router (router.js)</td><td>Client-side navigation with support for parameterised routes and route guards (~130 lines)</td></tr>
+        <tr><td>Supabase JavaScript SDK</td><td>Authentication and database access (loaded from vendor/supabase.js)</td></tr>
+        <tr><td>Canvas 2D API</td><td>From-scratch charts, QR codes, and barcodes (components/charts.js, qrcode.js, barcode.js)</td></tr>
+        <tr><td>SVG icon set</td><td>Over 50 inline SVG icons defined in utils.js used throughout the interface</td></tr>
+        <tr><td>Google Fonts</td><td>Inter, Playfair Display, and JetBrains Mono typography, cached offline by the service worker</td></tr>
+        <tr><td>PWA (manifest + service worker)</td><td>Installability, offline caching, and app-like behaviour (manifest.json, sw.js)</td></tr>
+        <tr><td>Vercel Static Hosting</td><td>Free global deployment with CDN caching and correct cache headers (vercel.json)</td></tr>
+        <tr><td>Express.js (local server)</td><td>Local development server with bcrypt, JWT, rate limiting for offline testing (server.js)</td></tr>
+        <tr><td>Git / GitHub</td><td>Version control for the whole project</td></tr>
+    </table>
+    <p>The only external JavaScript library loaded is the official <code>@supabase/supabase-js</code> client (supplied as a local vendor file in <code>vendor/</code>). Everything else — router, state management, components, icons, charts, QR codes — was written by hand, keeping the application fast and completely understandable.</p>
+
+    <h3>2.1 Vanilla JavaScript &amp; HTML5/CSS3</h3>
+    <p>Unlike the School Management System built with React and Next.js, this project deliberately avoids framework dependencies. All pages are plain JavaScript objects with a <code>render()</code> method that returns HTML strings. This means no build step, no webpack, no npm scripts for the frontend — just open <code>index.html</code> in a browser. Every component is readable by a Grade 10 student who knows basic JavaScript. The entire frontend is about 35 JavaScript source files totaling roughly 8,000 lines.</p>
+
+    <h3>2.2 Supabase (PostgreSQL + Authentication)</h3>
+    <p>Supabase provides the backend infrastructure: a PostgreSQL database with 24 interrelated tables, authentication with JWT tokens, and Row Level Security (RLS) policies that enforce role-based access. The frontend communicates with Supabase through the JavaScript SDK loaded from <code>vendor/supabase.js</code>. All database operations — querying books, creating borrow requests, fetching notifications — happen client-side through the SDK, which means no custom backend API is required for production.</p>
+
+    <h3>2.3 Custom CSS Theming with CSS Custom Properties</h3>
+    <p>This project uses pure CSS custom properties defined in <code>css/variables.css</code> for theming. Colors, shadows, radii, fonts, and transitions are declared as CSS variables; the dark theme merely redefines the same tokens under the <code>[data-theme="dark"]</code> selector.</p>
+    <div class="code-filename">css/variables.css</div>
+<pre>:root {
+    --accent-primary: #667eea;
+    --accent-secondary: #764ba2;
+    --accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fc;
+    --text-primary: #1a1a2e;
+    --text-secondary: #4a4a6a;
+    --border-color: rgba(0, 0, 0, 0.08);
+    --radius-md: 12px;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06);
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+}
+
+[data-theme="dark"] {
+    --bg-primary: #0f0f1a;
+    --bg-secondary: #1a1a2e;
+    --text-primary: #e8e8f0;
+    --text-secondary: #a8a8c8;
+    --border-color: rgba(255, 255, 255, 0.08);
+}</pre>
+    <p>A single attribute switch <code>document.documentElement.setAttribute('data-theme', 'dark')</code> re-themes the whole interface instantly. The preference is remembered in localStorage, and the OS preference is respected when the user has not chosen.</p>
+</div>
+
+<!-- ======================== CHAPTER 3: APPLICATION - FRONTEND PAGES ======================== -->
+<div class="page">
+    <h2>3. Application — Frontend Pages</h2>
+    <p>All page modules live in <code>js/pages/</code>. Each exports a plain object with a <code>render()</code> method returning HTML and an optional <code>afterRender()</code> method for event binding. The pages are organized into five groups below.</p>
+
+    <h3>3.1 Home Page (home.js)</h3>
+    <p>The Home page is the main entry point of the library website. It is composed of several sections that together present a complete overview of the library. The layout is defined in <code>js/pages/home.js</code>. The Home page opens with a hero section greeting the user by name and showing library open/closed status based on real-time day and hour checking via <code>Utils.isLibraryOpen()</code>. Below, sections list six <strong>new arrivals</strong>, the six <strong>most popular</strong> books, the visitor's <strong>recently viewed</strong> books, and latest <strong>returns</strong>. A scrolling announcement ticker, live counters, and quick-access buttons to browse or read online complete the page.</p>
+    <p>Data is fetched from Supabase on login and stored in <code>AppState</code>. The hero section displays a glass card with the featured book, an inspirational quote from <code>LIBRARY_DATA.quotes</code>, and a library status badge.</p>
+
+    <div class="code-filename">js/pages/home.js — Homepage Composition</div>
+<pre>const HomePage = {
+    render() {
+        const isOpen = Utils.isLibraryOpen();
+        const quote = LIBRARY_DATA.quotes[Math.floor(Math.random() * LIBRARY_DATA.quotes.length)];
+        const books = Array.isArray(AppState.books) ? AppState.books : [];
+        const featured = books[8] || books[0];
+        const newArrivals = [...books].sort((a, b) =&gt; b.year - a.year).slice(0, 6);
+        const popularBooks = [...books].sort((a, b) =&gt; (b.borrowCount || 0) - (a.borrowCount || 0)).slice(0, 6);
+        const recentBooks = AppState.recentlyViewed.map(id =&gt; books.find(b =&gt; b.id === id)).filter(Boolean).slice(0, 6);
+        const live = AppState.getDashboardStats();
+
+        return `
+        &lt;section class="hero"&gt;
+            &lt;div class="hero-content"&gt;
+                &lt;div class="hero-text"&gt;
+                    &lt;div class="hero-badge reveal"&gt;
+                        &lt;span class="dot"&gt;&lt;/span&gt;
+                        &lt;span&gt;${Utils.getGreeting()}, ${AppState.currentUser
+                            ? AppState.currentUser.name.split(' ')[0] : 'Student'}&lt;/span&gt;
+                    &lt;/div&gt;
+                    &lt;h1 class="hero-title reveal"&gt;
+                        Discover the World&lt;br&gt;Through &lt;span class="gradient-text"&gt;Books&lt;/span&gt;
+                    &lt;/h1&gt;
+                    &lt;p class="hero-description"&gt;
+                        Access ${live.totalBooks.toLocaleString()}+ books, digital resources,
+                        and a thriving reading community.
+                    &lt;/p&gt;
+                    &lt;div class="hero-actions"&gt;
+                        &lt;a href="#/books" class="btn btn-primary btn-lg" data-nav&gt;
+                            Browse Catalog
+                        &lt;/a&gt;
+                        &lt;a href="#/digital-library" class="btn btn-outline btn-lg" data-nav&gt;
+                            Digital Library
+                        &lt;/a&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+                &lt;div class="hero-visual"&gt;
+                    &lt;div class="hero-glass-card"&gt;
+                        &lt;div class="hero-featured"&gt;
+                            &lt;div class="hero-featured-cover"&gt;
+                                ${Utils.getBookCover(featured)}
+                            &lt;/div&gt;
+                            &lt;div class="hero-featured-info"&gt;
+                                &lt;div class="featured-tag"&gt;Today's Featured&lt;/div&gt;
+                                &lt;h4&gt;${Utils.escapeHtml(featured.title)}&lt;/h4&gt;
+                                &lt;p&gt;${Utils.escapeHtml(featured.author)}&lt;/p&gt;
+                                ${Utils.generateStars(featured.rating)}
+                            &lt;/div&gt;
+                        &lt;/div&gt;
+                        &lt;div class="hero-quote"&gt;
+                            &lt;p&gt;"${quote.text}"&lt;/p&gt;
+                            &lt;cite&gt;— ${quote.author}&lt;/cite&gt;
+                        &lt;/div&gt;
+                        &lt;div class="library-status-badge ${isOpen ? 'open' : 'closed'}"&gt;
+                            &lt;span class="status-dot"&gt;&lt;/span&gt;
+                            ${isOpen ? 'Library Open' : 'Library Closed'}
+                        &lt;/div&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/section&gt;`;
+    },
+    afterRender() { /* attach event listeners, animate counters */ }
+};
+
+The Home component composes multiple sections within the hero layout. Each section independently fetches its data from AppState.</pre>
+</div>
+
+<div class="page">
+    <h3>3.2 Catalog Pages</h3>
+    <ul>
+        <li><strong>Browse Books (books.js)</strong> — the heart of the application. Search by title, author, or ISBN; filter by a dozen categories and by grade; sort by popularity, newest, rating, or title; paginate the results as a responsive card grid. The page maintains its own filter state (<code>categoryFilter</code>, <code>gradeFilter</code>, <code>sortOption</code>, <code>currentPage</code>) and re-renders on every filter change.</li>
+        <li><strong>Book Detail (bookDetail.js)</strong> — full metadata, generated cover art, star rating and reviews, copy availability, and borrow/reserve actions backed by confirmation modals.</li>
+        <li><strong>Categories (categories.js)</strong> — a visual grid of all book categories, each linking to the filtered catalog.</li>
+        <li><strong>New Arrivals (newArrivals.js)</strong> — the latest additions to the collection with a hero-style layout.</li>
+        <li><strong>Top Rated (topRated.js)</strong> — the highest-rated books based on user reviews.</li>
+    </ul>
+
+    <div class="code-filename">js/pages/books.js — Books Page with Search &amp; Filters</div>
+<pre>const BooksPage = {
+    searchQuery: '',
+    categoryFilter: '',
+    gradeFilter: '',
+    sortOption: 'popular',
+    currentPage: 1,
+    perPage: 12,
+    isLoading: true,
+    filtersOpen: false,
+
+    render(params = {}) {
+        this.categoryFilter = params.category || '';
+        this.sortOption = params.sort || 'popular';
+        this.searchQuery = params.search || '';
+        this.currentPage = 1;
+
+        const allBooks = AppState.books;
+        const categories = [...new Set(allBooks.map(b =&gt; b.category))].sort();
+        const subjects = [...new Set(allBooks.map(b =&gt; b.subject).filter(Boolean))].sort();
+        const authors = [...new Set(allBooks.map(b =&gt; b.author))].sort();
+        const grades = [...new Set(allBooks.map(b =&gt; b.grade).filter(Boolean))].sort((a, b) =&gt; parseInt(a) - parseInt(b));
+
+        return `
+        &lt;div class="container books-page"&gt;
+            &lt;div class="page-header reveal"&gt;
+                &lt;h1 class="page-title"&gt;Book Catalog&lt;/h1&gt;
+                &lt;p class="page-description"&gt;Browse our collection of ${allBooks.length}
+                   books across ${categories.length} categories&lt;/p&gt;
+            &lt;/div&gt;
+            &lt;div class="books-toolbar reveal"&gt;
+                &lt;div class="books-search"&gt;
+                    ${Utils.getIcon('search', 18)}
+                    &lt;input type="text" id="booksSearchInput"
+                        placeholder="Search by title, author, ISBN..."&gt;
+                &lt;/div&gt;
+                &lt;div class="books-filters"&gt;
+                    &lt;select class="form-input" id="booksSortFilter"&gt;
+                        &lt;option value="popular"&gt;Most Popular&lt;/option&gt;
+                        &lt;option value="newest"&gt;Newest First&lt;/option&gt;
+                        &lt;option value="rating"&gt;Highest Rated&lt;/option&gt;
+                        &lt;option value="title-az"&gt;Title A-Z&lt;/option&gt;
+                    &lt;/select&gt;
+                    &lt;button class="filter-chip ${this.availabilityFilter === 'available' ? 'active' : ''}"
+                        id="filterAvailable"&gt;
+                        ${Utils.getIcon('check-circle', 14)} Available Now
+                    &lt;/button&gt;
+                    &lt;button class="filter-chip" id="toggleFiltersBtn"&gt;
+                        ${Utils.getIcon('filter', 14)} Filters
+                    &lt;/button&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div id="filterPanel"&gt;
+                &lt;div class="card" style="padding:20px;margin-bottom:20px"&gt;
+                    &lt;div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px"&gt;
+                        &lt;select class="form-input" id="filterCategory"&gt;
+                            &lt;option value=""&gt;All Categories&lt;/option&gt;
+                            ${categories.map(c =&gt; `&lt;option value="${c}"&gt;${c}&lt;/option&gt;`).join('')}
+                        &lt;/select&gt;
+                        &lt;select class="form-input" id="filterGrade"&gt;
+                            &lt;option value=""&gt;All Grades&lt;/option&gt;
+                            ${grades.map(g =&gt; `&lt;option value="${g}"&gt;Class ${g}&lt;/option&gt;`).join('')}
+                        &lt;/select&gt;
+                        &lt;select class="form-input" id="filterSubject"&gt;
+                            &lt;option value=""&gt;All Subjects&lt;/option&gt;
+                            ${subjects.map(s =&gt; `&lt;option value="${s}"&gt;${s}&lt;/option&gt;`).join('')}
+                        &lt;/select&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div id="booksGrid" class="books-grid"&gt;
+                &lt;!-- Books rendered dynamically --&gt;
+            &lt;/div&gt;
+            &lt;div id="booksPagination" class="pagination"&gt;&lt;/div&gt;
+        &lt;/div&gt;`;
+    }
+};
+
+The Books page includes client-side search filtering. Users can type in the search field to instantly filter books by title, author, or ISBN. Multiple filter chips allow combining category, grade, and availability filters.</pre>
+</div>
+
+<div class="page">
+    <h3>3.3 Community &amp; Information Pages</h3>
+    <ul>
+        <li><strong>Announcements (announcements.js)</strong> — latest library news with an unread badge on the navigation. Each announcement shows title, content, date, and priority level. Admins and librarians get an inline "Create Announcement" form.</li>
+        <li><strong>Events (events.js)</strong> — upcoming library events, workshops, and activities with registration support. A highlighted "Next Event" card displays a live countdown timer.</li>
+        <li><strong>Library Calendar (calendar.js)</strong> — events, holidays, and the library schedule in one monthly view.</li>
+        <li><strong>Library Rules (rules.js)</strong> — borrowing rules, fines, and reading-room etiquette displayed as styled cards.</li>
+        <li><strong>FAQ (faq.js)</strong> — accordion of answers to common questions about library usage.</li>
+        <li><strong>Help Center (help.js)</strong> — step-by-step guides for getting started, borrowing, and using the account.</li>
+        <li><strong>Support (support.js)</strong> — contact details and a working-hours card so users know when to ask.</li>
+        <li><strong>Feedback (feedback.js)</strong> — a form for suggestions and a visible count of submitted ideas.</li>
+    </ul>
+
+    <div class="code-filename">js/pages/announcements.js — Create announcement with Supabase + demo fallback</div>
+<pre>async createAnnouncement() {
+    const title = document.getElementById('ann-title');
+    const content = document.getElementById('ann-content');
+    const priority = document.getElementById('ann-priority');
+    if (!title || !title.value.trim() || !content || !content.value.trim()) {
+        Toast.error('Please fill in all fields');
+        return;
+    }
+    if (!AppState.announcements) AppState.announcements = [];
+
+    const newAnnouncement = {
+        title: title.value.trim(),
+        content: content.value.trim(),
+        priority: priority ? priority.value : 'normal',
+        date: new Date().toISOString(),
+        author: AppState.currentUser ? AppState.currentUser.name : 'Admin'
+    };
+
+    if (AppState.isSupabaseConnected) {
+        try {
+            const created = await Api.createAnnouncement({
+                title: newAnnouncement.title,
+                content: newAnnouncement.content,
+                priority: newAnnouncement.priority,
+                date: newAnnouncement.date,
+                author: newAnnouncement.author
+            });
+            AppState.announcements.unshift(Api.mapAnnouncement(created));
+        } catch (e) {
+            Toast.error('Failed to publish announcement: ' + (e.message || 'Unknown error'));
+            return;
+        }
+    } else {
+        newAnnouncement.id = Date.now();
+        AppState.announcements.unshift(newAnnouncement);
+    }
+
+    Toast.success('Announcement published');
+    this.showCreateForm = false;
+    const container = document.getElementById('pageContent');
+    if (container) {
+        container.innerHTML = this.render();
+        Router.bindLinks();
+        Router.highlightNav();
+    }
+}</pre>
+
+    <div class="code-filename">js/pages/events.js — Next-event card &amp; live countdown</div>
+<pre>const EventsPage = {
+  intervals: [],
+  filter: 'all',
+  render() {
+    const events = AppState.events || [];
+    const now = new Date();
+    const upcoming = events
+      .filter(e =&gt; new Date(e.date || e.startDate) &gt;= now)
+      .sort((a, b) =&gt;
+        new Date(a.date || a.startDate) - new Date(b.date || b.startDate));
+    const nextEvent = upcoming[0];
+
+    const typeColors = {
+      'Workshop': 'var(--primary)',
+      'Reading Session': 'var(--success)',
+      'Book Fair': 'var(--warning)',
+      'Guest Speaker': 'var(--info)',
+      'Story Time': 'var(--danger)',
+      'default': 'var(--text-tertiary)'
+    };
+
+    return `
+    &lt;div class="page-header"&gt;
+        &lt;h1 class="page-title"&gt;${Utils.getIcon('calendar', 28)} Events&lt;/h1&gt;
+    &lt;/div&gt;
+    ${nextEvent ? `
+    &lt;div class="card" style="background:linear-gradient(135deg,
+        var(--primary),var(--primary-dark));color:#fff;padding:2rem;"&gt;
+        &lt;div style="display:flex;align-items:center;
+            justify-content:space-between;flex-wrap:wrap;gap:1rem;"&gt;
+            &lt;div&gt;
+                &lt;span style="opacity:0.8;font-size:0.85rem;
+                    text-transform:uppercase;"&gt;Next Event&lt;/span&gt;
+                &lt;h2 style="margin:0.25rem 0 0;color:#fff;"&gt;
+                    ${Utils.escapeHtml(nextEvent.title)}&lt;/h2&gt;
+                &lt;p style="opacity:0.85;"&gt;
+                    ${Utils.formatDate(nextEvent.date)}&lt;/p&gt;
+            &lt;/div&gt;
+            &lt;div style="text-align:center;"&gt;
+                &lt;p style="font-size:0.85rem;opacity:0.8;"&gt;Countdown&lt;/p&gt;
+                &lt;div id="event-countdown" style="display:flex;gap:0.75rem;"&gt;&lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;` : ''}
+
+    &lt;div class="tabs"&gt;
+        &lt;button class="tab-btn active"
+            onclick="EventsPage.setFilter('all')"&gt;All Events&lt;/button&gt;
+        ${eventTypes.map(t =&gt; `
+            &lt;button class="tab-btn"
+                onclick="EventsPage.setFilter('${t}')"&gt;
+                ${Utils.escapeHtml(t)}&lt;/button&gt;`).join('')}
+    &lt;/div&gt;`;
+  }
+};
+
+The Events page sorts events into upcoming and past collections, renders a gradient "Next Event" hero card, and computes a live countdown in the afterRender hook. Event type filter buttons are generated dynamically from the data.</pre>
+
+    <h3>3.4 Member Pages</h3>
+    <ul>
+        <li><strong>Login (login.js)</strong> — Sign In, Sign Up, Forgot Password, and Reset Password modes with client-side validation and a password-strength meter. Also supports separate staff login portals for Admin and Librarian roles.</li>
+        <li><strong>Profile (profile.js)</strong> — personal details, membership card with QR/barcode, reading streak, favorites, review activity, and password change.</li>
+        <li><strong>My Books (myBooks.js)</strong> — tabs for active borrows, pending requests, and returned history with due-date reminders.</li>
+        <li><strong>Borrow History (borrowHistory.js)</strong> — the complete borrowing record with search, filter, sort, and date-range controls.</li>
+        <li><strong>Notifications (notifications.js)</strong> — the notification inbox with unread state management.</li>
+        <li><strong>Settings (settings.js)</strong> — theme preference, notification preferences, and language options.</li>
+    </ul>
+
+    <div class="code-filename">js/pages/login.js — Real sign-up flow (Supabase + demo fallback)</div>
+<pre>async signUp() {
+    const { name, email, password, role } = this;   // role: student | teacher
+    const userId = 'U' + Date.now();
+
+    if (AppState.isSupabaseConnected) {
+      // Real backend: Supabase Auth + auto profile via trigger
+      await Api.signUp(email, password, { name, role, user_id: userId });
+      Toast.success('Account created! Please check your email to verify, then sign in.');
+      this.setMode('signin');
+    } else {
+      // Demo fallback: JSON users stored in localStorage
+      const storedUsers = this.getStoredUsers();
+      const newUser = { name, email, role, id: Date.now().toString(), password };
+      storedUsers.push(newUser);                     // no password stored in real mode
+      localStorage.setItem('library_users', JSON.stringify(storedUsers));
+      Toast.success('Account created! Please sign in.');
+      this.setMode('signin');
+    }
+}</pre>
+</div>
+
+<div class="page">
+    <h3>3.5 Digital Library &amp; Study Materials</h3>
+    <ul>
+        <li><strong>Digital Library (digitalLibrary.js)</strong> — browse e-books, audiobooks, and video content. Each item shows title, subject, grade, rating, and download count. Users can open PDFs directly in the browser through the built-in PDF reader modal, and audiobooks play through a fixed bottom audio player with play/pause, skip, and a seek bar.</li>
+        <li><strong>Study Materials (studyMaterials.js)</strong> — teacher-uploaded notes, question papers, and guides organized by subject and grade. Supports filtering, reading in the PDF viewer, download counting, and download tracking.</li>
+    </ul>
+
+    <div class="code-filename">js/pages/digitalLibrary.js — Media-type tabs, filtering &amp; in-page audio player</div>
+<pre>const DigitalLibraryPage = {
+  activeTab: 'all',
+  searchQuery: '',
+  playing: false,
+  currentTrack: null,
+
+  render() {
+    const all = AppState.digitalBooks || [];
+    let filtered = this.activeTab === 'all'
+      ? all : all.filter(d =&gt; d.type === this.activeTab);
+    if (this.searchQuery) {
+      const q = this.searchQuery.toLowerCase();
+      filtered = filtered.filter(d =&gt;
+        d.title.toLowerCase().includes(q) ||
+        (d.author || d.creator || '').toLowerCase().includes(q));
+    }
+
+    const featured = all.filter(d =&gt; d.featured);
+    const ebooks = all.filter(d =&gt; d.type === 'pdf');
+    const audiobooks = all.filter(d =&gt; d.type === 'audio');
+    const videos = all.filter(d =&gt; d.type === 'video');
+
+    return `
+    &lt;div class="page-header"
+        style="background:linear-gradient(135deg,
+        var(--primary),var(--primary-dark));color:#fff;"&gt;
+        &lt;div class="container"&gt;
+            &lt;h1 class="page-title" style="color:#fff;"&gt;
+                ${Utils.getIcon('monitor', 28)} Digital Library&lt;/h1&gt;
+            &lt;p style="opacity:0.9;"&gt;Access e-books, audiobooks,
+                videos, and study materials&lt;/p&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+
+    ${featured.length ? `
+    &lt;div class="section-header"&gt;
+        &lt;h2 class="section-title"&gt;${Utils.getIcon('star', 18)} Featured&lt;/h2&gt;
+    &lt;/div&gt;
+    &lt;div style="display:flex;gap:1rem;overflow-x:auto;"&gt;
+        ${featured.map(item =&gt; `
+            &lt;div class="card" style="min-width:280px;"&gt;
+                &lt;div class="card-body"&gt;
+                    &lt;h4&gt;${Utils.escapeHtml(item.title)}&lt;/h4&gt;
+                    ${item.type === 'audio'
+                        ? `&lt;button class="btn btn-primary btn-sm"
+                            onclick="DigitalLibraryPage.playAudio(
+                              '${Utils.escapeHtml(item.title)}',
+                              '${Utils.escapeHtml(item.author || '')}',
+                              ${item.id})"&gt;${Utils.getIcon('play', 14)} Play&lt;/button&gt;`
+                        : ''}
+                    ${item.type === 'pdf'
+                        ? `&lt;button class="btn btn-primary btn-sm"
+                            onclick="DigitalLibraryPage.openPDF(${item.id})"&gt;
+                            ${Utils.getIcon('book-open', 14)} Read&lt;/button&gt;`
+                        : ''}
+                &lt;/div&gt;
+            &lt;/div&gt;`).join('')}
+    &lt;/div&gt;` : ''}
+
+    &lt;div class="tabs"&gt;
+        &lt;button class="tab-btn ${this.activeTab==='all'?'active':''}"
+            data-tab="all"&gt;All (${all.length})&lt;/button&gt;
+        &lt;button class="tab-btn ${this.activeTab==='pdf'?'active':''}"
+            data-tab="pdf"&gt;E-Books (${ebooks.length})&lt;/button&gt;
+        &lt;button class="tab-btn ${this.activeTab==='audio'?'active':''}"
+            data-tab="audio"&gt;Audiobooks (${audiobooks.length})&lt;/button&gt;
+        &lt;button class="tab-btn ${this.activeTab==='video'?'active':''}"
+            data-tab="video"&gt;Videos (${videos.length})&lt;/button&gt;
+    &lt;/div&gt;
+
+    &lt;div id="digital-content"&gt;${this.renderContent(filtered)}&lt;/div&gt;
+    &lt;div id="audio-player" style="display:none;position:fixed;
+        bottom:0;left:0;right:0;background:var(--bg-primary);
+        border-top:1px solid var(--border);z-index:100;"&gt;
+        &lt;div style="display:flex;align-items:center;gap:1rem;"&gt;
+            &lt;div style="flex:1;"&gt;
+                &lt;p id="player-title"&gt;&lt;/p&gt;
+                &lt;p id="player-artist" style="color:var(--text-secondary);"&gt;&lt;/p&gt;
+            &lt;/div&gt;
+            &lt;button class="btn btn-ghost btn-sm"
+                onclick="DigitalLibraryPage.togglePlay()"&gt;&lt;/button&gt;
+            &lt;div style="height:4px;background:var(--bg-tertiary);"
+                onclick="DigitalLibraryPage.seek(event)"&gt;
+                &lt;div id="player-progress" style="height:100%;width:0%;
+                    background:var(--primary);"&gt;&lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;`;
+  },
+
+  // Audio playback simulates a mini music player with a progress bar
+  playAudio(title, author, id) {
+    this.currentTrack = { id, title, author };
+    this.playing = true;
+    const player = document.getElementById('audio-player');
+    if (player) player.style.display = 'block';
+    document.getElementById('player-title').textContent = title;
+    document.getElementById('player-artist').textContent = author;
+
+    let progress = 0;
+    const interval = setInterval(() =&gt; {
+      if (!this.playing) { clearInterval(interval); return; }
+      progress += 0.5;
+      const bar = document.getElementById('player-progress');
+      if (bar) bar.style.width = Math.min(progress, 100) + '%';
+      if (progress &gt;= 100) { clearInterval(interval); this.playing = false; }
+    }, 200);
+  }
+};
+
+Each item card renders different action buttons based on its media type: Play for audio, Read (with "Continue" if progress was saved) for PDFs, and Watch for videos. The renderContent method produces a responsive three-column card grid with download counts.</pre>
+
+    <div class="code-filename">js/pages/studyMaterials.js — Type-config cards with grade/subject filters</div>
+<pre>const StudyMaterialsPage = {
+  activeTab: 'all',
+  searchQuery: '',
+  gradeFilter: '',
+  subjectFilter: '',
+
+  TYPE_CONFIG: {
+    'question-paper': { label: 'Question Paper', icon: 'file-text', color: 'var(--danger)' },
+    'notes': { label: 'Notes', icon: 'book-marked', color: 'var(--primary)' },
+    'model-set': { label: 'Model Set', icon: 'award', color: 'var(--success)' }
+  },
+
+  _filtered() {
+    let items = this._all().slice();
+    if (this.activeTab !== 'all') items = items.filter(m =&gt; m.type === this.activeTab);
+    if (this.gradeFilter) items = items.filter(m =&gt; String(m.grade) === String(this.gradeFilter));
+    if (this.subjectFilter) items = items.filter(m =&gt; m.subject === this.subjectFilter);
+    if (this.searchQuery) {
+      const q = this.searchQuery.toLowerCase();
+      items = items.filter(m =&gt;
+        (m.title || '').toLowerCase().includes(q) ||
+        (m.subject || '').toLowerCase().includes(q) ||
+        (m.description || '').toLowerCase().includes(q));
+    }
+    return items;
+  },
+
+  renderContent(items) {
+    if (!items.length) {
+      return `&lt;div class="empty-state"&gt;No materials found.&lt;/div&gt;`;
+    }
+    return `&lt;div class="grid-3"&gt;${items.map(m =&gt; {
+      const cfg = this.TYPE_CONFIG[m.type] || this.TYPE_CONFIG['notes'];
+      return `
+        &lt;div class="card"&gt;
+          &lt;div style="height:120px;background:linear-gradient(135deg,
+              ${cfg.color}22, ${cfg.color}11);
+              display:flex;align-items:center;justify-content:center;"&gt;
+            &lt;span style="color:${cfg.color};"&gt;
+                ${Utils.getIcon(cfg.icon, 44)}&lt;/span&gt;
+            &lt;span class="badge" style="background:${cfg.color};color:#fff;"&gt;
+                ${cfg.label}&lt;/span&gt;
+          &lt;/div&gt;
+          &lt;div class="card-body"&gt;
+            &lt;h4&gt;${Utils.escapeHtml(m.title)}&lt;/h4&gt;
+            ${m.subject
+              ? `&lt;span class="badge badge-info"&gt;${m.subject}&lt;/span&gt;` : ''}
+            &lt;div style="display:flex;gap:0.5rem;"&gt;
+              ${m.pdfUrl
+                ? `&lt;button class="btn btn-primary btn-sm"
+                    onclick="StudyMaterialsPage.openPdf(${m.id})"&gt;
+                    ${Utils.getIcon('eye', 14)} Read&lt;/button&gt;
+                   &lt;a class="btn btn-outline btn-sm"
+                    href="${m.pdfUrl}" download onclick="...countDownload()"&gt;
+                    ${Utils.getIcon('download', 14)} Download&lt;/a&gt;`
+                : ''}
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;`;
+    }).join('')}&lt;/div&gt;`;
+  }
+};
+
+Each study material is color-coded by its type (question paper = red, notes = blue, model set = green). Type icons and labels are centralized in TYPE_CONFIG so new types can be added in one place. All search, grade, and subject filters chain together through _filtered().</pre>
+</div>
+
+<!-- ======================== CHAPTER 4: CMS ADMIN PANEL ======================== -->
+<div class="page">
+    <h2>4. CMS Admin Panel</h2>
+    <p>The administrative area is a complete management console with eight screens under the <code>#/admin/...</code> routes. Access is guarded in two layers: routes check the logged-in role, and the sidebar only renders the Management and Security sections for authorized accounts (librarian and admin). The dashboard adapts by role — students see their active borrows and recommendations, teachers see their class and departmental view, and librarians/admins get the full management console with statistics, pending requests, and quick actions.</p>
+
+    <table>
+        <tr><th>Screen</th><th>File</th><th>Function</th></tr>
+        <tr><td>Dashboard</td><td>dashboard.js</td><td>Role-aware overview for teachers, librarians, and admins with statistics and charts</td></tr>
+        <tr><td>Manage Books</td><td>adminBooks.js</td><td>Full CRUD for books, cover upload, availability control, and category assignment</td></tr>
+        <tr><td>Manage Users</td><td>adminUsers.js</td><td>Profile management, role assignment, and borrowing overview for every member</td></tr>
+        <tr><td>Reports</td><td>adminReports.js</td><td>Library analytics and report generation with Canvas-drawn charts</td></tr>
+        <tr><td>System Settings</td><td>adminSettings.js</td><td>Member limits, fine rates, loan periods, and system configuration</td></tr>
+        <tr><td>Audit Logs</td><td>adminAuditLogs.js</td><td>Security event viewer: login history and activity logs</td></tr>
+        <tr><td>Import Data</td><td>adminImport.js</td><td>Bulk import of CDC textbooks with import history</td></tr>
+        <tr><td>Study Materials</td><td>adminStudyMaterials.js</td><td>Upload and manage question papers, notes, and model sets</td></tr>
+    </table>
+
+    <h3>4.1 Dashboard &amp; Reports</h3>
+    <p>The CMS Dashboard (<code>js/pages/dashboard.js</code>) displays an overview of the system. It shows statistics about the library and lists pending borrow requests that require approval. Admins can approve or reject each request directly from the dashboard. The dashboard also renders Canvas-based charts (drawn from scratch, no chart library) showing monthly borrow trends and book status distribution. Quick action buttons provide one-click access to offline book issue, adding books, viewing reports, and managing settings.</p>
+
+    <div class="code-filename">js/pages/dashboard.js — Dashboard with role-aware stats &amp; pending requests</div>
+<pre>const DashboardPage = {
+    render() {
+        const role = AppState.currentUser ? AppState.currentUser.role : 'student';
+        const isAdmin = role === 'admin' || role === 'librarian';
+
+        if (isAdmin) return this.renderAdminDashboard();
+        if (role === 'teacher') return this.renderTeacherDashboard();
+        return this.renderStudentDashboard();
+    },
+
+    renderAdminDashboard() {
+        const pending = AppState.getAllPendingRequests();
+        const active = AppState.getAllActiveBorrows();
+        const totalBooks = (AppState.books || []).length;
+        const totalFines = (AppState.borrowRequests || [])
+            .reduce((s, r) =&gt; s + (r.fine || 0), 0);
+        const mostBorrowed = [...(AppState.books || [])]
+            .sort((a, b) =&gt; (b.borrowCount || 0) - (a.borrowCount || 0))
+            .slice(0, 5);
+
+        return `
+        &lt;div class="page-header"&gt;
+            &lt;div class="container"&gt;
+                &lt;h1 class="page-title"&gt;${Utils.getGreeting()},
+                    ${Utils.escapeHtml(AppState.currentUser.name)}&lt;/h1&gt;
+                &lt;p class="page-description"&gt;Library Management Dashboard&lt;/p&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;div class="container"&gt;
+            &lt;div class="grid-3" style="margin-bottom:1.5rem;"&gt;
+                &lt;div class="stat-card"&gt;
+                    &lt;div class="stat-icon blue"&gt;${Utils.getIcon('book-open', 24)}&lt;/div&gt;
+                    &lt;div class="stat-info"&gt;
+                        &lt;span class="stat-value"&gt;${totalBooks}&lt;/span&gt;
+                        &lt;span class="stat-label"&gt;Total Books&lt;/span&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+                &lt;div class="stat-card"&gt;
+                    &lt;div class="stat-icon indigo"&gt;${Utils.getIcon('book-open', 24)}&lt;/div&gt;
+                    &lt;div class="stat-info"&gt;
+                        &lt;span class="stat-value"&gt;${active.length}&lt;/span&gt;
+                        &lt;span class="stat-label"&gt;Currently Borrowed&lt;/span&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+                &lt;div class="stat-card"&gt;
+                    &lt;div class="stat-icon orange"&gt;${Utils.getIcon('clock', 24)}&lt;/div&gt;
+                    &lt;div class="stat-info"&gt;
+                        &lt;span class="stat-value"&gt;${pending.length}&lt;/span&gt;
+                        &lt;span class="stat-label"&gt;Pending Requests&lt;/span&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div class="card"&gt;
+                &lt;div class="card-header-flex"&gt;
+                    &lt;h3&gt;Pending Borrow Requests&lt;/h3&gt;
+                    &lt;span class="badge badge-warning"&gt;${pending.length} pending&lt;/span&gt;
+                &lt;/div&gt;
+                &lt;table class="data-table"&gt;
+                    &lt;thead&gt;&lt;tr&gt;
+                        &lt;th&gt;Student&lt;/th&gt;&lt;th&gt;Book&lt;/th&gt;
+                        &lt;th&gt;Time&lt;/th&gt;&lt;th&gt;Actions&lt;/th&gt;
+                    &lt;/tr&gt;&lt;/thead&gt;
+                    &lt;tbody&gt;${pending.map(r =&gt; `
+                        &lt;tr&gt;
+                            &lt;td&gt;${Utils.escapeHtml(r.studentName)}&lt;/td&gt;
+                            &lt;td&gt;&lt;strong&gt;${Utils.escapeHtml(r.bookTitle)}&lt;/strong&gt;&lt;/td&gt;
+                            &lt;td&gt;${Utils.formatDate(r.borrowDate)}&lt;/td&gt;
+                            &lt;td&gt;
+                                &lt;button class="btn btn-success btn-sm"
+                                    onclick="DashboardPage.approveRequest('${r.id}')"&gt;
+                                    Approve
+                                &lt;/button&gt;
+                                &lt;button class="btn btn-danger btn-sm"
+                                    onclick="DashboardPage.rejectRequest('${r.id}')"&gt;
+                                    Reject
+                                &lt;/button&gt;
+                            &lt;/td&gt;
+                        &lt;/tr&gt;`).join('')}
+                    &lt;/tbody&gt;
+                &lt;/table&gt;
+            &lt;/div&gt;
+            &lt;div class="grid-2"&gt;
+                &lt;div class="card"&gt;&lt;h3&gt;Monthly Borrows&lt;/h3&gt;
+                    &lt;canvas id="dash-line-chart" height="220"&gt;&lt;/canvas&gt;&lt;/div&gt;
+                &lt;div class="card"&gt;&lt;h3&gt;Book Status&lt;/h3&gt;
+                    &lt;canvas id="dash-doughnut-chart" height="220"&gt;&lt;/canvas&gt;&lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;`;
+    }
+};
+
+The DashboardPage adapts its output based on the logged-in user's role. The admin dashboard shows nine stat cards, a pending requests table with approve/reject buttons, Canvas-drawn charts, recent activity feed, and quick action buttons.</pre>
+</div>
+
+<div class="page">
+    <h3>4.2 Book Management (CRUD)</h3>
+    <p>The Books admin page (<code>js/pages/adminBooks.js</code>) provides a complete Create, Read, Update, Delete interface. Books can be added with title, author, ISBN, category, grade, subject, language, publisher, copies, PDF URL, cover color, and description. The form validates required fields and supports inline editing in a table view. The admin can also manage categories, set cover colors for auto-generated book covers, and control availability by adjusting total and available copy counts. The page includes search, category filter, status filter (available/unavailable/overdue), column sorting, and pagination.</p>
+
+    <div class="code-filename">js/pages/adminBooks.js — Book CRUD with search, filter, sort &amp; pagination</div>
+<pre>const AdminBooksPage = {
+  searchQuery: '',
+  categoryFilter: '',
+  statusFilter: '',
+  currentPage: 1,
+  perPage: 15,
+  sortField: 'title',
+  sortDir: 'asc',
+
+  render() {
+    const books = AppState.books || [];
+    let filtered = [...books];
+    if (this.searchQuery) {
+      const q = this.searchQuery.toLowerCase();
+      filtered = filtered.filter(b =&gt;
+        (b.title || '').toLowerCase().includes(q) ||
+        (b.author || '').toLowerCase().includes(q) ||
+        (b.isbn || '').toLowerCase().includes(q)
+      );
+    }
+    if (this.categoryFilter) {
+      filtered = filtered.filter(b =&gt; (b.category || '') === this.categoryFilter);
+    }
+
+    filtered.sort((a, b) =&gt; {
+      let av = a[this.sortField] || '', bv = b[this.sortField] || '';
+      if (typeof av === 'string') av = av.toLowerCase();
+      if (typeof bv === 'string') bv = bv.toLowerCase();
+      if (this.sortDir === 'asc') return av &gt; bv ? 1 : av &lt; bv ? -1 : 0;
+      return av &lt; bv ? 1 : av &gt; bv ? -1 : 0;
+    });
+
+    const totalPages = Math.ceil(filtered.length / this.perPage) || 1;
+    const paged = filtered.slice(
+      (this.currentPage - 1) * this.perPage,
+      this.currentPage * this.perPage
+    );
+
+    return `
+    &lt;div class="page-header"&gt;
+        &lt;div class="container"&gt;
+            &lt;h1 class="page-title"&gt;${Utils.getIcon('book', 28)} Manage Books&lt;/h1&gt;
+            &lt;p class="page-description"&gt;${books.length} books in library&lt;/p&gt;
+            &lt;div style="display:flex;gap:0.75rem;"&gt;
+                &lt;button class="btn btn-outline"
+                    onclick="AdminBooksPage.bulkImport()"&gt;Bulk Import&lt;/button&gt;
+                &lt;button class="btn btn-outline"
+                    onclick="AdminBooksPage.bulkExportCSV()"&gt;Export CSV&lt;/button&gt;
+                &lt;button class="btn btn-primary"
+                    onclick="AdminBooksPage.addBook()"&gt;Add Book&lt;/button&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div class="container"&gt;
+        &lt;div class="card"&gt;
+            &lt;div style="padding:1rem 1.5rem;display:flex;gap:1rem;align-items:center;"&gt;
+                &lt;input class="form-input" placeholder="Search by title, author, ISBN..."
+                    oninput="AdminBooksPage.onSearch(this.value)"
+                    style="padding-left:2.5rem;flex:1;"&gt;
+                &lt;select class="form-input" style="width:auto;"
+                    onchange="AdminBooksPage.onCategoryFilter(this.value)"&gt;
+                    &lt;option value=""&gt;All Categories&lt;/option&gt;
+                    ${categories.map(c =&gt;
+                        `&lt;option value="${c}"&gt;${c}&lt;/option&gt;`
+                    ).join('')}
+                &lt;/select&gt;
+            &lt;/div&gt;
+            &lt;table class="data-table"&gt;
+                &lt;thead&gt;&lt;tr&gt;
+                    &lt;th onclick="AdminBooksPage.sort('title')"&gt;Book&lt;/th&gt;
+                    &lt;th&gt;ISBN&lt;/th&gt;
+                    &lt;th onclick="AdminBooksPage.sort('category')"&gt;Category&lt;/th&gt;
+                    &lt;th&gt;Rating&lt;/th&gt;
+                    &lt;th onclick="AdminBooksPage.sort('availableCopies')"&gt;Available&lt;/th&gt;
+                    &lt;th&gt;Actions&lt;/th&gt;
+                &lt;/tr&gt;&lt;/thead&gt;
+                &lt;tbody&gt;${paged.map(book =&gt; `
+                    &lt;tr&gt;
+                        &lt;td&gt;&lt;strong&gt;${Utils.escapeHtml(book.title)}&lt;/strong&gt;
+                            &lt;br&gt;&lt;small&gt;${Utils.escapeHtml(book.author)}&lt;/small&gt;&lt;/td&gt;
+                        &lt;td style="font-family:monospace;"&gt;${book.isbn || 'N/A'}&lt;/td&gt;
+                        &lt;td&gt;&lt;span class="badge badge-info"&gt;${book.category}&lt;/span&gt;&lt;/td&gt;
+                        &lt;td&gt;${Utils.getIcon('star', 14)} ${(book.rating || 0).toFixed(1)}&lt;/td&gt;
+                        &lt;td&gt;&lt;span class="badge badge-${book.availableCopies &gt; 0
+                            ? 'success' : 'danger'}"&gt;
+                            ${book.availableCopies} / ${book.totalCopies}&lt;/span&gt;&lt;/td&gt;
+                        &lt;td&gt;
+                            &lt;button class="btn btn-ghost btn-sm"
+                                onclick="AdminBooksPage.editBook(${book.id})"&gt;Edit&lt;/button&gt;
+                            &lt;button class="btn btn-ghost btn-sm"
+                                onclick="AdminBooksPage.deleteBook(${book.id})"
+                                style="color:var(--danger);"&gt;Delete&lt;/button&gt;
+                        &lt;/td&gt;
+                    &lt;/tr&gt;`).join('')}
+                &lt;/tbody&gt;
+            &lt;/table&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;`;
+  }
+};
+
+The AdminBooksPage maintains its own filter state and re-renders on every search, filter change, or page navigation. Each table row provides View, Edit, QR Code, Barcode, and Delete action buttons.</pre>
+
+    <h3>4.3 User Management</h3>
+    <p>The Users admin page (<code>js/pages/adminUsers.js</code>) allows admins and librarians to view all registered users, assign roles, approve pending accounts, and manage borrowing limits. The user table shows name, email, role, status, and provides action buttons for viewing profiles, editing, viewing borrow history, and deleting accounts. Role filtering tabs (All, Students, Teachers, Librarians, Admins, Pending) allow quick navigation. Bulk selection with approve/reject/delete actions is supported via checkboxes. Role changes are logged to the audit trail.</p>
+
+    <div class="code-filename">js/pages/adminUsers.js — User Management with role tabs &amp; bulk actions</div>
+<pre>const AdminUsersPage = {
+  activeRole: 'all',
+  searchQuery: '',
+  currentPage: 1,
+  perPage: 15,
+  selectedUsers: new Set(),
+
+  render() {
+    const allUsers = this._getAllUsers();
+    const filtered = this._filteredUsers();
+    const pendingCount = allUsers.filter(u =&gt; u.approved === false).length;
+    const roleCounts = {
+      all: allUsers.length,
+      student: allUsers.filter(u =&gt; u.role === 'student').length,
+      teacher: allUsers.filter(u =&gt; u.role === 'teacher').length,
+      librarian: allUsers.filter(u =&gt; u.role === 'librarian').length,
+      admin: allUsers.filter(u =&gt; u.role === 'admin').length,
+      pending: pendingCount
+    };
+
+    return `
+    &lt;div class="page-header"&gt;
+        &lt;h1 class="page-title"&gt;${Utils.getIcon('users', 28)} Manage Users&lt;/h1&gt;
+        &lt;div style="display:flex;gap:0.75rem;"&gt;
+            &lt;button class="btn btn-outline"
+                onclick="AdminUsersPage.exportUserList()"&gt;Export List&lt;/button&gt;
+            &lt;button class="btn btn-primary"
+                onclick="AdminUsersPage.addUser()"&gt;Add User&lt;/button&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div style="display:flex;gap:0.5rem;margin-bottom:1.5rem;"&gt;
+        ${['all', 'student', 'teacher', 'librarian', 'admin'].map(r =&gt; `
+            &lt;button class="btn btn-sm ${this.activeRole === r
+                ? 'btn-primary' : 'btn-outline'}"
+                onclick="AdminUsersPage.switchRole('${r}')"&gt;
+                ${r.charAt(0).toUpperCase() + r.slice(1)}s (${roleCounts[r]})
+            &lt;/button&gt;`).join('')}
+        &lt;button class="btn btn-sm ${this.activeRole === 'pending'
+            ? 'btn-warning' : 'btn-outline'}"
+            onclick="AdminUsersPage.switchRole('pending')"&gt;
+            Pending (${pendingCount})
+        &lt;/button&gt;
+    &lt;/div&gt;
+    &lt;div class="card"&gt;
+        &lt;table class="data-table"&gt;
+            &lt;thead&gt;&lt;tr&gt;
+                &lt;th&gt;&lt;input type="checkbox"
+                    onchange="AdminUsersPage.toggleSelectAll(this.checked)"&gt;&lt;/th&gt;
+                &lt;th&gt;User&lt;/th&gt;&lt;th&gt;Email&lt;/th&gt;&lt;th&gt;Role&lt;/th&gt;
+                &lt;th&gt;Status&lt;/th&gt;&lt;th&gt;Actions&lt;/th&gt;
+            &lt;/tr&gt;&lt;/thead&gt;
+            &lt;tbody&gt;${paged.map(user =&gt; `
+                &lt;tr&gt;
+                    &lt;td&gt;&lt;input type="checkbox"
+                        onchange="AdminUsersPage.toggleSelect('${user.id}')"&gt;&lt;/td&gt;
+                    &lt;td&gt;&lt;strong&gt;${Utils.escapeHtml(user.name)}&lt;/strong&gt;&lt;/td&gt;
+                    &lt;td&gt;${Utils.escapeHtml(user.email)}&lt;/td&gt;
+                    &lt;td&gt;&lt;span class="badge badge-info"&gt;${user.role}&lt;/span&gt;&lt;/td&gt;
+                    &lt;td&gt;${user.approved === false
+                        ? '&lt;span class="badge badge-warning"&gt;Pending&lt;/span&gt;'
+                        : '&lt;span class="badge badge-success"&gt;Approved&lt;/span&gt;'
+                    }&lt;/td&gt;
+                    &lt;td&gt;
+                        ${user.approved === false ? `
+                            &lt;button class="btn btn-sm"
+                                style="background:var(--success);color:#fff;"
+                                onclick="AdminUsersPage.approveUser('${user.id}')"&gt;
+                                Approve
+                            &lt;/button&gt;
+                            &lt;button class="btn btn-sm"
+                                style="background:var(--danger);color:#fff;"
+                                onclick="AdminUsersPage.rejectUser('${user.id}')"&gt;
+                                Reject
+                            &lt;/button&gt;
+                        ` : `
+                            &lt;button class="btn btn-ghost btn-sm"
+                                onclick="AdminUsersPage.editUser('${user.id}')"&gt;
+                                Edit
+                            &lt;/button&gt;
+                            &lt;button class="btn btn-ghost btn-sm"
+                                onclick="AdminUsersPage.viewBorrowHistory('${user.id}')"&gt;
+                                History
+                            &lt;/button&gt;
+                        `}
+                    &lt;/td&gt;
+                &lt;/tr&gt;`).join('')}
+            &lt;/tbody&gt;
+        &lt;/table&gt;
+    &lt;/div&gt;`;
+  }
+};
+
+The AdminUsersPage uses a Set for bulk selection and provides role-based tab filtering. Pending users are highlighted with a yellow background. Bulk actions (approve, reject, delete) appear when users are selected via checkboxes.</pre>
+</div>
+
+<div class="page">
+    <h3>4.4 Settings, Audit Logs &amp; Import</h3>
+    <p><strong>Settings</strong> (<code>js/pages/adminSettings.js</code>) allows configuration of fine rates per day, loan periods in days, max borrows per role (student/teacher), reservation limits, and library operating hours. Changes are saved to Supabase and immediately take effect across the application.</p>
+    <p><strong>Audit Logs</strong> (<code>js/pages/adminAuditLogs.js</code>) displays a chronological feed of all significant system events — login, borrow request, approval, return, book creation, user role change, settings modification. Each entry shows the event type, message, user who performed the action, their role, and timestamp. The log is read-only and supports search and date-range filtering.</p>
+    <p><strong>Import</strong> (<code>js/pages/adminImport.js</code>) provides bulk CSV import of CDC textbook data with duplicate detection (by ISBN or title) and import history tracking. Previously imported batches are listed with their date, record count, and status.</p>
+    <p><strong>Reports</strong> (<code>js/pages/adminReports.js</code>) generates library analytics with Canvas-drawn charts showing borrowing trends over time, most popular books, overdue statistics, category distribution, and user activity patterns. All charts are drawn from scratch using the Canvas 2D API — no external chart library is used.</p>
+</div>
+
+<!-- ======================== CHAPTER 5: COMPONENT ARCHITECTURE ======================== -->
+<div class="page">
+    <h2>5. Component Architecture &amp; State Management</h2>
+    <h3>5.1 Modular Page Architecture</h3>
+    <p>Every page is a plain object registered with the router in <code>app.js</code>. This "component-first" pattern keeps concerns separated — a page describes its own HTML, its own events, and nothing else. The architecture has four layers:</p>
+    <ul>
+        <li><strong>Router (router.js)</strong> — matches <code>#/path</code> against registered routes, resolves dynamic parameters (e.g. <code>/book/:id</code>), runs <code>beforeNavigate</code> guards, renders the page into <code>#pageContent</code>, and rebinds navigation links.</li>
+        <li><strong>State (state.js)</strong> — a singleton <code>AppState</code> holding the session and all domain collections; loads data in parallel via <code>Promise.all</code> after sign-in, and falls back to a localStorage-powered demo mode when the network is unreachable.</li>
+        <li><strong>Data access (api.js)</strong> — a single seam to Supabase that maps database rows to the camelCase objects used by pages.</li>
+        <li><strong>Utilities (utils.js)</strong> — shared helpers: HTML escaping, date and currency formatting, debounce, library open-hours detection, star-rating generation, and the SVG icon dictionary of over 50 icons.</li>
+    </ul>
+    <div class="code-filename">js/router.js — real router (excerpt)</div>
+<pre>const Router = {
+  routes: [],
+  beforeNavigate(callback) { this._beforeNavigateCallbacks.push(callback); },
+
+  init() {
+    window.addEventListener('hashchange', () =&gt; this.resolve());
+    this.resolve();
+  },
+
+  resolve() {
+    const hash = window.location.hash || '#/';
+    const full = hash.substring(1);
+    const [pathPart, queryPart] = full.split('?');
+    const query = {};
+    if (queryPart) new URLSearchParams(queryPart).forEach((v, k) =&gt; { query[k] = v; });
+
+    let matched = null, params = { ...query };
+    for (const route of this.routes) {          // match /book/:id style routes
+      const routeSegs = route.path.split('/');
+      const pathSegs = pathPart.split('/');
+      if (routeSegs.length !== pathSegs.length) continue;
+      let ok = true; const p = { ...query };
+      for (let i = 0; i &lt; routeSegs.length; i++) {
+        if (routeSegs[i].startsWith(':')) p[routeSegs[i].slice(1)] = decodeURIComponent(pathSegs[i]);
+        else if (routeSegs[i] !== pathSegs[i]) { ok = false; break; }
+      }
+      if (ok) { matched = route; params = p; break; }
+    }
+    if (!matched) matched = { handler: this._notFound };   // 404 page
+    return this.render(matched.handler, params);
+  },
+
+  async render(handler, params) {
+    const container = document.getElementById('pageContent');
+    const html = await handler.render(params);
+    container.innerHTML = html;
+    if (handler.afterRender) await handler.afterRender(params);
+    this.bindLinks();      // one listener per [data-nav] link
+    this.highlightNav();
+    this.closeSidebarIfOpen();
+  }
+};</pre>
+
+    <div class="code-filename">js/app.js — real route registration</div>
+<pre>registerRoutes() {
+    Router.add('/', HomePage);
+    Router.add('/books', BooksPage);
+    Router.add('/book/:id', BookDetailPage);
+    Router.add('/my-books', MyBooksPage);
+    Router.add('/digital-library', DigitalLibraryPage);
+    Router.add('/study-materials', StudyMaterialsPage);
+    Router.add('/profile', ProfilePage);
+    Router.add('/dashboard', DashboardPage);
+    Router.add('/announcements', AnnouncementsPage);
+    Router.add('/events', EventsPage);
+    Router.add('/categories', CategoriesPage);
+    Router.add('/rules', RulesPage);
+    Router.add('/support', SupportPage);
+    Router.add('/settings', SettingsPage);
+    Router.add('/new-arrivals', NewArrivalsPage);
+    Router.add('/top-rated', TopRatedPage);
+    Router.add('/feedback', FeedbackPage);
+    Router.add('/faq', FAQPage);
+    Router.add('/calendar', CalendarPage);
+    Router.add('/help', HelpPage);
+    Router.add('/login', LoginPage);
+    // CMS admin panel
+    Router.add('/admin/books', AdminBooksPage);
+    Router.add('/admin/users', AdminUsersPage);
+    Router.add('/admin/reports', AdminReportsPage);
+    Router.add('/admin/settings', AdminSettingsPage);
+    Router.add('/admin/audit-logs', AdminAuditLogsPage);
+    Router.add('/admin/import', AdminImportPage);
+    Router.add('/admin/study-materials', AdminStudyMaterialsPage);
+}</pre>
+
+    <div class="code-filename">js/pages/home.js — the page-module pattern every page uses</div>
+<pre>const HomePage = {
+    render() {
+        const isOpen = Utils.isLibraryOpen();
+        const featured = AppState.books[8] || AppState.books[0];
+        return `
+        &lt;section class="hero"&gt;
+          &lt;h1 class="hero-title"&gt;Discover the World&lt;br&gt;Through Books&lt;/h1&gt;
+          &lt;p&gt;Access ${LIBRARY_DATA.stats.totalBooks}+ books and a thriving reading community.&lt;/p&gt;
+          &lt;a href="#/books" class="btn btn-primary" data-nav&gt;Browse Catalog&lt;/a&gt;
+          &lt;a href="#/digital-library" class="btn btn-outline" data-nav&gt;Digital Library&lt;/a&gt;
+        &lt;/section&gt;`;
+    },
+    afterRender() { /* attach event listeners */ }
+};</pre>
+</div>
+
+<div class="page">
+    <h3>5.2 Reusable UI Components</h3>
+    <p>Reusable UI pieces are built as independent components under <code>js/components/</code>, so every page reuses the same behaviour instead of duplicating it:</p>
+    <table>
+        <tr><th>Component</th><th>Purpose</th></tr>
+        <tr><td>toast.js</td><td>Transient success/error/info toasts, stacked up to five, auto-dismissed after 4 seconds</td></tr>
+        <tr><td>modal.js</td><td>Reusable dialogs, confirmations, and the PDF reader with Escape-key and backdrop-click closing</td></tr>
+        <tr><td>charts.js</td><td>Dashboard visualizations drawn on the Canvas API (bar, line, pie charts)</td></tr>
+        <tr><td>qrcode.js / barcode.js</td><td>Member cards and book labels generated entirely in the browser via Canvas</td></tr>
+        <tr><td>notifications.js</td><td>Bell dropdown panel and unread badge counting</td></tr>
+        <tr><td>animations.js</td><td>Scroll-reveal effects, confetti, and animated counters</td></tr>
+    </table>
+
+    <div class="code-filename">js/components/toast.js — Toast Notification System</div>
+<pre>const Toast = {
+    container: null,
+    init() { this.container = document.getElementById('toastContainer'); },
+
+    show(message, type = 'info', duration = 4000) {
+        const icons = { success: 'check-circle', error: 'x-circle',
+                        warning: 'alert-triangle', info: 'info' };
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `
+            &lt;span class="toast-icon"&gt;${Utils.getIcon(icons[type], 22)}&lt;/span&gt;
+            &lt;span class="toast-text"&gt;${Utils.escapeHtml(message)}&lt;/span&gt;
+            &lt;button class="toast-close"&gt;${Utils.getIcon('x-circle', 16)}&lt;/button&gt;`;
+        this.container.appendChild(toast);
+        requestAnimationFrame(() =&gt; toast.classList.add('show'));
+
+        const existing = this.container.querySelectorAll('.toast');
+        if (existing.length &gt; 5) this.dismiss(existing[0]);
+        setTimeout(() =&gt; this.dismiss(toast), duration);
+    },
+
+    dismiss(toast) {
+        toast.classList.remove('show');
+        setTimeout(() =&gt; toast.remove(), 400);
+    },
+    success(msg, dur) { this.show(msg, 'success', dur); },
+    error(msg, dur)   { this.show(msg, 'error', dur); },
+    warning(msg, dur) { this.show(msg, 'warning', dur); },
+    info(msg, dur)    { this.show(msg, 'info', dur); }
+};</pre>
+
+    <div class="code-filename">js/components/modal.js — Modal Dialog System</div>
+<pre>const Modal = {
+    container: null,
+    init() { this.container = document.getElementById('modalContainer'); },
+
+    show({ title = '', content = '', buttons = [], size = 'md', onClose = null }) {
+        const sizeClass = size === 'sm' ? 'max-width:400px'
+            : size === 'lg' ? 'max-width:700px' : '';
+        let btnsHtml = buttons.map(b =&gt;
+            `&lt;button class="btn ${b.class || 'btn-secondary'} modal-action-btn"&gt;
+                ${Utils.escapeHtml(b.label)}
+            &lt;/button&gt;`
+        ).join('');
+
+        this.container.innerHTML = `
+            &lt;div class="modal-backdrop"&gt;&lt;/div&gt;
+            &lt;div class="modal" style="${sizeClass}"&gt;
+                &lt;div class="modal-header"&gt;
+                    &lt;h3 class="modal-title"&gt;${Utils.escapeHtml(title)}&lt;/h3&gt;
+                    &lt;button class="modal-close"&gt;${Utils.getIcon('x-circle', 20)}&lt;/button&gt;
+                &lt;/div&gt;
+                &lt;div class="modal-body"&gt;${content}&lt;/div&gt;
+                ${buttons.length ? `&lt;div class="modal-footer"&gt;${btnsHtml}&lt;/div&gt;` : ''}
+            &lt;/div&gt;`;
+        this.container.classList.add('active');
+    },
+
+    confirm(title, message, onConfirm) {
+        this.show({
+            title,
+            content: `&lt;p style="color:var(--text-secondary)"&gt;${Utils.escapeHtml(message)}&lt;/p&gt;`,
+            size: 'sm',
+            buttons: [
+                { label: 'Cancel', class: 'btn-secondary' },
+                { label: 'Confirm', class: 'btn-primary', onClick: onConfirm }
+            ]
+        });
+    }
+};</pre>
+
+    <h3>5.3 Global State (state.js)</h3>
+    <p>On sign-in, the API layer fetches books, categories, borrow requests, reservations, notifications, favorites, reviews, digital books, and study materials in parallel and stores them in <code>AppState</code>. Pages read this single source of truth and call <code>api.js</code> for writes; a small confirmation helper and toast system report success. This one-way flow — action, API call, state refresh, re-render — keeps the application predictable and easy to debug.</p>
+    <p>The <code>AppState</code> singleton (1,778 lines) maintains data collections (books, categories, borrowRequests, reservations, favorites, notifications, announcements, events, digitalBooks, studyMaterials, auditLogs, activityLogs, feedback, calendarEvents, faqs, contactMessages, bookImports), a role system with 4 roles and <code>ROLE_PERMISSIONS</code>/<code>ROLE_CONFIG</code>, core business logic (<code>canBorrow()</code>, <code>canReserve()</code>, <code>canRenew()</code>, <code>createBorrowRequest()</code>, <code>approveBorrowRequest()</code>, <code>processReturn()</code>, <code>renewBorrow()</code>, <code>reserveBook()</code>), and a dual backend with Supabase (production) and localStorage demo mode fallback.</p>
+
+    <h3>5.4 API Layer (api.js)</h3>
+    <p><code>api.js</code> wraps every Supabase database operation into simple async functions (<code>Api.getBooks()</code>, <code>Api.createBorrowRequest()</code>, etc.) that map snake_case database columns to camelCase JavaScript objects. When Supabase is unreachable, the API layer transparently falls back to localStorage, making the application fully functional even without a network connection.</p>
+</div>
+
+<!-- ======================== CHAPTER 6: UI/UX ======================== -->
+<div class="page">
+    <h2>6. UI/UX &amp; Responsive Design</h2>
+    <h3>6.1 CSS Custom Properties Theming (Light/Dark)</h3>
+    <p>Design tokens live in <code>css/variables.css</code>. Colors, shadows, radii, and fonts are declared as CSS custom properties; the dark theme merely redefines the same tokens under the <code>[data-theme="dark"]</code> selector. A single attribute switch re-themes the whole interface instantly, the preference is remembered in localStorage, and the OS preference is respected when the user has not chosen.</p>
+    <div class="code-filename">css/variables.css — token-driven theming</div>
+<pre>:root {
+  --accent-primary: #667eea;
+  --accent-secondary: #764ba2;
+  --bg-primary: #ffffff;
+  --text-primary: #1a1a2e;
+  --border-color: rgba(0, 0, 0, 0.08);
+  --radius-md: 12px;
+  --font-sans: 'Inter', 'Noto Sans Devanagari', sans-serif;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #0f0f1a;
+  --text-primary: #e8e8f0;
+  --border-color: rgba(255, 255, 255, 0.08);
+}</pre>
+
+    <h3>6.2 Layout &amp; Navigation</h3>
+    <p>The shell in <code>index.html</code> provides a fixed navbar (logo, global search with Ctrl+K, theme toggle, notification bell, user menu), a slide-in role-aware sidebar, the <code>#pageContent</code> region where the active page renders, a floating action button (FAB) with role-specific shortcuts, and a bottom navigation bar for mobile. Toast and modal layers sit above the page container.</p>
+
+    <h3>6.3 Responsive Behaviour</h3>
+    <p><code>css/responsive.css</code> defines three tiers: above 1024px the sidebar is fixed; from 768-1024px it becomes a slide-over; below 768px the bottom navigation appears and book grids compress from 5 columns down to 2. Typography, spacing, and touch targets scale together, so the experience is equally comfortable at 320px and 1920px wide.</p>
+
+    <h3>6.4 UX Conventions &amp; Micro-interactions</h3>
+    <ul>
+        <li><strong>Feedback on every action</strong> — toasts confirm borrows, returns, saves, and errors; modals confirm destructive operations.</li>
+        <li><strong>Page transitions</strong> — a <code>transitioning</code> class fades new pages in with a 200ms delay; scroll-reveal animations and animated counters polish the dashboard.</li>
+        <li><strong>Empty states</strong> — every list shows a friendly illustration-plus-message instead of a blank page.</li>
+        <li><strong>Loading states</strong> — skeleton and spinner blocks appear while data loads.</li>
+        <li><strong>Accessibility</strong> — aria attributes, keyboard shortcuts (Ctrl+K search, Esc to close modals), focus states, and &gt;=44px touch targets.</li>
+        <li><strong>Session management</strong> — 30-minute session timeout with a 25-minute warning modal; JWT expiry checks on every route navigation.</li>
+    </ul>
+</div>
+
+<!-- ======================== CHAPTER 7: PWA & DEPLOYMENT ======================== -->
+<div class="page">
+    <h2>7. PWA &amp; Deployment</h2>
+    <h3>7.1 Service Worker (sw.js)</h3>
+    <p>The service worker caches the application shell (HTML, CSS, JS, images) at install time under a versioned cache name (<code>saraswati-library-v4</code>). At fetch time it uses a <strong>network-first</strong> strategy — try the network for fresh content, fall back to the cache when offline — while Google Fonts are cached <strong>cache-first</strong> for speed. An activate handler deletes stale caches so upgrades stay clean.</p>
+    <div class="code-filename">sw.js — Service Worker (network-first)</div>
+<pre>const CACHE_NAME = 'saraswati-library-v4';
+const ASSETS = [
+    './', './css/variables.css', './css/main.css',
+    './css/animations.css', './css/components.css',
+    './css/pages.css', './css/responsive.css'
+];
+
+self.addEventListener('install', (e) =&gt; {
+    e.waitUntil(
+        caches.open(CACHE_NAME).then(cache =&gt; cache.addAll(ASSETS))
+              .then(() =&gt; self.skipWaiting())
+    );
+});
+
+self.addEventListener('activate', (e) =&gt; {
+    e.waitUntil(
+        caches.keys().then(keys =&gt; Promise.all(
+            keys.filter(k =&gt; k !== CACHE_NAME).map(k =&gt; caches.delete(k))
+        )).then(() =&gt; self.clients.claim())
+    );
+});
+
+self.addEventListener('fetch', (e) =&gt; {
+    if (e.request.method !== 'GET') return;
+
+    // Cache-first for Google Fonts
+    if (e.request.url.includes('fonts.googleapis.com') ||
+        e.request.url.includes('fonts.gstatic.com')) {
+        e.respondWith(
+            caches.match(e.request).then(r =&gt; r || fetch(e.request).then(resp =&gt; {
+                const clone = resp.clone();
+                caches.open(CACHE_NAME).then(cache =&gt; cache.put(e.request, clone));
+                return resp;
+            }))
+        );
+        return;
+    }
+
+    // Network-first for everything else
+    e.respondWith(
+        fetch(e.request).then(resp =&gt; {
+            if (resp &amp;&amp; resp.ok) {
+                const clone = resp.clone();
+                caches.open(CACHE_NAME).then(cache =&gt; cache.put(e.request, clone));
+            }
+            return resp;
+        }).catch(() =&gt;
+            caches.match(e.request).then(r =&gt; r || caches.match('./'))
+        )
+    );
+});</pre>
+
+    <h3>7.2 Web App Manifest (manifest.json)</h3>
+    <p>The manifest declares the app name (<em>Saraswati Sec School Library</em>), short name (<em>SaraswatiLib</em>), theme colour <code>#667eea</code>, standalone display mode, education/book/library categories, and SVG icons. This enables "Add to Home Screen" installation on Android, iOS, and desktop.</p>
+    <div class="code-filename">manifest.json</div>
+<pre>{
+    "name": "Saraswati Sec School Library",
+    "short_name": "SaraswatiLib",
+    "description": "School Library Management System",
+    "start_url": "./",
+    "scope": "./",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#667eea",
+    "orientation": "any",
+    "icons": [
+        { "src": "assets/logo.png", "sizes": "192x192", "type": "image/png" },
+        { "src": "assets/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    ],
+    "categories": ["education", "books", "library"]
+}</pre>
+
+    <h3>7.3 Deployment (Vercel)</h3>
+    <p>Because the whole application is static, it is deployed with the <code>@vercel/static</code> builder. <code>vercel.json</code> pins two important cache headers: <code>sw.js</code> is served with <code>must-revalidate</code> so service-worker updates propagate, while <code>/assets/*</code> is marked immutable for a year so cached images and PDFs load instantly. During development the app is served locally by a small Express server (<code>server.js</code>); the frontend itself is pure static and needs no server.</p>
+    <div class="code-filename">vercel.json — static deployment with headers</div>
+<pre>{
+    "builds": [{ "src": "**", "use": "@vercel/static" }],
+    "outputDirectory": ".",
+    "headers": [
+        { "source": "/sw.js",
+          "headers": [{ "key": "Cache-Control",
+                        "value": "public, max-age=0, must-revalidate" }] },
+        { "source": "/assets/(.*)",
+          "headers": [{ "key": "Cache-Control",
+                        "value": "public, max-age=31536000, immutable" }] }
+    ]
+}</pre>
+</div>
+
+<!-- ======================== CHAPTER 8: CONCLUSION ======================== -->
+<div class="page">
+    <h2>8. Conclusion</h2>
+    <p>The frontend development of the Library Management System for Shree Saraswati Secondary School was a comprehensive learning experience that covered modern web development technologies and practices.</p>
+    <p>The project successfully delivered a responsive, user-friendly single page application and a powerful admin panel. The public interface provides students and teachers with a searchable catalog of 100+ books, a digital library for PDF access, borrow request management, and real-time notifications. The admin panel empowers librarians and administrators to manage books, users, reports, settings, and audit logs without any technical expertise.</p>
+    <p>Throughout the development process, several challenges were encountered and overcome. Building a custom hash-based SPA router from scratch required understanding URL fragment parsing, dynamic parameter extraction, and route guard patterns. Implementing the CSS custom properties theming system involved defining over 60 design tokens and ensuring the dark theme redefined each one correctly. Managing global state across 30+ pages without a framework required a disciplined singleton pattern with clear data flow conventions.</p>
+    <p>The decision to avoid React, Vue, or Angular proved valuable for this project. Without a build step, every file is readable and editable with a basic text editor. Without a package manager for the frontend, there are no dependency conflicts or version mismatches. The entire frontend is about 35 JavaScript source files totaling roughly 8,000 lines — small enough for a single developer to understand completely.</p>
+    <p>The dual-backend architecture (Supabase for production, localStorage for demo/offline) was a key design decision. It means the application works even when the Supabase connection is lost, and it allows demonstration of the full functionality without requiring a live database connection.</p>
+    <p>This project has significantly enhanced my understanding of modern frontend development. I gained practical experience with vanilla JavaScript SPA architecture, CSS custom properties theming, service worker caching, Supabase integration, and responsive design principles. These skills will be valuable in my future career as a software developer.</p>
+    <p>The Library Management System is now ready for deployment and will serve Shree Saraswati Secondary School effectively, improving their library operations and providing students with digital access to educational resources.</p>
+</div>
+
+<!-- ======================== CHAPTER 9: SNAPSHOT ======================== -->
+<div class="page">
+    <h2>9. Snapshot</h2>
+    <p>The following screen captures document the frontend in action. Each print layout is designed to fit one page when printed in portrait A4.</p>
+    <div class="snapshot-placeholder" style="min-height:200px;">
+        <p style="font-size:16px;color:#333;margin-top:60px;">Fig 1: Home Page (hero, featured book, library status, new arrivals)</p>
+    </div>
+    <div class="snapshot-placeholder" style="min-height:200px;">
+        <p style="font-size:16px;color:#333;margin-top:60px;">Fig 2: Browse Books (search, filters, sort, card grid)</p>
+    </div>
+    <div class="snapshot-placeholder" style="min-height:200px;">
+        <p style="font-size:16px;color:#333;margin-top:60px;">Fig 3: Book Detail (metadata, reviews, borrow action)</p>
+    </div>
+    <div class="snapshot-placeholder" style="min-height:200px;">
+        <p style="font-size:16px;color:#333;margin-top:60px;">Fig 4: Digital Library (e-books, PDF access)</p>
+    </div>
+</div>
+<div class="page">
+    <div class="snapshot-placeholder" style="min-height:200px;">
+        <p style="font-size:16px;color:#333;margin-top:60px;">Fig 5: Login Interface (Sign In / Sign Up)</p>
+    </div>
+    <div class="snapshot-placeholder" style="min-height:200px;">
+        <p style="font-size:16px;color:#333;margin-top:60px;">Fig 6: CMS Admin Panel (Manage Books)</p>
+    </div>
+    <div class="snapshot-placeholder" style="min-height:200px;">
+        <p style="font-size:16px;color:#333;margin-top:60px;">Fig 7: Reports &amp; Canvas Charts</p>
+    </div>
+    <div class="snapshot-placeholder" style="min-height:200px;">
+        <p style="font-size:16px;color:#333;margin-top:60px;">Fig 8: Mobile Responsive Layout (bottom nav, FAB)</p>
+    </div>
+    <div class="snapshot-placeholder" style="min-height:200px;">
+        <p style="font-size:16px;color:#333;margin-top:60px;">Fig 9: Dark &amp; Light Theme Toggle</p>
+    </div>
+</div>
+
+<!-- ======================== CHAPTER 10: REFERENCES ======================== -->
+<div class="page">
+    <h2>10. References</h2>
+    <p>The following documentation and resources were used during the development of this project:</p>
+    <ul>
+        <li>Mozilla Developer Network (MDN) Web Docs: <code>https://developer.mozilla.org</code></li>
+        <li>Supabase Documentation: <code>https://supabase.com/docs</code></li>
+        <li>Supabase JavaScript SDK: <code>https://supabase.com/docs/reference/javascript</code></li>
+        <li>Web.dev — Progressive Web Apps: <code>https://web.dev/pwa</code></li>
+        <li>CSS Custom Properties (MDN): <code>https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties</code></li>
+        <li>Service Worker API (MDN): <code>https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API</code></li>
+        <li>Web App Manifest (MDN): <code>https://developer.mozilla.org/en-US/docs/Web/Manifest</code></li>
+        <li>Google Fonts — Inter, Playfair Display, JetBrains Mono: <code>https://fonts.google.com</code></li>
+        <li>Vercel Documentation: <code>https://vercel.com/docs</code></li>
+        <li>Express.js Documentation: <code>https://expressjs.com</code></li>
+        <li>Canvas API (MDN): <code>https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API</code></li>
+        <li>SVG — Scalable Vector Graphics (MDN): <code>https://developer.mozilla.org/en-US/docs/Web/SVG</code></li>
+    </ul>
+</div>
+
+</body>
+</html>
