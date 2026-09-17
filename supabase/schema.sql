@@ -5,6 +5,7 @@
 
 -- Enable UUID extension (usually enabled by default in Supabase)
 create extension if not exists "uuid-ossp";
+create extension if not exists "pgcrypto";
 
 -- ============================================================
 -- 1. PROFILES (extends Supabase auth.users)
