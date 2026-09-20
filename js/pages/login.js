@@ -65,18 +65,19 @@ const LoginPage = {
     const role = this.staffRole === 'admin' ? 'admin' : 'librarian';
     const roleLabel = this.staffRole === 'admin' ? 'Admin' : 'Librarian';
     return `
+      <form autocomplete="off" onsubmit="return false;">
       <div class="form-group">
         <label class="form-label">${roleLabel} Email</label>
         <div style="position:relative;">
           <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-tertiary);pointer-events:none;">${Utils.getIcon('mail', 16)}</span>
-          <input class="form-input" type="email" id="login-email" placeholder="${roleLabel.toLowerCase()}@yourlibrary.com" style="padding-left:38px;" autocomplete="email">
+          <input class="form-input" type="email" name="staff-email" id="login-email" style="padding-left:38px;" autocomplete="off">
         </div>
       </div>
       <div class="form-group">
         <label class="form-label">Password</label>
         <div style="position:relative;">
           <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-tertiary);pointer-events:none;">${Utils.getIcon('lock', 16)}</span>
-          <input class="form-input" type="password" id="login-password" placeholder="Enter your password" style="padding-left:38px;padding-right:2.5rem;" autocomplete="current-password">
+          <input class="form-input" type="password" name="staff-password" id="login-password" style="padding-left:38px;padding-right:2.5rem;" autocomplete="new-password">
           <button type="button" class="btn btn-ghost btn-sm" style="position:absolute;right:0.25rem;top:50%;transform:translateY(-50%);padding:4px;" onclick="LoginPage.togglePassword('login-password')" aria-label="Toggle password visibility">
             ${this.passwordVisible ? Utils.getIcon('eye-off', 16) : Utils.getIcon('eye', 16)}
           </button>
@@ -86,6 +87,7 @@ const LoginPage = {
       <button class="btn btn-primary btn-lg" id="signin-btn" style="width:100%;margin-bottom:1rem;" onclick="LoginPage.staffLogin()">
         ${Utils.getIcon('log-in', 16)} Sign In as ${roleLabel}
       </button>
+      </form>
 
       <div style="text-align:center;border-top:1px solid var(--border-color);padding-top:1rem;">
         <a href="javascript:void(0)" onclick="LoginPage.setMode('signin')" style="font-size:0.85rem;color:var(--text-secondary);text-decoration:none;font-weight:500;display:inline-flex;align-items:center;gap:4px;">
@@ -769,6 +771,18 @@ const LoginPage = {
   },
 
   afterRender() {
+    if (this.mode === 'staff') {
+      // Browsers may still autofill saved credentials right after the inputs
+      // are inserted into the DOM, despite autocomplete="off". Clear them so
+      // the staff portal always starts empty.
+      setTimeout(() => {
+        const e = document.getElementById('login-email');
+        const p = document.getElementById('login-password');
+        if (e && e.value) e.value = '';
+        if (p && p.value) p.value = '';
+      }, 0);
+    }
+
     const emailInput = document.getElementById('login-email');
     if (emailInput) {
       emailInput.addEventListener('keydown', (e) => {

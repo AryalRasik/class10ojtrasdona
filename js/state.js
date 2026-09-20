@@ -251,6 +251,22 @@ const AppState = {
         this.digitalBooks = digitalBooks || [];
         this.studyMaterials = studyMaterials || [];
         this.settings = settings || {};
+
+        // Merge locally-persisted study materials with the remote study_materials
+        // table so uploads survive refresh even if the Supabase insert fails
+        // (e.g. not signed in as admin/librarian, or RLS blocks the write).
+        const localMaterials = this._loadLocal('library_studyMaterials');
+        if (Array.isArray(localMaterials) && localMaterials.length) {
+            const remoteKeys = new Set(this.studyMaterials.map(m => m && this._studyMaterialKey(m)));
+            localMaterials.forEach(lm => {
+                if (!lm) return;
+                const key = this._studyMaterialKey(lm);
+                if (key && !remoteKeys.has(key)) {
+                    this.studyMaterials.push(lm);
+                    remoteKeys.add(key);
+                }
+            });
+        }
         this.allProfiles = allProfiles || [];
         this.lastBorrowSeq = (this.borrowRequests || []).length;
 
@@ -371,6 +387,10 @@ const AppState = {
             const val = localStorage.getItem(key);
             return val ? JSON.parse(val) : [];
         } catch (e) { return []; }
+    },
+
+    _studyMaterialKey(m) {
+        return String((m.title || '') + '|' + (m.pdfUrl || '')).trim();
     },
 
     saveAll() {
@@ -1576,7 +1596,11 @@ const AppState = {
                 description: material.description,
                 uploaded_by: material.uploadedBy
             }).then(created => {
-                if (created && created.id) material.id = created.id;
+                if (created && created.id) {
+                    material.id = created.id;
+                    if (created.uploaded_at) material.uploadedAt = created.uploaded_at;
+                    this.saveAll();
+                }
             }).catch(e => console.warn('Supabase study material save failed:', e));
         }
         this.saveAll();

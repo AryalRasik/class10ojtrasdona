@@ -449,7 +449,7 @@ create or replace function public.add_staff_account(
 returns uuid
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_user_id uuid;
@@ -475,7 +475,7 @@ begin
       'authenticated',
       'authenticated',
       p_email,
-      crypt(p_password, gen_salt('bf')),
+      extensions.crypt(p_password, extensions.gen_salt('bf')),
       now(),
       '{"provider":"email","providers":["email"]}',
       jsonb_build_object('name', p_name, 'role', p_role),
@@ -496,6 +496,9 @@ begin
 end;
 $$;
 
+grant execute on function public.add_staff_account(text, text, text, text, text)
+  to anon, authenticated, service_role;
+
 -- Admin helper: delete a user account (auth user + profile cascade)
 create or replace function public.delete_account(p_user_id uuid)
 returns void
@@ -510,6 +513,9 @@ begin
   delete from auth.users where id = p_user_id;
 end;
 $$;
+
+grant execute on function public.delete_account(uuid)
+  to anon, authenticated, service_role;
 
 -- Profiles: users can read all, update own or admin can update all
 alter table profiles enable row level security;
