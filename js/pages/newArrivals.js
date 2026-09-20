@@ -25,7 +25,7 @@ const NewArrivalsPage = {
 
     return `
       <style>
-        .na-hero { background: linear-gradient(135deg, #059669 0%, #047857 55%, #065f46 100%); color: #fff; position: relative; overflow: hidden; }
+        .na-hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 55%, #764ba2 100%); color: #fff; position: relative; overflow: hidden; }
         .na-hero::before, .na-hero::after { content: ""; position: absolute; border-radius: 50%; background: rgba(255,255,255,0.06); }
         .na-hero::before { width: 360px; height: 360px; top: -150px; right: -90px; }
         .na-hero::after { width: 240px; height: 240px; bottom: -130px; left: -70px; }
@@ -50,21 +50,21 @@ const NewArrivalsPage = {
           </div>
           <div style="display:flex;gap:0.75rem;margin-top:1.5rem;flex-wrap:wrap;">
             <div class="na-stat">
-              <span style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.14);display:flex;align-items:center;justify-content:center;color:#a7f3d0;">${Utils.getIcon('layers', 18)}</span>
+              <span style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.14);display:flex;align-items:center;justify-content:center;color:#c7d2fe;">${Utils.getIcon('layers', 18)}</span>
               <div>
                 <div style="font-size:1.25rem;font-weight:800;line-height:1;">${recentCount}</div>
                 <div style="font-size:0.72rem;opacity:0.85;">Recent Additions</div>
               </div>
             </div>
             <div class="na-stat">
-              <span style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.14);display:flex;align-items:center;justify-content:center;color:#6ee7b7;">${Utils.getIcon('calendar', 18)}</span>
+              <span style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.14);display:flex;align-items:center;justify-content:center;color:#a5b4fc;">${Utils.getIcon('calendar', 18)}</span>
               <div>
                 <div style="font-size:1.25rem;font-weight:800;line-height:1;">${thisYearCount}</div>
                 <div style="font-size:0.72rem;opacity:0.85;">Added in ${currentYear}</div>
               </div>
             </div>
             <div class="na-stat">
-              <span style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.14);display:flex;align-items:center;justify-content:center;color:#99f6e4;">${Utils.getIcon('clock', 18)}</span>
+              <span style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.14);display:flex;align-items:center;justify-content:center;color:#ddd6fe;">${Utils.getIcon('clock', 18)}</span>
               <div>
                 <div style="font-size:1.25rem;font-weight:800;line-height:1;">${olderBooks.length}</div>
                 <div style="font-size:0.72rem;opacity:0.85;">Older Additions</div>

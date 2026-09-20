@@ -47,14 +47,14 @@ const StudyMaterialsPage = {
 
     const stats = [
       { label: 'Materials', value: all.length, icon: 'layers', color: '#ffffff' },
-      { label: 'Question Papers', value: qp, icon: 'file-text', color: '#fda4af' },
+      { label: 'Question Papers', value: qp, icon: 'file-text', color: '#c7d2fe' },
       { label: 'Notes', value: notes, icon: 'book-marked', color: '#a5b4fc' },
-      { label: 'Model Sets', value: ms, icon: 'award', color: '#6ee7b7' }
+      { label: 'Model Sets', value: ms, icon: 'award', color: '#ddd6fe' }
     ];
 
     return `
       <style>
-        .sm-hero { background: linear-gradient(135deg, #0f766e 0%, #115e59 55%, #134e4a 100%); color: #fff; position: relative; overflow: hidden; }
+        .sm-hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 55%, #764ba2 100%); color: #fff; position: relative; overflow: hidden; }
         .sm-hero::before, .sm-hero::after { content: ""; position: absolute; border-radius: 50%; background: rgba(255,255,255,0.06); }
         .sm-hero::before { width: 360px; height: 360px; top: -150px; right: -90px; }
         .sm-hero::after { width: 240px; height: 240px; bottom: -130px; left: -70px; }
