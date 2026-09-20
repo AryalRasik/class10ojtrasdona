@@ -45,7 +45,7 @@ const NewArrivalsPage = {
             <div style="width:58px;height:58px;border-radius:16px;background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;">${Utils.getIcon('book-open', 30)}</div>
             <div>
               <h1 class="page-title" style="color:#fff;margin:0;">New Arrivals</h1>
-              <p class="page-description" style="opacity:0.85;margin:0.25rem 0 0;">Discover the latest additions to our library collection</p>
+              <p class="page-description" style="color:rgba(255,255,255,0.85);margin:0.25rem 0 0;">Discover the latest additions to our library collection</p>
             </div>
           </div>
           <div style="display:flex;gap:0.75rem;margin-top:1.5rem;flex-wrap:wrap;">
