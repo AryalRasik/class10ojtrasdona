@@ -23,15 +23,33 @@ const App = {
         try {
             await AppState.init();
         } catch (e) {
-            console.warn('AppState.init() failed, using demo fallback:', e);
-            AppState.initDemoMode();
+            // SECURITY: fail closed. Do NOT silently switch to demo mode when
+            // initialisation fails while Supabase is configured.
+            console.error('AppState.init() failed:', e);
+            if (window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+                AppState.isSupabaseConnected = true;
+                AppState.isDemoMode = false;
+            } else {
+                AppState.initDemoMode();
+            }
+            AppState.currentUser = null;
+            AppState.isLoggedIn = false;
+            AppState._applyRoleFlags(null);
+            AppState._clearStoredSession();
         }
 
         // Apply saved system settings (library name/motto/phone/email/address)
         // onto LIBRARY_DATA.school so home/support/help/footer reflect them.
         try {
             const merged = Object.assign({}, AppState.settings || {});
-            try { Object.assign(merged, JSON.parse(localStorage.getItem('admin_settings') || '{}')); } catch (e) {}
+            try {
+                const cached = JSON.parse(localStorage.getItem('admin_settings') || '{}');
+                // SECURITY: drop any legacy secret that may still sit in the
+                // cached admin settings blob.
+                delete cached.smtpPass;
+                delete cached.smtpPassword;
+                Object.assign(merged, cached);
+            } catch (e) {}
             if (typeof Utils !== 'undefined') Utils.applySchoolFromSettings(merged);
         } catch (e) { console.warn('applySchoolFromSettings failed:', e); }
 
@@ -126,47 +144,18 @@ const App = {
                 const cleanPath = path.split('?')[0].split('#')[0];
 
                 if (protectedRoutes.includes(cleanPath)) {
-                    // Supabase mode is authoritative on isLoggedIn (restored from the
-                    // real GoTrue session at init); demo mode relies on a stored token.
+                    // SECURITY: the session is only ever established from a real
+                    // Supabase session (AppState.init / persistSession). There is
+                    // no locally-minted token to validate any more.
                     if (!AppState.isLoggedIn || !AppState.currentUser) {
                         Toast.warning('Please sign in to access this page');
                         Router.go('/login');
                         return false;
                     }
-
-                    // Demo mode only: validate the stored JWT (base64url) is present & not expired.
-                    const token = localStorage.getItem('library_access_token');
-                    if (token && !AppState.isSupabaseConnected) {
-                        try {
-                            let payloadB64 = token.split('.')[1] || '';
-                            payloadB64 = payloadB64.replace(/-/g, '+').replace(/_/g, '/');
-                            while (payloadB64.length % 4) payloadB64 += '=';
-                            const payload = JSON.parse(atob(payloadB64));
-                            const now = Math.floor(Date.now() / 1000);
-                            if (payload.exp && payload.exp < now) {
-                                Toast.error('Session expired. Please sign in again.');
-                                AppState.currentUser = null;
-                                AppState.isLoggedIn = false;
-                                localStorage.removeItem('library_currentUser');
-                                localStorage.removeItem('library_access_token');
-                                Router.go('/login');
-                                return false;
-                            }
-                        } catch (e) {
-                            Toast.error('Invalid session. Please sign in again.');
-                            AppState.currentUser = null;
-                            AppState.isLoggedIn = false;
-                            localStorage.removeItem('library_currentUser');
-                            localStorage.removeItem('library_access_token');
-                            Router.go('/login');
-                            return false;
-                        }
-                    }
                 }
 
                 if (adminRoutes.includes(cleanPath) && AppState.isLoggedIn) {
-                    const role = AppState.currentUser ? AppState.currentUser.role : '';
-                    if (role !== 'admin' && role !== 'librarian') {
+                    if (!AppState.isStaff) {
                         Toast.error('Access Denied: Admin privileges required');
                         Router.go('/');
                         return false;
@@ -253,8 +242,8 @@ const App = {
         }
         AppState.currentUser = null;
         AppState.isLoggedIn = false;
-        localStorage.removeItem('library_currentUser');
-        localStorage.removeItem('library_access_token');
+        AppState._applyRoleFlags(null);
+        AppState._clearStoredSession();
         Toast.warning('Session expired. Please sign in again.');
         Router.go('/login');
         App.updateUserInfo();
@@ -450,8 +439,8 @@ setupDeveloperTrigger() {
                     }
                     AppState.currentUser = null;
                     AppState.isLoggedIn = false;
-                    localStorage.removeItem('library_currentUser');
-                    localStorage.removeItem('library_access_token');
+                    AppState._applyRoleFlags(null);
+                    AppState._clearStoredSession();
                     Toast.info('Signed out successfully');
                     Router.go('/login');
                     App.updateUserInfo();

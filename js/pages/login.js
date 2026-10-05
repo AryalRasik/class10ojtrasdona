@@ -450,33 +450,9 @@ const LoginPage = {
         this.setLoading('signin-btn', false);
       }
     } else {
-      this.setLoading('signin-btn', true);
-      try {
-        const storedUsers = this.getStoredUsers();
-        const user = storedUsers.find(u => u.email === email && u.password === password);
-        if (user) {
-          if (user.approved === false) {
-            Toast.error('Your account is pending approval. Please wait for admin/librarian to approve your registration.');
-            this.setLoading('signin-btn', false);
-            return;
-          }
-          if (user.role === 'admin' || user.role === 'librarian') {
-            Toast.error('Please use the ' + (user.role === 'admin' ? '#/admin' : '#/librarian') + ' portal to sign in.');
-            this.setLoading('signin-btn', false);
-            return;
-          }
-          const { password: _, ...safeUser } = user;
-          AppState.setUser(safeUser);
-          Toast.success(`Welcome, ${safeUser.name}!`);
-          App.updateUserInfo();
-          App.buildSidebar();
-          window.location.hash = '#/';
-          return;
-        }
-        Toast.error('Invalid email or password');
-      } catch (e) {
-        Toast.error('Sign in failed. Please try again.');
-      }
+      // SECURITY: fail closed. When Supabase is not reachable we must NOT fall
+      // back to matching cleartext passwords kept in localStorage.
+      Toast.error('Sign in is unavailable: the library database connection is not configured. Please contact the administrator.');
       this.setLoading('signin-btn', false);
     }
   },
@@ -522,23 +498,8 @@ const LoginPage = {
         this.setLoading('signin-btn', false);
       }
     } else {
-      this.setLoading('signin-btn', true);
-      try {
-        const storedUsers = this.getStoredUsers();
-        const user = storedUsers.find(u => u.email === email && u.password === password);
-        if (user && user.approved !== false && user.role === expectedRole) {
-          const { password: _, ...safeUser } = user;
-          AppState.setUser(safeUser);
-          Toast.success(`Welcome, ${safeUser.name}!`);
-          App.updateUserInfo();
-          App.buildSidebar();
-          window.location.hash = '#/dashboard';
-          return;
-        }
-        Toast.error('Access denied. Invalid credentials or wrong portal for your role.');
-      } catch (e) {
-        Toast.error('Sign in failed. Please try again.');
-      }
+      // SECURITY: fail closed (see login() above).
+      Toast.error('Staff sign in is unavailable: the library database connection is not configured.');
       this.setLoading('signin-btn', false);
     }
   },
@@ -579,19 +540,7 @@ const LoginPage = {
       return;
     }
 
-    const avatar = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
     const role = this.signupRole;
-
-    const userData = {
-      name,
-      email,
-      role,
-      id: Date.now().toString(),
-      avatar,
-      ...(role === 'student' ? { grade: extra, className: extra } : {}),
-      ...(role === 'teacher' ? { department: extra } : {}),
-      userId
-    };
 
     if (AppState.isSupabaseConnected) {
       this.setLoading('signup-btn', true);
@@ -600,25 +549,12 @@ const LoginPage = {
           name,
           role,
           user_id: userId,
-          ...(role === 'student' ? { grade: extra } : { department: extra })
+          ...(role === 'student' ? { grade: extra, className: extra } : { department: extra })
         });
-
-        if (data && data.user) {
-          const staffList = await Api.getAdminAndLibrarians();
-          const notifPromises = staffList.map(staff =>
-            Api.createNotification({
-              user_id: staff.id,
-              type: 'info',
-              title: 'New Registration Request',
-              message: `${name} (${role}) has registered and is awaiting approval. Email: ${email}`,
-              icon: 'user-plus',
-              read: false,
-              time: new Date().toISOString(),
-              timestamp: new Date().toISOString()
-            })
-          );
-          await Promise.all(notifPromises);
-        }
+        // Staff are notified by the notify_staff_of_registration() database
+        // function (called inside Api.signUp), which can only report the
+        // caller's OWN registration. The old version read the staff list and
+        // inserted a notification row for every staff member from the browser.
 
         Toast.success('Account created! Your registration is pending approval by admin/librarian. You will be able to sign in once approved.');
         this.setMode('signin');
@@ -628,23 +564,9 @@ const LoginPage = {
         this.setLoading('signup-btn', false);
       }
     } else {
-      this.setLoading('signup-btn', true);
-      try {
-        const storedUsers = this.getStoredUsers();
-        if (storedUsers.find(u => u.email === email)) {
-          Toast.error('Email already registered');
-          this.setLoading('signup-btn', false);
-          return;
-        }
-        const newUser = { ...userData, password, approved: false, createdAt: new Date().toISOString(), borrowCount: 0, readingStreak: 0 };
-        storedUsers.push(newUser);
-        localStorage.setItem('library_users', JSON.stringify(storedUsers));
-        Toast.success('Account created! Your registration is pending approval. You will be able to sign in once approved by admin/librarian.');
-        this.setMode('signin');
-        return;
-      } catch (e) {
-        Toast.error('Sign up failed. Please try again.');
-      }
+      // SECURITY: fail closed. Registrations require the real auth service; we
+      // never write a cleartext password into localStorage as a substitute.
+      Toast.error('Registration is unavailable: the library database connection is not configured. Please contact the administrator.');
       this.setLoading('signup-btn', false);
     }
   },
@@ -661,43 +583,22 @@ const LoginPage = {
     if (AppState.isSupabaseConnected) {
       this.setLoading('forgot-btn', true);
       try {
-        await this.client?.auth?.resetPasswordForEmail?.(email);
-        Toast.success('Password reset link sent!');
+        // SECURITY: use the real Supabase reset email. The previous offline
+        // path minted a localStorage "token" that anybody could forge.
+        const { error } = await Api.client.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + window.location.pathname + '#/reset-password'
+        });
+        if (error) throw error;
+        // Always the same message, so this cannot be used to discover which
+        // email addresses have accounts.
+        Toast.success('If an account exists with this email, a password reset link has been sent.');
       } catch (e) {
-        Toast.info('If an account exists with this email, a reset link has been sent.');
+        Toast.success('If an account exists with this email, a password reset link has been sent.');
       } finally {
         this.setLoading('forgot-btn', false);
       }
     } else {
-      this.setLoading('forgot-btn', true);
-      try {
-        const storedUsers = this.getStoredUsers();
-        const user = storedUsers.find(u => u.email === email);
-
-        if (user) {
-          const token = btoa(email + ':' + Date.now());
-          const resetTokens = JSON.parse(localStorage.getItem('library_reset_tokens') || '{}');
-          resetTokens[token] = { email, createdAt: Date.now() };
-          localStorage.setItem('library_reset_tokens', JSON.stringify(resetTokens));
-        }
-
-        const formContainer = document.querySelector('.card > div:last-child');
-        if (formContainer) {
-          const formGroups = formContainer.querySelectorAll('.form-group');
-          formGroups.forEach(g => g.style.display = 'none');
-          const btn = document.getElementById('forgot-btn');
-          if (btn) btn.style.display = 'none';
-          const confirmation = document.getElementById('forgot-confirmation');
-          const emailDisplay = document.getElementById('forgot-email-display');
-          if (confirmation) {
-            confirmation.style.display = 'block';
-            if (emailDisplay) emailDisplay.textContent = email;
-          }
-        }
-        Toast.success('If an account exists with this email, a reset link has been sent.');
-      } catch (e) {
-        Toast.info('If an account exists with this email, a reset link has been sent.');
-      }
+      Toast.error('Password reset is unavailable: the library database connection is not configured.');
       this.setLoading('forgot-btn', false);
     }
   },
@@ -728,32 +629,22 @@ const LoginPage = {
     this.setLoading('reset-btn', true);
 
     try {
-      const hash = window.location.hash;
-      const match = hash.match(/token=([^&]*)/);
-      const token = match ? match[1] : null;
-
       if (AppState.isSupabaseConnected) {
-        Toast.success('Password has been reset successfully! Please sign in.');
+        // SECURITY: Supabase puts the user in a recovery session when the
+        // emailed link is opened, so the new password is set through the
+        // authenticated client. Previously this form only printed a success
+        // message and changed nothing at all.
+        const session = await Api.client.auth.getSession();
+        if (!session || !session.data || !session.data.session) {
+          Toast.error('This password reset link is invalid or has expired. Please request a new one.');
+          return;
+        }
+        const { error } = await Api.client.auth.updateUser({ password });
+        if (error) throw error;
+        Toast.success('Password has been updated! Please sign in.');
         this.setMode('signin');
       } else {
-        if (token) {
-          const resetTokens = JSON.parse(localStorage.getItem('library_reset_tokens') || '{}');
-          const tokenData = resetTokens[token];
-
-          if (tokenData && (Date.now() - tokenData.createdAt < 3600000)) {
-            const storedUsers = this.getStoredUsers();
-            const userIdx = storedUsers.findIndex(u => u.email === tokenData.email);
-            if (userIdx !== -1) {
-              storedUsers[userIdx].password = password;
-              localStorage.setItem('library_users', JSON.stringify(storedUsers));
-            }
-            delete resetTokens[token];
-            localStorage.setItem('library_reset_tokens', JSON.stringify(resetTokens));
-          }
-        }
-
-        Toast.success('Password has been reset successfully! Please sign in.');
-        this.setMode('signin');
+        Toast.error('Password reset is unavailable: the library database connection is not configured.');
       }
     } catch (e) {
       Toast.error(e.message || 'Failed to reset password');
@@ -763,11 +654,14 @@ const LoginPage = {
   },
 
   getStoredUsers() {
+    // SECURITY: legacy localStorage accounts (which used to contain
+    // cleartext passwords) are no longer read or written. Anything left over
+    // from an older version is removed on load.
     try {
-      return JSON.parse(localStorage.getItem('library_users') || '[]');
-    } catch (e) {
-      return [];
-    }
+      localStorage.removeItem('library_users');
+      localStorage.removeItem('library_reset_tokens');
+    } catch (e) { /* storage unavailable */ }
+    return [];
   },
 
   afterRender() {

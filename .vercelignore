@@ -1,8 +1,37 @@
 node_modules/
-.env
-.git/
-server.js
 package.json
+package-lock.json
+server.js
 supabase/
-*.docx
 PENDING-TASKS.md
+*.docx
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+
+# VCS / tooling metadata
+.git/
+.gitignore
+.vercel
+
+# Private working material that must never be published
+private area.txt
+private area/
+developer/
+*_BACKUP_*/
+*_BACKUP_*.sql
+
+# Generated audit reports (may contain internal details)
+*REPORT*.html
+BACKEND_REPORT.html
+FRONTEND_REPORT.html
+PROJECT_REPORT.html
+LIBRARY_FRONTEND_REPORT.html

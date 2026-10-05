@@ -199,9 +199,22 @@ const SettingsPage = {
       Toast.success('All other sessions have been logged out');
     });
   },
-  deleteAccount() {
-    Modal.confirm('Delete Account', 'This will permanently delete your account and all data. This action cannot be undone. Are you sure?', () => {
-      Toast.success('Account deletion requested');
+  async deleteAccount() {
+    Modal.confirm('Delete Account', 'This will permanently delete your account and all data. This action cannot be undone. Are you sure?', async () => {
+      // SECURITY: actually performs the deletion through the auth service.
+      // This used to be a stub that only showed a success toast.
+      try {
+        await Api.deleteOwnAccount();
+        Toast.success('Your account has been deleted.');
+        try { await Api.signOut(); } catch (e) {}
+        AppState.currentUser = null;
+        AppState.isLoggedIn = false;
+        AppState._applyRoleFlags(null);
+        AppState._clearStoredSession();
+        Router.go('/login');
+      } catch (e) {
+        Toast.error('Could not delete your account: ' + (e.message || 'Unknown error'));
+      }
     });
   },
   exportData() {

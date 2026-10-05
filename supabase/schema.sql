@@ -31,28 +31,105 @@ create table if not exists profiles (
   created_at timestamptz default now()
 );
 
--- Auto-create profile on signup via trigger
--- Admin and librarian are auto-approved; students/teachers require approval
+-- SECURITY: Role helpers. SECURITY DEFINER so that RLS policies can call them
+-- without recursing into the `profiles` policies themselves.
+create or replace function public.is_admin()
+returns boolean language sql stable security definer set search_path = public, pg_temp as $$
+  select exists (select 1 from public.profiles
+                 where id = auth.uid() and role = 'admin' and approved is true);
+$$;
+
+create or replace function public.is_staff()
+returns boolean language sql stable security definer set search_path = public, pg_temp as $$
+  select exists (select 1 from public.profiles
+                 where id = auth.uid() and role in ('admin','librarian') and approved is true);
+$$;
+
+revoke all on function public.is_admin() from public, anon;
+revoke all on function public.is_staff() from public, anon;
+grant execute on function public.is_admin() to authenticated, service_role;
+grant execute on function public.is_staff() to authenticated, service_role;
+
+-- Auto-create profile on signup via trigger.
+-- SECURITY: a public signup may only ever request a student/teacher role, and
+-- `approved` is ALWAYS false. Staff accounts are created by an admin through
+-- add_staff_account() -- never through the public signup form.
 create or replace function public.handle_new_user()
 returns trigger as $$
 declare
   user_role text;
-  auto_approve boolean;
 begin
-  user_role := coalesce(new.raw_user_meta_data->>'role', 'student');
-  auto_approve := user_role in ('admin', 'librarian');
+  user_role := lower(btrim(coalesce(new.raw_user_meta_data->>'role', 'student')));
+  if user_role not in ('student', 'teacher') then
+    user_role := 'student';
+  end if;
 
-  insert into public.profiles (id, name, email, role, approved)
+  insert into public.profiles (
+    id, name, email, role, grade, "className", department, student_id, approved
+  )
   values (
     new.id,
-    coalesce(new.raw_user_meta_data->>'name', new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
-    new.email,
+    coalesce(
+      nullif(btrim(coalesce(new.raw_user_meta_data->>'name', '')), ''),
+      nullif(btrim(coalesce(new.raw_user_meta_data->>'full_name', '')), ''),
+      split_part(coalesce(new.email, ''), '@', 1)
+    ),
+    coalesce(new.email, ''),
     user_role,
-    auto_approve
-  );
+    coalesce(new.raw_user_meta_data->>'grade', ''),
+    coalesce(
+      new.raw_user_meta_data->>'className',
+      new.raw_user_meta_data->>'class',
+      ''
+    ),
+    coalesce(new.raw_user_meta_data->>'department', ''),
+    coalesce(new.raw_user_meta_data->>'user_id', ''),
+    false
+  )
+  on conflict (id) do nothing;
   return new;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public, pg_temp;
+
+-- SECURITY: blocks "update my own profile row to role=admin / approved=true".
+-- RLS filters rows, not columns, so the protected-column rule needs a trigger.
+create or replace function public.guard_profile_update()
+returns trigger as $$
+begin
+  if public.is_admin() then
+    return new;
+  end if;
+
+  if new.role                 is distinct from old.role
+     or new.student_id        is distinct from old.student_id
+     or new.teacher_id        is distinct from old.teacher_id
+     or new.membership_status is distinct from old.membership_status
+     or new.membership_expiry is distinct from old.membership_expiry
+     or new.borrow_count      is distinct from old.borrow_count
+     or new.reading_streak    is distinct from old.reading_streak
+     or new.created_at        is distinct from old.created_at
+     or new.id                is distinct from old.id then
+    raise exception 'Only administrators can change role or membership fields'
+      using errcode = '42501';
+  end if;
+
+  if new.approved is distinct from old.approved and not public.is_staff() then
+    raise exception 'Only staff can approve or reject an account' using errcode = '42501';
+  end if;
+
+  if new.email is distinct from old.email
+     and (auth.uid() is null or auth.uid() <> old.id) then
+    raise exception 'You can only change your own email address' using errcode = '42501';
+  end if;
+
+  return new;
+end;
+$$ language plpgsql security definer set search_path = public, pg_temp;
+
+drop trigger if exists guard_profile_update on public.profiles;
+create trigger guard_profile_update
+  before update on public.profiles
+  for each row execute function public.guard_profile_update();
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
@@ -436,7 +513,17 @@ create index if not exists idx_profiles_membership on profiles(membership_status
 -- ============================================================
 -- Row Level Security
 -- ============================================================
--- (defined below in the RLS section; adding admin helper functions)
+-- SECURITY NOTES (2026-09-30 hardening):
+--   * Role checks go through public.is_admin() / public.is_staff(), which are
+--     SECURITY DEFINER, so they cannot recurse into the `profiles` policies.
+--   * `profiles` is readable ONLY by the owner and staff. Anonymous users get
+--     nothing; students get nothing but their own row. Public, non-identifying
+--     fields are exposed through the `public_profiles` view below.
+--   * The public signup form can only ever create a student/teacher profile
+--     with approved=false (see handle_new_user above).
+--   * guard_profile_update (above) stops anyone from self-promoting their own
+--     role/approved fields, which RLS alone cannot express.
+--   * Log tables are service-role-write only.
 
 -- Admin helper: create a staff account (auth user + profile), approved automatically
 create or replace function public.add_staff_account(
@@ -449,327 +536,500 @@ create or replace function public.add_staff_account(
 returns uuid
 language plpgsql
 security definer
-set search_path = public, extensions
+set search_path = public, extensions, pg_temp
 as $$
 declare
   v_user_id uuid;
 begin
-  if not exists (select 1 from profiles where id = auth.uid() and role = 'admin') then
-    raise exception 'Only administrators can add staff accounts';
+  if not public.is_admin() then
+    raise exception 'Only administrators can add staff accounts' using errcode = '42501';
   end if;
 
   if p_role not in ('librarian', 'admin') then
-    raise exception 'Invalid staff role';
+    raise exception 'Invalid staff role' using errcode = '22023';
   end if;
 
-  v_user_id := (select id from auth.users where email = p_email limit 1);
-
-  if v_user_id is null then
-    v_user_id := extensions.uuid_generate_v4();
-    insert into auth.users (
-      instance_id, id, aud, role, email, encrypted_password,
-      email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at
-    ) values (
-      '00000000-0000-0000-0000-000000000000',
-      v_user_id,
-      'authenticated',
-      'authenticated',
-      p_email,
-      extensions.crypt(p_password, extensions.gen_salt('bf')),
-      now(),
-      '{"provider":"email","providers":["email"]}',
-      jsonb_build_object('name', p_name, 'role', p_role),
-      now(), now()
-    );
+  if p_password is null or length(p_password) < 8
+     or p_password !~ '[A-Z]' or p_password !~ '[a-z]' or p_password !~ '[0-9]' then
+    raise exception 'Password must be at least 8 characters with upper, lower and a number'
+      using errcode = '22023';
   end if;
+
+  -- Never silently promote an existing member account into staff.
+  if exists (select 1 from public.profiles where email = p_email) then
+    raise exception 'That email already has a library account. Change their role from Manage Users instead.'
+      using errcode = '23505';
+  end if;
+
+  v_user_id := extensions.uuid_generate_v4();
+  insert into auth.users (
+    instance_id, id, aud, role, email, encrypted_password,
+    email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+  ) values (
+    '00000000-0000-0000-0000-000000000000',
+    v_user_id,
+    'authenticated',
+    'authenticated',
+    p_email,
+    extensions.crypt(p_password, extensions.gen_salt('bf')),
+    now(),
+    '{"provider":"email","providers":["email"]}',
+    jsonb_build_object('name', p_name),
+    now(), now()
+  );
 
   insert into public.profiles (id, name, email, role, department, approved)
   values (v_user_id, p_name, p_email, p_role, p_department, true)
   on conflict (id) do update
-    set name = excluded.name,
-        role = excluded.role,
+    set name       = excluded.name,
+        role       = excluded.role,
         department = excluded.department,
-        approved = true,
-        email = excluded.email;
+        approved   = true,
+        email      = excluded.email;
 
   return v_user_id;
 end;
 $$;
 
-grant execute on function public.add_staff_account(text, text, text, text, text)
-  to anon, authenticated, service_role;
-
--- Admin helper: delete a user account (auth user + profile cascade)
+-- Admin helper: delete another account (auth user + profile cascade)
 create or replace function public.delete_account(p_user_id uuid)
 returns void
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 begin
-  if not exists (select 1 from profiles where id = auth.uid() and role = 'admin') then
-    raise exception 'Only administrators can delete accounts';
+  if not public.is_admin() then
+    raise exception 'Only administrators can delete accounts' using errcode = '42501';
   end if;
+
+  if p_user_id = auth.uid() then
+    raise exception 'You cannot delete your own account' using errcode = '42501';
+  end if;
+
+  if (select role from public.profiles where id = p_user_id) = 'admin'
+     and (select count(*) from public.profiles where role = 'admin' and approved is true) <= 1 then
+    raise exception 'This is the last administrator account and cannot be deleted'
+      using errcode = '42501';
+  end if;
+
   delete from auth.users where id = p_user_id;
 end;
 $$;
 
-grant execute on function public.delete_account(uuid)
-  to anon, authenticated, service_role;
+-- A user may delete their OWN account only (settings > danger zone)
+create or replace function public.delete_my_account()
+returns void
+language plpgsql
+security definer
+set search_path = public, extensions, pg_temp
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'Authentication required' using errcode = '42501';
+  end if;
+  delete from auth.users where id = auth.uid();
+end;
+$$;
 
--- Profiles: users can read all, update own or admin can update all
-alter table profiles enable row level security;
-create policy "profiles_select_all" on profiles for select using (true);
-create policy "profiles_update_own" on profiles for update
-  using (
-    auth.uid() = id
-    or exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian'))
-  );
-create policy "profiles_insert_own" on profiles for insert with check (auth.uid() = id);
-create policy "profiles_delete_admin" on profiles for delete
-  using (exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian')));
+-- Librarian/staff "reject registration" action. Staff may remove a
+-- registration ONLY while it is still unapproved AND holds a non-staff role,
+-- so this can never delete an approved member or another staff account.
+create or replace function public.reject_registration(p_user_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public, extensions, pg_temp
+as $$
+declare
+  v_role text;
+  v_approved boolean;
+begin
+  if not public.is_staff() then
+    raise exception 'Only staff can reject a registration' using errcode = '42501';
+  end if;
+
+  select role, approved into v_role, v_approved
+  from public.profiles
+  where id = p_user_id;
+
+  if v_role is null then
+    raise exception 'Account not found' using errcode = 'P0002';
+  end if;
+
+  if v_role in ('admin', 'librarian') or v_approved is true then
+    raise exception 'Only unapproved student or teacher registrations can be rejected'
+      using errcode = '42501';
+  end if;
+
+  delete from auth.users where id = p_user_id;
+end;
+$$;
+
+revoke all on function public.add_staff_account(text, text, text, text, text) from public, anon;
+revoke all on function public.delete_account(uuid) from public, anon;
+revoke all on function public.reject_registration(uuid) from public, anon;
+revoke all on function public.delete_my_account() from public, anon;
+
+grant execute on function public.add_staff_account(text, text, text, text, text)
+  to authenticated, service_role;
+grant execute on function public.delete_account(uuid) to authenticated, service_role;
+grant execute on function public.reject_registration(uuid) to authenticated, service_role;
+grant execute on function public.delete_my_account() to authenticated, service_role;
+
+-- Staff notification on registration (replaces the unauthenticated client
+-- fan-out that let any signed-up user write a notification row for anyone)
+create or replace function public.notify_staff_of_registration(
+  p_user_id uuid,
+  p_name text,
+  p_role text
+)
+returns integer
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_count integer;
+begin
+  if auth.uid() is null or auth.uid() <> p_user_id then
+    raise exception 'You can only announce your own registration' using errcode = '42501';
+  end if;
+
+  insert into public.notifications (user_id, type, title, message, icon, read, time, timestamp)
+  select
+    p.id,
+    'info',
+    'New Registration Request',
+    coalesce(p_name, 'A new user') || ' (' || coalesce(p_role, 'student')
+      || ') has registered and is awaiting approval.',
+    'user-plus',
+    false,
+    now()::text,
+    now()
+  from public.profiles p
+  where p.role in ('admin', 'librarian') and p.approved is true;
+
+  get diagnostics v_count = row_count;
+  return v_count;
+end;
+$$;
+
+revoke all on function public.notify_staff_of_registration(uuid, text, text) from public, anon;
+grant execute on function public.notify_staff_of_registration(uuid, text, text)
+  to authenticated, service_role;
+
+-- Profiles: owner + staff only. No anonymous access, no self-insert, no
+-- self-promotion. Column protection lives in the guard_profile_update trigger.
+alter table public.profiles enable row level security;
+drop policy if exists "profiles_select_all" on public.profiles;
+drop policy if exists "profiles_select_self_or_staff" on public.profiles;
+drop policy if exists "profiles_update_own" on public.profiles;
+drop policy if exists "profiles_update_self_or_staff" on public.profiles;
+drop policy if exists "profiles_insert_own" on public.profiles;
+drop policy if exists "profiles_insert_admin" on public.profiles;
+drop policy if exists "profiles_delete_admin" on public.profiles;
+
+create policy "profiles_select_self_or_staff" on public.profiles for select to authenticated
+  using (auth.uid() = id or public.is_staff());
+create policy "profiles_update_self_or_staff" on public.profiles for update to authenticated
+  using (auth.uid() = id or public.is_staff())
+  with check (auth.uid() = id or public.is_staff());
+create policy "profiles_insert_admin" on public.profiles for insert to authenticated
+  with check (public.is_admin());
+create policy "profiles_delete_admin" on public.profiles for delete to authenticated
+  using (public.is_admin());
+
+revoke all on table public.profiles from anon;
+grant select, update on table public.profiles to authenticated;
+
+-- Public, non-identifying profile view used for book/review attribution.
+-- Deliberately excludes email, phone, address, student_id, role, approved.
+create or replace view public.public_profiles as
+  select id, name, avatar from public.profiles;
+
+grant select on public.public_profiles to anon, authenticated;
 
 -- Books: everyone can read, only admins can modify
-alter table books enable row level security;
-create policy "books_select_all" on books for select using (true);
-create policy "books_insert_admin" on books for insert
-  with check (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
-create policy "books_update_admin" on books for update
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
-create policy "books_delete_admin" on books for delete
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+alter table public.books enable row level security;
+drop policy if exists "books_select_all" on public.books;
+drop policy if exists "books_insert_admin" on public.books;
+drop policy if exists "books_update_admin" on public.books;
+drop policy if exists "books_delete_admin" on public.books;
+create policy "books_select_all" on public.books for select to anon, authenticated using (true);
+create policy "books_insert_admin" on public.books for insert to authenticated with check (public.is_admin());
+create policy "books_update_admin" on public.books for update to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy "books_delete_admin" on public.books for delete to authenticated using (public.is_admin());
 
 -- Categories: everyone can read, only admins can modify
-alter table categories enable row level security;
-create policy "categories_select_all" on categories for select using (true);
-create policy "categories_insert_admin" on categories for insert
-  with check (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
-create policy "categories_update_admin" on categories for update
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
-create policy "categories_delete_admin" on categories for delete
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+alter table public.categories enable row level security;
+drop policy if exists "categories_select_all" on public.categories;
+drop policy if exists "categories_insert_admin" on public.categories;
+drop policy if exists "categories_update_admin" on public.categories;
+drop policy if exists "categories_delete_admin" on public.categories;
+create policy "categories_select_all" on public.categories for select to anon, authenticated using (true);
+create policy "categories_insert_admin" on public.categories for insert to authenticated with check (public.is_admin());
+create policy "categories_update_admin" on public.categories for update to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy "categories_delete_admin" on public.categories for delete to authenticated using (public.is_admin());
 
--- Borrow requests: users see own, admins see all
-alter table borrow_requests enable row level security;
-create policy "borrow_select_own" on borrow_requests for select
-  using (
-    auth.uid() = student_id
-    or exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian'))
-  );
-create policy "borrow_insert_own" on borrow_requests for insert
-  with check (auth.uid() = student_id);
-create policy "borrow_update_admin" on borrow_requests for update
-  using (exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian')));
-
--- Notifications: users see own, admins see all, admins can insert for anyone
-alter table notifications enable row level security;
-create policy "notifications_select_own" on notifications for select
-  using (
-    auth.uid() = user_id
-    or exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian'))
-  );
-create policy "notifications_insert_own" on notifications for insert
+-- Borrow requests: owner sees own, staff see all.
+-- A student can only create a PENDING request; approval is a staff action.
+alter table public.borrow_requests enable row level security;
+drop policy if exists "borrow_select_own" on public.borrow_requests;
+drop policy if exists "borrow_insert_own" on public.borrow_requests;
+drop policy if exists "borrow_insert_own_pending" on public.borrow_requests;
+drop policy if exists "borrow_update_admin" on public.borrow_requests;
+drop policy if exists "borrow_update_staff" on public.borrow_requests;
+create policy "borrow_select_own" on public.borrow_requests for select to authenticated
+  using (auth.uid() = student_id or public.is_staff());
+create policy "borrow_insert_own_pending" on public.borrow_requests for insert to authenticated
   with check (
-    auth.uid() = user_id
-    or exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian'))
+    auth.uid() = student_id
+    and coalesce(status, 'pending') = 'pending'
+    and approved_by is null
+    and approved_at is null
   );
-create policy "notifications_update_own" on notifications for update
-  using (auth.uid() = user_id);
-create policy "notifications_delete_own" on notifications for delete
+create policy "borrow_update_staff" on public.borrow_requests for update to authenticated
+  using (public.is_staff())
+  with check (public.is_staff());
+-- Staff may record historical / already-decided rows (CSV borrow import).
+create policy "borrow_insert_staff" on public.borrow_requests for insert to authenticated
+  with check (public.is_staff());
+
+-- Notifications: owner manages own; staff can read all
+alter table public.notifications enable row level security;
+drop policy if exists "notifications_select_own" on public.notifications;
+drop policy if exists "notifications_insert_own" on public.notifications;
+drop policy if exists "notifications_update_own" on public.notifications;
+drop policy if exists "notifications_delete_own" on public.notifications;
+create policy "notifications_select_own" on public.notifications for select to authenticated
+  using (auth.uid() = user_id or public.is_staff());
+create policy "notifications_insert_own" on public.notifications for insert to authenticated
+  with check (auth.uid() = user_id or public.is_staff());
+create policy "notifications_update_own" on public.notifications for update to authenticated
+  using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "notifications_delete_own" on public.notifications for delete to authenticated
   using (auth.uid() = user_id);
 
 -- Announcements: everyone can read, admins can manage
-alter table announcements enable row level security;
-create policy "announcements_select_all" on announcements for select using (true);
-create policy "announcements_insert_admin" on announcements for insert
-  with check (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
-create policy "announcements_update_admin" on announcements for update
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
-create policy "announcements_delete_admin" on announcements for delete
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+alter table public.announcements enable row level security;
+drop policy if exists "announcements_select_all" on public.announcements;
+drop policy if exists "announcements_insert_admin" on public.announcements;
+drop policy if exists "announcements_update_admin" on public.announcements;
+drop policy if exists "announcements_delete_admin" on public.announcements;
+create policy "announcements_select_all" on public.announcements for select to anon, authenticated using (true);
+create policy "announcements_insert_admin" on public.announcements for insert to authenticated with check (public.is_admin());
+create policy "announcements_update_admin" on public.announcements for update to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy "announcements_delete_admin" on public.announcements for delete to authenticated using (public.is_admin());
 
 -- Events: everyone can read, admins can manage
-alter table events enable row level security;
-create policy "events_select_all" on events for select using (true);
-create policy "events_insert_admin" on events for insert
-  with check (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
-create policy "events_update_admin" on events for update
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
-create policy "events_delete_admin" on events for delete
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+alter table public.events enable row level security;
+drop policy if exists "events_select_all" on public.events;
+drop policy if exists "events_insert_admin" on public.events;
+drop policy if exists "events_update_admin" on public.events;
+drop policy if exists "events_delete_admin" on public.events;
+create policy "events_select_all" on public.events for select to anon, authenticated using (true);
+create policy "events_insert_admin" on public.events for insert to authenticated with check (public.is_admin());
+create policy "events_update_admin" on public.events for update to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy "events_delete_admin" on public.events for delete to authenticated using (public.is_admin());
 
--- Reservations: users see own, admins see all
-alter table reservations enable row level security;
-create policy "reservations_select_own" on reservations for select
-  using (
-    auth.uid() = student_id
-    or exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian'))
-  );
-create policy "reservations_insert_own" on reservations for insert
-  with check (auth.uid() = student_id);
-create policy "reservations_update_own" on reservations for update
-  using (
-    auth.uid() = student_id
-    or exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian'))
-  );
+-- Reservations: owner sees own, staff see all. Owner cannot self-fulfil.
+alter table public.reservations enable row level security;
+drop policy if exists "reservations_select_own" on public.reservations;
+drop policy if exists "reservations_insert_own" on public.reservations;
+drop policy if exists "reservations_update_own" on public.reservations;
+drop policy if exists "reservations_update_staff" on public.reservations;
+create policy "reservations_select_own" on public.reservations for select to authenticated
+  using (auth.uid() = student_id or public.is_staff());
+create policy "reservations_insert_own" on public.reservations for insert to authenticated
+  with check (auth.uid() = student_id and coalesce(status, 'active') in ('active', 'waiting'));
+create policy "reservations_update_staff" on public.reservations for update to authenticated
+  using (public.is_staff()) with check (public.is_staff());
+create policy "reservations_insert_staff" on public.reservations for insert to authenticated
+  with check (public.is_staff());
 
 -- Favorites: users manage their own
-alter table favorites enable row level security;
-create policy "favorites_select_own" on favorites for select using (auth.uid() = user_id);
-create policy "favorites_insert_own" on favorites for insert with check (auth.uid() = user_id);
-create policy "favorites_delete_own" on favorites for delete using (auth.uid() = user_id);
+alter table public.favorites enable row level security;
+drop policy if exists "favorites_select_own" on public.favorites;
+drop policy if exists "favorites_insert_own" on public.favorites;
+drop policy if exists "favorites_delete_own" on public.favorites;
+create policy "favorites_select_own" on public.favorites for select to authenticated using (auth.uid() = user_id);
+create policy "favorites_insert_own" on public.favorites for insert to authenticated with check (auth.uid() = user_id);
+create policy "favorites_delete_own" on public.favorites for delete to authenticated using (auth.uid() = user_id);
 
 -- Recently viewed: users manage their own
-alter table recently_viewed enable row level security;
-create policy "recently_viewed_select_own" on recently_viewed for select using (auth.uid() = user_id);
-create policy "recently_viewed_insert_own" on recently_viewed for insert with check (auth.uid() = user_id);
-create policy "recently_viewed_delete_own" on recently_viewed for delete using (auth.uid() = user_id);
+alter table public.recently_viewed enable row level security;
+drop policy if exists "recently_viewed_select_own" on public.recently_viewed;
+drop policy if exists "recently_viewed_insert_own" on public.recently_viewed;
+drop policy if exists "recently_viewed_delete_own" on public.recently_viewed;
+create policy "recently_viewed_select_own" on public.recently_viewed for select to authenticated using (auth.uid() = user_id);
+create policy "recently_viewed_insert_own" on public.recently_viewed for insert to authenticated with check (auth.uid() = user_id);
+create policy "recently_viewed_delete_own" on public.recently_viewed for delete to authenticated using (auth.uid() = user_id);
 
 -- Reviews: everyone can read, users manage their own
-alter table reviews enable row level security;
-create policy "reviews_select_all" on reviews for select using (true);
-create policy "reviews_insert_own" on reviews for insert with check (auth.uid() = user_id);
-create policy "reviews_update_own" on reviews for update using (auth.uid() = user_id);
-create policy "reviews_delete_own" on reviews for delete using (auth.uid() = user_id);
+alter table public.reviews enable row level security;
+drop policy if exists "reviews_select_all" on public.reviews;
+drop policy if exists "reviews_insert_own" on public.reviews;
+drop policy if exists "reviews_update_own" on public.reviews;
+drop policy if exists "reviews_delete_own" on public.reviews;
+create policy "reviews_select_all" on public.reviews for select to anon, authenticated using (true);
+create policy "reviews_insert_own" on public.reviews for insert to authenticated with check (auth.uid() = user_id);
+create policy "reviews_update_own" on public.reviews for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "reviews_delete_own" on public.reviews for delete to authenticated using (auth.uid() = user_id);
 
 -- Digital books: everyone can read, admins can manage
-alter table digital_books enable row level security;
-create policy "digital_books_select_all" on digital_books for select using (true);
-create policy "digital_books_insert_admin" on digital_books for insert
-  with check (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
-create policy "digital_books_update_admin" on digital_books for update
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
-create policy "digital_books_delete_admin" on digital_books for delete
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+alter table public.digital_books enable row level security;
+drop policy if exists "digital_books_select_all" on public.digital_books;
+drop policy if exists "digital_books_insert_admin" on public.digital_books;
+drop policy if exists "digital_books_update_admin" on public.digital_books;
+drop policy if exists "digital_books_delete_admin" on public.digital_books;
+create policy "digital_books_select_all" on public.digital_books for select to anon, authenticated using (true);
+create policy "digital_books_insert_admin" on public.digital_books for insert to authenticated with check (public.is_admin());
+create policy "digital_books_update_admin" on public.digital_books for update to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy "digital_books_delete_admin" on public.digital_books for delete to authenticated using (public.is_admin());
 
 -- Study materials: everyone can read, admins/librarians manage
-alter table study_materials enable row level security;
-create policy "study_materials_select_all" on study_materials for select using (true);
-create policy "study_materials_insert_staff" on study_materials for insert
-  with check (exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian')));
-create policy "study_materials_update_staff" on study_materials for update
-  using (exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian')));
-create policy "study_materials_delete_staff" on study_materials for delete
-  using (exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian')));
+alter table public.study_materials enable row level security;
+drop policy if exists "study_materials_select_all" on public.study_materials;
+drop policy if exists "study_materials_insert_staff" on public.study_materials;
+drop policy if exists "study_materials_update_staff" on public.study_materials;
+drop policy if exists "study_materials_delete_staff" on public.study_materials;
+create policy "study_materials_select_all" on public.study_materials for select to anon, authenticated using (true);
+create policy "study_materials_insert_staff" on public.study_materials for insert to authenticated with check (public.is_staff());
+create policy "study_materials_update_staff" on public.study_materials for update to authenticated using (public.is_staff()) with check (public.is_staff());
+create policy "study_materials_delete_staff" on public.study_materials for delete to authenticated using (public.is_staff());
 
--- Settings: admins manage, everyone reads
-alter table settings enable row level security;
-create policy "settings_select_all" on settings for select using (true);
-create policy "settings_upsert_admin" on settings for insert
-  with check (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
-create policy "settings_update_admin" on settings for update
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+-- Settings: everyone reads, ONLY admins write.
+-- Never store SMTP credentials in this table.
+alter table public.settings enable row level security;
+drop policy if exists "settings_select_all" on public.settings;
+drop policy if exists "settings_upsert_admin" on public.settings;
+drop policy if exists "settings_update_admin" on public.settings;
+drop policy if exists "settings_insert_authenticated" on public.settings;
+drop policy if exists "settings_update_authenticated" on public.settings;
+create policy "settings_select_all" on public.settings for select to anon, authenticated using (true);
+create policy "settings_upsert_admin" on public.settings for insert to authenticated with check (public.is_admin());
+create policy "settings_update_admin" on public.settings for update to authenticated using (public.is_admin()) with check (public.is_admin());
 
--- The SPA writes settings with the anon key (no service role/session), so also allow
--- writes when a matching profile is the current user, so admin settings can persist.
-create policy "settings_insert_authenticated" on settings for insert
-  with check (exists (select 1 from profiles where id = auth.uid()));
-create policy "settings_update_authenticated" on settings for update
-  using (exists (select 1 from profiles where id = auth.uid()));
+-- Personal (per-user) preferences. Kept out of the global `settings` table so
+-- a student can save their own theme/notifications without being able to
+-- rewrite library-wide configuration.
+create table if not exists public.user_preferences (
+  user_id uuid primary key references public.profiles(id) on delete cascade,
+  preferences jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.user_preferences enable row level security;
+drop policy if exists "user_preferences_select_own" on public.user_preferences;
+drop policy if exists "user_preferences_upsert_own" on public.user_preferences;
+drop policy if exists "user_preferences_update_own" on public.user_preferences;
+drop policy if exists "user_preferences_delete_own" on public.user_preferences;
+create policy "user_preferences_select_own" on public.user_preferences for select to authenticated using (auth.uid() = user_id);
+create policy "user_preferences_upsert_own" on public.user_preferences for insert to authenticated with check (auth.uid() = user_id);
+create policy "user_preferences_update_own" on public.user_preferences for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "user_preferences_delete_own" on public.user_preferences for delete to authenticated using (auth.uid() = user_id);
+
+revoke all on table public.user_preferences from anon;
+grant select, insert, update, delete on table public.user_preferences to authenticated;
 
 -- Achievements: users see own, admins see all
-alter table achievements enable row level security;
-create policy "achievements_select_own" on achievements for select
-  using (
-    auth.uid() = user_id
-    or exists (select 1 from profiles where id = auth.uid() and role = 'admin')
-  );
-create policy "achievements_insert_own" on achievements for insert
-  with check (auth.uid() = user_id);
+alter table public.achievements enable row level security;
+drop policy if exists "achievements_select_own" on public.achievements;
+drop policy if exists "achievements_insert_own" on public.achievements;
+create policy "achievements_select_own" on public.achievements for select to authenticated
+  using (auth.uid() = user_id or public.is_admin());
+create policy "achievements_insert_own" on public.achievements for insert to authenticated with check (auth.uid() = user_id);
 
--- Login history: admins see all, users see own
-alter table login_history enable row level security;
-create policy "login_history_select_own" on login_history for select
-  using (
-    auth.uid() = user_id
-    or exists (select 1 from profiles where id = auth.uid() and role = 'admin')
-  );
-create policy "login_history_insert_service" on login_history for insert
-  with check (true);
+-- Login history: admins read; writes are service-role only (no client policy)
+alter table public.login_history enable row level security;
+drop policy if exists "login_history_select_own" on public.login_history;
+drop policy if exists "login_history_select_admin" on public.login_history;
+drop policy if exists "login_history_insert_service" on public.login_history;
+create policy "login_history_select_admin" on public.login_history for select to authenticated using (public.is_admin());
 
--- Activity logs: admins see all, users see own
-alter table activity_logs enable row level security;
-create policy "activity_logs_select_own" on activity_logs for select
-  using (
-    auth.uid() = user_id
-    or exists (select 1 from profiles where id = auth.uid() and role = 'admin')
-  );
-create policy "activity_logs_insert_service" on activity_logs for insert
-  with check (true);
+-- Activity logs: admins read; writes are service-role only
+alter table public.activity_logs enable row level security;
+drop policy if exists "activity_logs_select_own" on public.activity_logs;
+drop policy if exists "activity_logs_select_admin" on public.activity_logs;
+drop policy if exists "activity_logs_insert_service" on public.activity_logs;
+create policy "activity_logs_select_admin" on public.activity_logs for select to authenticated using (public.is_admin());
 
--- Audit logs: only admins can read, service role inserts
-alter table audit_logs enable row level security;
-create policy "audit_logs_select_admin" on audit_logs for select
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
-create policy "audit_logs_insert_service" on audit_logs for insert
-  with check (true);
+-- Audit logs: only admins can read; writes are service-role only
+alter table public.audit_logs enable row level security;
+drop policy if exists "audit_logs_select_admin" on public.audit_logs;
+drop policy if exists "audit_logs_insert_service" on public.audit_logs;
+create policy "audit_logs_select_admin" on public.audit_logs for select to authenticated using (public.is_admin());
 
--- Fine payments: users see own, admins see all
-alter table fine_payments enable row level security;
-create policy "fine_payments_select_own" on fine_payments for select
-  using (
-    auth.uid() = student_id
-    or exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian'))
-  );
-create policy "fine_payments_insert_admin" on fine_payments for insert
-  with check (exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'librarian')));
+revoke insert, update, delete on table public.login_history  from anon, authenticated;
+revoke insert, update, delete on table public.activity_logs from anon, authenticated;
+revoke insert, update, delete on table public.audit_logs    from anon, authenticated;
+grant select on table public.login_history, public.activity_logs, public.audit_logs to authenticated;
+
+-- Fine payments: owner sees own, staff see all, staff record fines
+alter table public.fine_payments enable row level security;
+drop policy if exists "fine_payments_select_own" on public.fine_payments;
+drop policy if exists "fine_payments_insert_admin" on public.fine_payments;
+drop policy if exists "fine_payments_insert_staff" on public.fine_payments;
+create policy "fine_payments_select_own" on public.fine_payments for select to authenticated
+  using (auth.uid() = student_id or public.is_staff());
+create policy "fine_payments_insert_staff" on public.fine_payments for insert to authenticated
+  with check (public.is_staff());
 
 -- Book imports: only admins can manage
-alter table book_imports enable row level security;
-create policy "book_imports_select_admin" on book_imports for select
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
-create policy "book_imports_insert_admin" on book_imports for insert
-  with check (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
-create policy "book_imports_update_admin" on book_imports for update
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+alter table public.book_imports enable row level security;
+drop policy if exists "book_imports_select_admin" on public.book_imports;
+drop policy if exists "book_imports_insert_admin" on public.book_imports;
+drop policy if exists "book_imports_update_admin" on public.book_imports;
+create policy "book_imports_select_admin" on public.book_imports for select to authenticated using (public.is_admin());
+create policy "book_imports_insert_admin" on public.book_imports for insert to authenticated with check (public.is_admin());
+create policy "book_imports_update_admin" on public.book_imports for update to authenticated using (public.is_admin()) with check (public.is_admin());
 
--- Feedback: users see own, admins see all; anyone can insert
-alter table feedback enable row level security;
-create policy "feedback_select_own" on feedback for select
-  using (
-    auth.uid() = user_id
-    or exists (select 1 from profiles where id = auth.uid() and role = 'admin')
-  );
-create policy "feedback_insert_own" on feedback for insert
-  with check (auth.uid() = user_id);
+-- Feedback: users see own, admins see all
+alter table public.feedback enable row level security;
+drop policy if exists "feedback_select_own" on public.feedback;
+drop policy if exists "feedback_insert_own" on public.feedback;
+create policy "feedback_select_own" on public.feedback for select to authenticated
+  using (auth.uid() = user_id or public.is_admin());
+create policy "feedback_insert_own" on public.feedback for insert to authenticated with check (auth.uid() = user_id);
 
 -- Calendar events: everyone can read, admins can manage
-alter table calendar_events enable row level security;
-create policy "calendar_events_select_all" on calendar_events for select using (true);
-create policy "calendar_events_insert_admin" on calendar_events for insert
-  with check (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
-create policy "calendar_events_update_admin" on calendar_events for update
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
-create policy "calendar_events_delete_admin" on calendar_events for delete
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+alter table public.calendar_events enable row level security;
+drop policy if exists "calendar_events_select_all" on public.calendar_events;
+drop policy if exists "calendar_events_insert_admin" on public.calendar_events;
+drop policy if exists "calendar_events_update_admin" on public.calendar_events;
+drop policy if exists "calendar_events_delete_admin" on public.calendar_events;
+create policy "calendar_events_select_all" on public.calendar_events for select to anon, authenticated using (true);
+create policy "calendar_events_insert_admin" on public.calendar_events for insert to authenticated with check (public.is_admin());
+create policy "calendar_events_update_admin" on public.calendar_events for update to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy "calendar_events_delete_admin" on public.calendar_events for delete to authenticated using (public.is_admin());
 
 -- FAQs: everyone can read, admins can manage
-alter table faqs enable row level security;
-create policy "faqs_select_all" on faqs for select using (true);
-create policy "faqs_insert_admin" on faqs for insert
-  with check (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
-create policy "faqs_update_admin" on faqs for update
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
-create policy "faqs_delete_admin" on faqs for delete
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+alter table public.faqs enable row level security;
+drop policy if exists "faqs_select_all" on public.faqs;
+drop policy if exists "faqs_insert_admin" on public.faqs;
+drop policy if exists "faqs_update_admin" on public.faqs;
+drop policy if exists "faqs_delete_admin" on public.faqs;
+create policy "faqs_select_all" on public.faqs for select to anon, authenticated using (true);
+create policy "faqs_insert_admin" on public.faqs for insert to authenticated with check (public.is_admin());
+create policy "faqs_update_admin" on public.faqs for update to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy "faqs_delete_admin" on public.faqs for delete to authenticated using (public.is_admin());
 
--- Contact messages: admins can manage, anyone can insert
-alter table contact_messages enable row level security;
-create policy "contact_messages_select_admin" on contact_messages for select
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
-create policy "contact_messages_insert_anon" on contact_messages for insert
-  with check (true);
-create policy "contact_messages_update_admin" on contact_messages for update
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
+-- Contact messages: admins manage, anyone can submit the public form
+alter table public.contact_messages enable row level security;
+drop policy if exists "contact_messages_select_admin" on public.contact_messages;
+drop policy if exists "contact_messages_insert_anon" on public.contact_messages;
+drop policy if exists "contact_messages_update_admin" on public.contact_messages;
+create policy "contact_messages_select_admin" on public.contact_messages for select to authenticated using (public.is_admin());
+create policy "contact_messages_insert_anon" on public.contact_messages for insert to anon, authenticated with check (true);
+create policy "contact_messages_update_admin" on public.contact_messages for update to authenticated using (public.is_admin()) with check (public.is_admin());
 
 -- Sessions: users see own, admins see all
-alter table sessions enable row level security;
-create policy "sessions_select_own" on sessions for select
-  using (
-    auth.uid() = user_id
-    or exists (select 1 from profiles where id = auth.uid() and role = 'admin')
-  );
-create policy "sessions_insert_own" on sessions for insert
-  with check (auth.uid() = user_id);
-create policy "sessions_delete_own" on sessions for delete
-  using (auth.uid() = user_id);
+alter table public.sessions enable row level security;
+drop policy if exists "sessions_select_own" on public.sessions;
+drop policy if exists "sessions_insert_own" on public.sessions;
+drop policy if exists "sessions_delete_own" on public.sessions;
+create policy "sessions_select_own" on public.sessions for select to authenticated
+  using (auth.uid() = user_id or public.is_admin());
+create policy "sessions_insert_own" on public.sessions for insert to authenticated with check (auth.uid() = user_id);
+create policy "sessions_delete_own" on public.sessions for delete to authenticated using (auth.uid() = user_id);

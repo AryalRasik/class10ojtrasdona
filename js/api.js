@@ -1,8 +1,25 @@
 window.Api = {
   client: null,
 
+  // Fields on `profiles` that only an administrator may change. The database
+  // trigger `guard_profile_update` is the real enforcement; this list just
+  // keeps the UI from sending privileged changes by accident.
+  ADMIN_ONLY_PROFILE_FIELDS: [
+    'role', 'approved', 'student_id', 'teacher_id',
+    'membership_status', 'membership_expiry',
+    'borrow_count', 'reading_streak', 'created_at', 'id'
+  ],
+
   init() {
     this.client = SupabaseClient.get();
+  },
+
+  _callerIsAdmin() {
+    return !!(window.AppState && AppState.isAdmin);
+  },
+
+  _callerIsStaff() {
+    return !!(window.AppState && (AppState.isAdmin || AppState.isLibrarian));
   },
 
   // ── Auth ──────────────────────────────────────────────
@@ -11,16 +28,45 @@ window.Api = {
     if (error) throw error;
     const profile = await this.getProfile(data.user.id);
     if (!profile) throw new Error('Profile not found for this account. Please contact the administrator.');
+    if (profile.approved === false) {
+      await this.client.auth.signOut();
+      throw new Error('Your account is still awaiting approval by the library administrator.');
+    }
     return { user: data.user, profile };
   },
 
   async signUp(email, password, meta = {}) {
+    // SECURITY: the signup form is public, so a requested role can never be
+    // trusted. Only student/teacher is allowed through; the database trigger
+    // enforces the same clamp and always sets approved = false.
+    const safeMeta = { ...meta };
+    const requestedRole = String(safeMeta.role || 'student').toLowerCase();
+    safeMeta.role = (requestedRole === 'teacher') ? 'teacher' : 'student';
+    delete safeMeta.approved;
+    delete safeMeta.role_admin;
+
     const { data, error } = await this.client.auth.signUp({
       email,
       password,
-      options: { data: meta }
+      options: { data: safeMeta }
     });
     if (error) throw error;
+
+    // Tell the staff roster about the new registration. This runs as a
+    // SECURITY DEFINER function that only allows reporting YOUR OWN signup.
+    const newId = data && data.user && data.user.id;
+    if (newId) {
+      try {
+        await this.client.rpc('notify_staff_of_registration', {
+          p_user_id: newId,
+          p_name: safeMeta.name || '',
+          p_role: safeMeta.role
+        });
+      } catch (e) {
+        // Non-fatal: the registration itself succeeded.
+        console.warn('Could not notify staff of registration:', e);
+      }
+    }
     return data;
   },
 
@@ -53,9 +99,27 @@ window.Api = {
   },
 
   async updateProfile(userId, updates) {
+    // SECURITY: refuse to send admin-only fields unless the caller really is
+    // an admin, and never let a non-staff edit somebody else's row.
+    const session = await this.getSession();
+    const callerId = session && session.user && session.user.id;
+    if (!callerId) throw new Error('You must be signed in to update a profile.');
+    if (callerId !== userId && !this._callerIsStaff()) {
+      throw new Error('You can only edit your own profile.');
+    }
+
+    if (!this._callerIsAdmin()) {
+      const blocked = this.ADMIN_ONLY_PROFILE_FIELDS
+        .filter(f => Object.prototype.hasOwnProperty.call(updates, f));
+      if (blocked.length) {
+        throw new Error('Only an administrator can change: ' + blocked.join(', '));
+      }
+    }
+    const payload = { ...updates };
+
     const { data, error } = await this.client
       .from('profiles')
-      .update(updates)
+      .update(payload)
       .eq('id', userId)
       .select()
       .single();
@@ -73,6 +137,9 @@ window.Api = {
   },
 
   async approveUser(userId) {
+    if (!this._callerIsStaff()) {
+      throw new Error('Only staff can approve accounts.');
+    }
     const { data, error } = await this.client
       .from('profiles')
       .update({ approved: true })
@@ -84,23 +151,33 @@ window.Api = {
   },
 
   async rejectUser(userId) {
-    await this.deleteUser(userId);
+    // Staff may reject a registration that is still unapproved. The database
+    // function refuses to remove an approved member or another staff account.
+    if (!this._callerIsStaff()) {
+      throw new Error('Only staff can reject registrations.');
+    }
+    const { error } = await this.client.rpc('reject_registration', { p_user_id: userId });
+    if (error) throw error;
   },
 
   async deleteUser(userId) {
-    // Try the security-definer RPC first (removes auth user + cascades to profile)
-    try {
-      const { error } = await this.client.rpc('delete_account', { p_user_id: userId });
-      if (!error) return;
-      console.warn('delete_account RPC failed, falling back to direct profile delete:', error);
-    } catch (e) {
-      console.warn('delete_account RPC threw, falling back to direct profile delete:', e);
+    // SECURITY: administrator only, and it goes through the SECURITY DEFINER
+    // function that removes the auth user too. There is deliberately NO
+    // fallback to a direct profiles delete: that would leave an orphaned
+    // auth account behind and used to be reachable by librarians.
+    if (!this._callerIsAdmin()) {
+      throw new Error('Only an administrator can delete accounts.');
     }
-    // Fallback: delete the profiles row directly
-    const { error } = await this.client
-      .from('profiles')
-      .delete()
-      .eq('id', userId);
+    const session = await this.getSession();
+    if (session && session.user && session.user.id === userId) {
+      throw new Error('You cannot delete your own account from the user list.');
+    }
+    const { error } = await this.client.rpc('delete_account', { p_user_id: userId });
+    if (error) throw error;
+  },
+
+  async deleteOwnAccount() {
+    const { error } = await this.client.rpc('delete_my_account');
     if (error) throw error;
   },
 
@@ -109,6 +186,9 @@ window.Api = {
   },
 
   async addLibrarian({ email, password, name, role = 'librarian', department }) {
+    if (!this._callerIsAdmin()) {
+      throw new Error('Only an administrator can add staff accounts.');
+    }
     const { data, error } = await this.client.rpc('add_staff_account', {
       p_email: email,
       p_password: password,
@@ -116,15 +196,6 @@ window.Api = {
       p_role: role,
       p_department: department || ''
     });
-    if (error) throw error;
-    return data;
-  },
-
-  async getAdminAndLibrarians() {
-    const { data, error } = await this.client
-      .from('profiles')
-      .select('id, name, role')
-      .in('role', ['admin', 'librarian']);
     if (error) throw error;
     return data;
   },
@@ -536,14 +607,38 @@ async updateBook(bookId, updates) {
   },
 
   // ── Reviews ───────────────────────────────────────────
+  // SECURITY: the `profiles` table is no longer readable by every user, so the
+  // author name/avatar is resolved through the non-identifying public_profiles
+  // view (id, name, avatar) instead of an embedded join on `profiles`.
+  async _attachPublicAuthors(reviews) {
+    if (!reviews || !reviews.length) return reviews || [];
+    const ids = [...new Set(reviews.map(r => r.user_id).filter(Boolean))];
+    if (!ids.length) return reviews;
+    try {
+      const { data, error } = await this.client
+        .from('public_profiles')
+        .select('id, name, avatar')
+        .in('id', ids);
+      if (error) throw error;
+      const byId = new Map((data || []).map(p => [p.id, p]));
+      return reviews.map(r => {
+        const p = byId.get(r.user_id);
+        return { ...r, profiles: p ? { name: p.name, avatar: p.avatar } : null };
+      });
+    } catch (e) {
+      console.warn('Could not load review author names:', e);
+      return reviews;
+    }
+  },
+
   async getReviewsByBook(bookId) {
     const { data, error } = await this.client
       .from('reviews')
-      .select('*, profiles(name, avatar)')
+      .select('*, books(title, cover)')
       .eq('book_id', bookId)
       .order('created_at', { ascending: false });
     if (error) throw error;
-    return data;
+    return this._attachPublicAuthors(data);
   },
 
   async getReviewsByUser(userId) {
@@ -553,7 +648,7 @@ async updateBook(bookId, updates) {
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
     if (error) throw error;
-    return data;
+    return this._attachPublicAuthors(data);
   },
 
   async upsertReview(review) {
@@ -722,7 +817,7 @@ async updateBook(bookId, updates) {
       email: raw.email,
       role: raw.role,
       grade: raw.grade,
-      className: raw.classname,
+      className: raw.className || raw.classname,
       avatar: raw.avatar,
       borrowCount: raw.borrow_count,
       readingStreak: raw.reading_streak,
@@ -848,7 +943,7 @@ async updateBook(bookId, updates) {
       rating: raw.rating,
       comment: raw.comment,
       createdAt: raw.created_at,
-      user: raw.profiles ? { name: raw.profiles.name, avatar: raw.profiles.avatar } : null,
+      user: (raw.profiles || raw.user) ? { name: (raw.profiles || raw.user).name, avatar: (raw.profiles || raw.user).avatar } : null,
       book: raw.books ? { title: raw.books.title, cover: raw.books.cover } : null
     };
   },
@@ -894,7 +989,7 @@ async updateBook(bookId, updates) {
       email: raw.email,
       role: raw.role,
       grade: raw.grade,
-      className: raw.classname,
+      className: raw.className || raw.classname,
       avatar: raw.avatar,
       borrowCount: raw.borrow_count,
       readingStreak: raw.reading_streak,

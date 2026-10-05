@@ -10,6 +10,12 @@ const AppState = {
     isSupabaseConnected: false,
     isDemoMode: false,
 
+    // Derived from the signed-in Supabase profile only (see _applyRoleFlags).
+    // Never from localStorage or from user-supplied input.
+    isAdmin: false,
+    isLibrarian: false,
+    isStaff: false,
+
     DEVELOPER_EMAIL: 'admin@saraswatischool.edu.np',
     DEVELOPER_PROFILE: {
         name: 'Rasik Aryal',
@@ -121,6 +127,7 @@ const AppState = {
                     this.isLoggedIn = true;
                     this.isSupabaseConnected = true;
                     this.isDemoMode = false;
+                    this._applyRoleFlags(this.currentUser);
                     if (session.access_token) {
                         localStorage.setItem('library_currentUser', JSON.stringify(this.currentUser));
                         localStorage.setItem('library_access_token', session.access_token);
@@ -131,57 +138,56 @@ const AppState = {
                 }
                 this.isSupabaseConnected = true;
                 this.isDemoMode = false;
+                this._applyRoleFlags(null);
                 await this.loadFromSupabase();
                 this._startSessionManagement();
                 return;
             } catch (e) {
-                console.warn('Supabase available but session load failed:', e);
+                // SECURITY: fail closed. Supabase IS configured, so a failure
+                // here must never silently downgrade the app to demo mode.
+                console.error('Supabase session load failed:', e);
                 this.isSupabaseConnected = true;
                 this.isDemoMode = false;
+                this.currentUser = null;
+                this.isLoggedIn = false;
+                this._applyRoleFlags(null);
+                this._clearStoredSession();
+                return;
             }
         }
 
         this.initDemoMode();
     },
 
+    // Role flags are derived ONLY from the profile row that Supabase returned
+    // for the current session. They are never read from localStorage, so
+    // editing storage cannot grant admin or librarian rights in the UI.
+    _applyRoleFlags(user) {
+        const role = user && user.role;
+        const approved = user ? user.approved !== false : false;
+        this.isAdmin = role === 'admin' && approved;
+        this.isLibrarian = role === 'librarian' && approved;
+        this.isStaff = this.isAdmin || this.isLibrarian;
+    },
+
+    _clearStoredSession() {
+        try {
+            localStorage.removeItem('library_currentUser');
+            localStorage.removeItem('library_access_token');
+        } catch (e) { /* storage unavailable */ }
+    },
+
     initDemoMode() {
         this.isDemoMode = true;
         this.isSupabaseConnected = false;
 
-        // Check for a valid token + user session before restoring
-        const savedUser = localStorage.getItem('library_currentUser');
-        const savedToken = localStorage.getItem('library_access_token');
-        if (savedUser && savedToken) {
-            try {
-                this.currentUser = JSON.parse(savedUser);
-                // Validate token expiry
-                try {
-                    const payload = JSON.parse(atob(savedToken.split('.')[1]));
-                    const now = Math.floor(Date.now() / 1000);
-                    if (payload.exp && payload.exp < now) {
-                        // Token expired, clear session
-                        localStorage.removeItem('library_currentUser');
-                        localStorage.removeItem('library_access_token');
-                        this.currentUser = null;
-                        this.isLoggedIn = false;
-                    } else {
-                        this.isLoggedIn = true;
-                    }
-                } catch (e) {
-                    // Invalid token format, clear session
-                    localStorage.removeItem('library_currentUser');
-                    localStorage.removeItem('library_access_token');
-                    this.currentUser = null;
-                    this.isLoggedIn = false;
-                }
-            } catch (e) {
-                this.currentUser = null;
-                this.isLoggedIn = false;
-            }
-        } else {
-            this.currentUser = null;
-            this.isLoggedIn = false;
-        }
+        // SECURITY: demo mode is browse-only. Previously a JSON blob in
+        // localStorage plus a hand-made JWT could put the browser into an
+        // "admin" session, which then unlocked every client-side check.
+        this._clearStoredSession();
+        this.currentUser = null;
+        this.isLoggedIn = false;
+        this._applyRoleFlags(null);
 
         this.loadFromStorage();
         if (this.borrowRequests.length === 0) {
@@ -364,7 +370,8 @@ const AppState = {
             (LIBRARY_DATA.teachers || []).forEach(add);
         }
         (this.offlineUsers || []).forEach(add);
-        if (typeof LoginPage !== 'undefined' && LoginPage.getStoredUsers) LoginPage.getStoredUsers().forEach(add);
+        // NOTE: legacy localStorage accounts are intentionally not merged in.
+        // They used to contain cleartext passwords and are no longer read.
         (this.allProfiles || []).forEach(add);
         return Array.from(map.values());
     },
@@ -472,11 +479,15 @@ const AppState = {
     setUser(user, token) {
         this.currentUser = user;
         this.isLoggedIn = !!user;
-        if (!this.isSupabaseConnected && user) {
+        this._applyRoleFlags(user);
+        if (this.isSupabaseConnected && user) {
             localStorage.setItem('library_currentUser', JSON.stringify(user));
-            // Store JWT token for session validation
-            const jwt = token || this._generateDemoJWT(user);
-            localStorage.setItem('library_access_token', jwt);
+        }
+        // SECURITY: no client-generated token is ever stored. A forged JWT in
+        // localStorage used to be enough to look authenticated to any code
+        // that only decoded the payload.
+        if (!this.isSupabaseConnected) {
+            this._clearStoredSession();
         }
         this._lastActivityTime = Date.now();
         this._addAuditLog('user_login', `User ${user ? user.name : 'logged out'}`);
@@ -485,6 +496,7 @@ const AppState = {
     async persistSession(user) {
         this.currentUser = user;
         this.isLoggedIn = !!user;
+        this._applyRoleFlags(user);
         localStorage.setItem('library_currentUser', JSON.stringify(user));
         try {
             const s = await Api.getSession();
@@ -496,20 +508,6 @@ const AppState = {
         }
         this._lastActivityTime = Date.now();
         this._addAuditLog('user_login', `User ${user ? user.name : 'logged out'}`);
-    },
-
-    _generateDemoJWT(user) {
-        const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-        const payload = btoa(JSON.stringify({
-            sub: user.id,
-            email: user.email,
-            role: user.role,
-            name: user.name,
-            iat: Math.floor(Date.now() / 1000),
-            exp: Math.floor(Date.now() / 1000) + (30 * 60) // 30 minutes
-        }));
-        const signature = btoa('demo-signature-' + user.id + '-' + Date.now());
-        return `${header}.${payload}.${signature}`;
     },
 
     setTheme(theme) {
@@ -538,7 +536,7 @@ const AppState = {
     },
 
     hasPermission(permission) {
-        if (!this.currentUser) return false;
+        if (!this.currentUser || !this.isLoggedIn) return false;
         const perms = this.ROLE_PERMISSIONS[this.currentUser.role];
         return perms ? perms.includes(permission) : false;
     },
@@ -1789,8 +1787,7 @@ const AppState = {
         this._addAuditLog('session_expired', `Session expired for ${this.currentUser?.name || 'unknown'}`);
         this.setUser(null);
         this.isLoggedIn = false;
-        localStorage.removeItem('library_currentUser');
-        localStorage.removeItem('library_access_token');
+        this._clearStoredSession();
         if (typeof Utils !== 'undefined' && Utils.toast) {
             Utils.toast('Session expired due to inactivity. Please log in again.', 'error');
         }

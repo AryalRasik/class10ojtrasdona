@@ -1,4 +1,14 @@
 #!/usr/bin/env node
+
+// =====================================================================
+// SECURITY WARNING - DEVELOPMENT SEED SCRIPT
+// This file creates accounts with well-known passwords (admin123,
+// student123, librarian123). Anyone with a copy of this repository can
+// sign in as those users. Do NOT run it against a production project, and
+// rotate or delete these accounts before deploying.
+// Service-role access is read from SUPABASE_SERVICE_KEY in your .env and
+// bypasses all Row Level Security - keep that file out of version control.
+// =====================================================================
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const { createClient } = require('@supabase/supabase-js');
 const XLSX = require('xlsx');

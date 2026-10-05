@@ -406,7 +406,24 @@ const ProfilePage = {
       content: `<p>Are you absolutely sure you want to delete your account? This action cannot be undone.</p><p style="color:#ef4444;font-weight:600;margin-top:0.5rem;">All your data, reading history, achievements, and reviews will be permanently deleted.</p>`,
       buttons: [
         { label: 'Cancel', class: 'btn-outline', onClick: () => Modal.hide() },
-        { label: 'Delete Account', class: 'btn-danger', onClick: () => { Toast.success('Account deleted.'); Modal.hide(); } }
+        { label: 'Delete Account', class: 'btn-danger', onClick: async () => {
+          // SECURITY: this used to be a stub that only displayed a success
+          // message while deleting nothing. It now really deletes the account.
+          try {
+            await Api.deleteOwnAccount();
+            Modal.hide();
+            Toast.success('Your account has been deleted.');
+            try { await Api.signOut(); } catch (e) {}
+            AppState.currentUser = null;
+            AppState.isLoggedIn = false;
+            AppState._applyRoleFlags(null);
+            AppState._clearStoredSession();
+            Router.go('/login');
+          } catch (e) {
+            Modal.hide();
+            Toast.error('Could not delete your account: ' + (e.message || 'Unknown error'));
+          }
+        } }
       ],
       size: 'md'
     });

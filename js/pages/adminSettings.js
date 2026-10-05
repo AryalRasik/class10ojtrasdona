@@ -32,13 +32,22 @@ const AdminSettingsPage = {
   },
 
   render() {
+    // SECURITY: never render a stored SMTP password back into the form, and
+    // never read one out of AppState.settings / localStorage.
+    this.config.smtpPass = '';
     if (AppState.isSupabaseConnected && AppState.settings && Object.keys(AppState.settings).length > 0) {
       for (const [key, value] of Object.entries(AppState.settings)) {
+        if (key === 'smtpPass' || key === 'smtpPassword') continue;
         if (key in this.config) this.config[key] = value;
       }
     } else {
       const saved = localStorage.getItem('admin_settings');
-      if (saved) try { Object.assign(this.config, JSON.parse(saved)); } catch (e) {}
+      if (saved) try {
+        const parsed = JSON.parse(saved);
+        delete parsed.smtpPass;
+        delete parsed.smtpPassword;
+        Object.assign(this.config, parsed);
+      } catch (e) {}
     }
 
     const sections = [
@@ -194,11 +203,14 @@ const AdminSettingsPage = {
           <div style="padding:1rem;background:var(--bg-secondary);border-radius:8px;margin-bottom:1rem;">
             <small style="color:var(--text-secondary);">Configure SMTP settings for sending email notifications. Currently email notifications are handled through the notification system.</small>
           </div>
+          <div style="padding:1rem;background:var(--bg-secondary);border:1px solid var(--warning);border-radius:8px;margin-bottom:1rem;">
+            <small style="color:var(--text-secondary);"><strong>Security note:</strong> the SMTP password is not stored in the database or in this browser. Set it as a <code>SMTP_PASS</code> environment variable on the server instead.</small>
+          </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
             <div class="form-group"><label class="form-label">SMTP Host</label><input class="form-input" id="set-smtphost" value="${Utils.escapeHtml(this.config.smtpHost)}" placeholder="smtp.gmail.com"></div>
             <div class="form-group"><label class="form-label">SMTP Port</label><input class="form-input" id="set-smtpport" value="${Utils.escapeHtml(this.config.smtpPort)}" placeholder="587"></div>
             <div class="form-group"><label class="form-label">SMTP Username</label><input class="form-input" id="set-smtpuser" value="${Utils.escapeHtml(this.config.smtpUser)}" placeholder="your@email.com"></div>
-            <div class="form-group"><label class="form-label">SMTP Password</label><input class="form-input" id="set-smtppass" type="password" value="${Utils.escapeHtml(this.config.smtpPass)}" placeholder="App password"></div>
+            <div class="form-group"><label class="form-label">SMTP Password (not saved)</label><input class="form-input" id="set-smtppass" type="password" value="" autocomplete="new-password" placeholder="Set SMTP_PASS on the server"></div>
           </div>
         </div>
       </div>
@@ -281,12 +293,24 @@ const AdminSettingsPage = {
     this.config.smtpHost = document.getElementById('set-smtphost')?.value || '';
     this.config.smtpPort = document.getElementById('set-smtpport')?.value || '587';
     this.config.smtpUser = document.getElementById('set-smtpuser')?.value || '';
-    this.config.smtpPass = document.getElementById('set-smtppass')?.value || '';
+    this.config.smtpPass = '';
+
+    // SECURITY: smtpHost / smtpPort / smtpUser are non-secret, but the SMTP
+    // PASSWORD must never be written to the shared `settings` table (readable
+    // by anonymous visitors) nor to localStorage (readable by any script on
+    // the page). Configure the mailer with environment variables on the server
+    // instead; the password field below is intentionally not persisted.
+    const SECRET_CONFIG_KEYS = ['smtpPass'];
+    const configToSave = {};
+    for (const [key, value] of Object.entries(this.config)) {
+      if (SECRET_CONFIG_KEYS.includes(key)) continue;
+      configToSave[key] = value;
+    }
 
     if (AppState.isSupabaseConnected) {
       try {
         const settingsToSave = {};
-        for (const [key, value] of Object.entries(this.config)) {
+        for (const [key, value] of Object.entries(configToSave)) {
           settingsToSave[key] = value;
           try {
             await Api.setSetting(key, value);
@@ -300,7 +324,12 @@ const AdminSettingsPage = {
       }
     }
 
-    localStorage.setItem('admin_settings', JSON.stringify(this.config));
+    // Store only the non-secret configuration locally.
+    localStorage.setItem('admin_settings', JSON.stringify(configToSave));
+
+    if (this.config.smtpPass) {
+      Toast.info('SMTP password was not saved. Set the mail password as a server environment variable instead.');
+    }
 
     if (AppState.ROLE_CONFIG && AppState.ROLE_CONFIG.student) {
       AppState.ROLE_CONFIG.student.maxBorrow = this.config.maxBorrowStudent;

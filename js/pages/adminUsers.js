@@ -212,17 +212,12 @@ const AdminUsersPage = {
   bulkApprove() {
     const users = this._selectedUserObjects();
     if (users.length === 0) return;
+    if (!AppState.isStaff) { Toast.error('Only staff can approve registrations.'); return; }
     Modal.confirm('Bulk Approve', `Approve ${users.length} pending user(s)?`, async () => {
       let ok = 0, fail = 0;
       for (const u of users) {
         try {
-          if (AppState.isSupabaseConnected) {
-            await Api.approveUser(u.id);
-          } else {
-            const storedUsers = LoginPage.getStoredUsers();
-            const found = storedUsers.find(x => String(x.id) === String(u.id));
-            if (found) { found.approved = true; localStorage.setItem('library_users', JSON.stringify(storedUsers)); }
-          }
+          await Api.approveUser(u.id);
           ok++;
         } catch (e) { fail++; }
       }
@@ -236,19 +231,15 @@ const AdminUsersPage = {
   bulkReject() {
     const users = this._selectedUserObjects();
     if (users.length === 0) return;
+    if (!AppState.isStaff) { Toast.error('Only staff can reject registrations.'); return; }
     const cannotDeleteOwn = users.some(u => AppState.currentUser && String(AppState.currentUser.id) === String(u.id));
-    const msg = `Reject and delete ${users.length} selected user(s)?` + (cannotDeleteOwn ? ' Note: your own account is excluded.' : '') + ' This permanently removes their accounts.';
+    const msg = `Reject and delete ${users.length} selected registration(s)?` + (cannotDeleteOwn ? ' Note: your own account is excluded.' : '') + ' This permanently removes their unapproved accounts.';
     Modal.confirm('Bulk Reject', msg, async () => {
       let ok = 0, fail = 0;
       for (const u of users) {
         if (AppState.currentUser && String(AppState.currentUser.id) === String(u.id)) continue;
         try {
-          if (AppState.isSupabaseConnected) {
-            await Api.rejectUser(u.id);
-          } else {
-            const storedUsers = LoginPage.getStoredUsers();
-            localStorage.setItem('library_users', JSON.stringify(storedUsers.filter(x => String(x.id) !== String(u.id))));
-          }
+          await Api.rejectUser(u.id);
           ok++;
         } catch (e) { fail++; }
       }
@@ -262,6 +253,8 @@ const AdminUsersPage = {
   bulkDelete() {
     const users = this._selectedUserObjects();
     if (users.length === 0) return;
+    // SECURITY: account deletion is an administrator action only.
+    if (!AppState.isAdmin) { Toast.error('Only an administrator can delete accounts.'); return; }
     const cannotDeleteOwn = users.some(u => AppState.currentUser && String(AppState.currentUser.id) === String(u.id));
     const msg = `Permanently delete ${users.length} selected user(s)?` + (cannotDeleteOwn ? ' Note: your own account is excluded.' : '') + ' This removes their sign-in, borrow history and reservations.';
     Modal.confirm('Bulk Delete', msg, async () => {
@@ -269,12 +262,7 @@ const AdminUsersPage = {
       for (const u of users) {
         if (AppState.currentUser && String(AppState.currentUser.id) === String(u.id)) continue;
         try {
-          if (AppState.isSupabaseConnected) {
-            await Api.deleteUser(u.id);
-          } else {
-            const storedUsers = LoginPage.getStoredUsers();
-            localStorage.setItem('library_users', JSON.stringify(storedUsers.filter(x => String(x.id) !== String(u.id))));
-          }
+          await Api.deleteUser(u.id);
           ok++;
         } catch (e) { fail++; }
       }
@@ -286,40 +274,28 @@ const AdminUsersPage = {
   },
 
   async approveUser(id, name) {
-    if (AppState.isSupabaseConnected) {
-      try {
-        await Api.approveUser(id);
-        await this._notifyUserApproved(id, name);
-      } catch (e) {
-        Toast.error('Failed to approve user: ' + (e.message || 'Unknown error'));
-        return;
-      }
-      try { AppState.allProfiles = await Api.getAllProfiles(); } catch (e) {}
-    } else {
-      const storedUsers = LoginPage.getStoredUsers();
-      const u = storedUsers.find(x => String(x.id) === String(id));
-      if (u) {
-        u.approved = true;
-        localStorage.setItem('library_users', JSON.stringify(storedUsers));
-      }
+    if (!AppState.isStaff) { Toast.error('Only staff can approve registrations.'); return; }
+    try {
+      await Api.approveUser(id);
+      await this._notifyUserApproved(id, name);
+    } catch (e) {
+      Toast.error('Failed to approve user: ' + (e.message || 'Unknown error'));
+      return;
     }
+    try { AppState.allProfiles = await Api.getAllProfiles(); } catch (e) {}
     Toast.success(`${name} has been approved and can now sign in.`);
     this.refresh();
   },
 
   async rejectUser(id, name) {
-    Modal.confirm('Reject Registration', `Are you sure you want to reject "${name}"? This will delete their account.`, async () => {
-      if (AppState.isSupabaseConnected) {
-        try {
-          await Api.rejectUser(id);
-          try { AppState.allProfiles = await Api.getAllProfiles(); } catch (e) {}
-        } catch (e) {
-          Toast.error('Failed to reject user: ' + (e.message || 'Unknown error'));
-          return;
-        }
-      } else {
-        const storedUsers = LoginPage.getStoredUsers();
-        localStorage.setItem('library_users', JSON.stringify(storedUsers.filter(x => String(x.id) !== String(id))));
+    if (!AppState.isStaff) { Toast.error('Only staff can reject registrations.'); return; }
+    Modal.confirm('Reject Registration', `Are you sure you want to reject "${name}"? This will delete their unapproved account.`, async () => {
+      try {
+        await Api.rejectUser(id);
+        try { AppState.allProfiles = await Api.getAllProfiles(); } catch (e) {}
+      } catch (e) {
+        Toast.error('Failed to reject user: ' + (e.message || 'Unknown error'));
+        return;
       }
       this.selectedUsers.delete(String(id));
       Toast.success(`${name} has been rejected.`);
@@ -427,32 +403,25 @@ const AdminUsersPage = {
       return;
     }
 
-    if (AppState.isSupabaseConnected) {
-      try {
-        if (role === 'librarian' || role === 'admin') {
-          await Api.addLibrarian({ email, password, name, role, department: role === 'admin' ? 'Administration' : dept });
-        } else {
-          const { data } = await Api.signUp(email, password, { name, role, user_id: id, ...(role === 'student' ? { grade } : { department: dept }) });
-          if (data && data.user) {
-            await Api.approveUser(data.user.id);
-          }
+    // SECURITY: account creation is an administrator action and always goes
+    // through the auth service. The old localStorage branch stored the
+    // cleartext password in the browser.
+    if (!AppState.isAdmin) { Toast.error('Only an administrator can create accounts.'); return; }
+    try {
+      if (role === 'librarian' || role === 'admin') {
+        await Api.addLibrarian({ email, password, name, role, department: role === 'admin' ? 'Administration' : dept });
+      } else {
+        const { data } = await Api.signUp(email, password, { name, role, user_id: id, ...(role === 'student' ? { grade, className } : { department: dept }) });
+        if (data && data.user) {
+          await Api.approveUser(data.user.id);
         }
-        try { AppState.allProfiles = await Api.getAllProfiles(); } catch (e) {}
-        Toast.success(`${role} account created successfully.`);
-        Modal.hide();
-        this.refresh();
-      } catch (e) {
-        Toast.error('Failed to create user: ' + (e.message || 'Unknown error'));
       }
-    } else {
-      const storedUsers = LoginPage.getStoredUsers();
-      if (storedUsers.find(u => u.email === email)) { Toast.error('Email already registered'); return; }
-      const newUser = { name, email, role, approved: true, grade, department: dept, className, password, id: id || Date.now().toString(), createdAt: new Date().toISOString(), borrowCount: 0, readingStreak: 0 };
-      storedUsers.push(newUser);
-      localStorage.setItem('library_users', JSON.stringify(storedUsers));
+      try { AppState.allProfiles = await Api.getAllProfiles(); } catch (e) {}
       Toast.success(`${role} account created successfully.`);
       Modal.hide();
       this.refresh();
+    } catch (e) {
+      Toast.error('Failed to create user: ' + (e.message || 'Unknown error'));
     }
   },
 
@@ -461,15 +430,12 @@ const AdminUsersPage = {
       Toast.error('You cannot delete your own account.');
       return;
     }
+    // SECURITY: only an administrator may delete an account.
+    if (!AppState.isAdmin) { Toast.error('Only an administrator can delete accounts.'); return; }
     Modal.confirm('Delete Account', `Are you sure you want to permanently delete "${name}"? This cannot be undone and will also remove their sign-in, borrow history and reservations.`, async () => {
       try {
-        if (AppState.isSupabaseConnected) {
-          await Api.deleteUser(id);
-          try { AppState.allProfiles = await Api.getAllProfiles(); } catch (e) {}
-        } else {
-          const storedUsers = LoginPage.getStoredUsers();
-          localStorage.setItem('library_users', JSON.stringify(storedUsers.filter(u => String(u.id) !== String(id))));
-        }
+        await Api.deleteUser(id);
+        try { AppState.allProfiles = await Api.getAllProfiles(); } catch (e) {}
         this.selectedUsers.delete(String(id));
         Toast.success(`${name} has been deleted.`);
         this.refresh();
@@ -482,11 +448,10 @@ const AdminUsersPage = {
   editUser(id) {
     const user = this._findUser(id);
     if (!user) { Toast.warning('User not found'); return; }
-    Modal.show({
-      title: 'Edit User',
-      content: `
-        <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="eu-name" value="${Utils.escapeHtml(user.name)}"></div>
-        <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="eu-email" value="${Utils.escapeHtml(user.email || '')}"></div>
+    // SECURITY: librarians keep the roster/approval workflow, but changing a
+    // role is an administrator action (also enforced by guard_profile_update).
+    const canEditRole = !!AppState.isAdmin;
+    const roleField = canEditRole ? `
         <div class="form-group"><label class="form-label">Role</label>
           <select class="form-input" id="eu-role">
             <option value="student" ${user.role === 'student' ? 'selected' : ''}>Student</option>
@@ -494,7 +459,18 @@ const AdminUsersPage = {
             <option value="librarian" ${user.role === 'librarian' ? 'selected' : ''}>Librarian</option>
             <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
           </select>
-        </div>
+          <small style="color:var(--text-tertiary);">Only an administrator can change a role.</small>
+        </div>` : `
+        <div class="form-group"><label class="form-label">Role</label>
+          <input class="form-input" value="${Utils.escapeHtml(user.role)}" disabled>
+          <small style="color:var(--text-tertiary);">Ask an administrator to change this role.</small>
+        </div>`;
+    Modal.show({
+      title: 'Edit User',
+      content: `
+        <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="eu-name" value="${Utils.escapeHtml(user.name)}"></div>
+        <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="eu-email" value="${Utils.escapeHtml(user.email || '')}" disabled><small style="color:var(--text-tertiary);">Email changes are managed through Supabase Auth.</small></div>
+        ${roleField}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
           <div class="form-group"><label class="form-label">Grade</label><input class="form-input" id="eu-grade" value="${Utils.escapeHtml(user.grade || '')}"></div>
           <div class="form-group"><label class="form-label">Department</label><input class="form-input" id="eu-dept" value="${Utils.escapeHtml(user.department || '')}"></div>
@@ -506,28 +482,25 @@ const AdminUsersPage = {
           if (!name) { Toast.error('Name is required'); return; }
           const updates = {
             name: name,
-            role: document.getElementById('eu-role')?.value || user.role,
             grade: document.getElementById('eu-grade')?.value?.trim() || user.grade || '',
             department: document.getElementById('eu-dept')?.value?.trim() || user.department || '',
             className: document.getElementById('eu-class')?.value?.trim() || user.class || user.className || ''
           };
-          if (AppState.isSupabaseConnected) {
-            try {
-              await Api.updateProfile(user.id, updates);
-            } catch (e) {
-              console.error('Supabase updateProfile failed:', e);
-              Toast.error('Failed to update user: ' + (e.message || 'Unknown error'));
-              return;
-            }
+          const newRole = canEditRole ? (document.getElementById('eu-role')?.value || user.role) : user.role;
+          if (newRole !== user.role) updates.role = newRole;
+          try {
+            await Api.updateProfile(user.id, updates);
+          } catch (e) {
+            console.error('updateProfile failed:', e);
+            Toast.error('Failed to update user: ' + (e.message || 'Unknown error'));
+            return;
           }
           user.name = updates.name;
-          user.role = updates.role;
           user.grade = updates.grade;
           user.department = updates.department;
           user.class = updates.className;
-          if (AppState.isSupabaseConnected) {
-            try { AppState.allProfiles = await Api.getAllProfiles(); } catch (e) {}
-          }
+          if (updates.role) user.role = updates.role;
+          try { AppState.allProfiles = await Api.getAllProfiles(); } catch (e) {}
           Toast.success('User updated successfully!');
           Modal.hide();
           this.refresh();
@@ -824,9 +797,15 @@ const AdminUsersPage = {
     if (runBtn) { runBtn.disabled = true; runBtn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.6s linear infinite;"></span> Importing...'; }
     const resultArea = document.getElementById('import-result-area');
 
-    const existingUsers = AppState.isSupabaseConnected && AppState.allProfiles
-      ? AppState.allProfiles
-      : (LoginPage.getStoredUsers ? LoginPage.getStoredUsers() : []);
+    // SECURITY: bulk import creates real accounts (and may set staff roles),
+    // so it is restricted to administrators.
+    if (!AppState.isAdmin) {
+      if (runBtn) { runBtn.disabled = false; runBtn.innerHTML = `${Utils.getIcon('upload', 16)} Import Members`; }
+      Toast.error('Only an administrator can import members.');
+      return;
+    }
+
+    const existingUsers = (AppState.isSupabaseConnected && AppState.allProfiles) ? AppState.allProfiles : [];
 
     const existingEmails = new Set(existingUsers.map(u => (u.email || '').toLowerCase()));
     const existingIds = new Set(existingUsers.filter(u => u.id).map(u => String(u.id)));
@@ -852,37 +831,22 @@ const AdminUsersPage = {
       const generatedPassword = password || (name.substring(0, 4).replace(/\s/g, '') + '12345678');
 
       try {
-        if (AppState.isSupabaseConnected) {
-          if (role === 'librarian' || role === 'admin') {
-            await Api.addLibrarian({ email, password: generatedPassword, name, role, department: dept || 'Library' });
-          } else {
-            const result = await Api.signUp(email, generatedPassword, {
-              name, role, user_id: userId || undefined,
-              ...(role === 'student' ? { grade } : { department: dept })
-            });
-            if (result && result.user && autoApprove) {
-              try { await Api.approveUser(result.user.id); } catch (e) {}
-            }
-          }
+        if (role === 'librarian' || role === 'admin') {
+          await Api.addLibrarian({ email, password: generatedPassword, name, role, department: dept || 'Library' });
         } else {
-          const storedUsers = LoginPage.getStoredUsers ? LoginPage.getStoredUsers() : [];
-          storedUsers.push({
-            id: userId || Date.now().toString() + Math.random().toString(36).substring(2, 6),
-            name, email, role, approved: autoApprove,
-            grade, department: dept, className,
-            password: generatedPassword,
-            createdAt: new Date().toISOString(),
-            borrowCount: 0, readingStreak: 0
+          const result = await Api.signUp(email, generatedPassword, {
+            name, role, user_id: userId || undefined,
+            ...(role === 'student' ? { grade, className } : { department: dept })
           });
-          localStorage.setItem('library_users', JSON.stringify(storedUsers));
+          if (result && result.user && autoApprove) {
+            try { await Api.approveUser(result.user.id); } catch (e) {}
+          }
         }
         existingEmails.add(email);
         if (userId) existingIds.add(userId);
         imported++;
         importedMembers.push({
-          id: userId || (AppState.isSupabaseConnected
-            ? 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16); })
-            : Date.now().toString() + Math.random().toString(36).substring(2, 6)),
+          id: userId || 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16); }),
           name, email, grade, class: className,
           role: role === 'teacher' ? 'teacher' : 'student',
           phone, avatar: name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase(),
