@@ -6,6 +6,11 @@ const AdminBooksPage = {
   perPage: 15,
   sortField: 'title',
   sortDir: 'asc',
+  // Book PDF staging: a chosen file / pending removal is applied when the form
+  // is saved, so Cancel never changes the stored PDF.
+  _pendingPdf: null,
+  _pendingPdfRemove: false,
+  _pdfContextBook: null,
 
   render() {
     const books = AppState.books || [];
@@ -135,6 +140,7 @@ const AdminBooksPage = {
   _bookForm(book) {
     const isEdit = !!book;
     const b = book || {};
+    this._pdfContextBook = book || null;
     return `
       <div class="form-group"><label class="form-label">Title *</label><input class="form-input" id="bf-title" value="${Utils.escapeHtml(b.title || '')}" placeholder="Book title"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
@@ -184,7 +190,118 @@ const AdminBooksPage = {
           </div>
         </div>
       </div>
+      ${this._pdfSection()}
     `;
+  },
+
+  // ── Book PDF field ────────────────────────────────────
+  // Students and teachers never see this section (they cannot open the book
+  // form at all - the route is staff-only - and the section is gated again
+  // here). The upload itself is authorized by server.js, so calling the API
+  // directly from a console is rejected with 403 too.
+  _pdfSection() {
+    if (!AppState.isStaff) return '';
+    const book = this._pdfContextBook;
+    const hasPdf = !!(book && book.pdfUrl);
+    const chooseBtn = `<label class="btn btn-outline btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;">${Utils.getIcon('upload', 14)} Choose PDF<input type="file" accept=".pdf,application/pdf,application/x-pdf" style="display:none;" onchange="AdminBooksPage.onPdfFile(this)"></label>`;
+
+    let body;
+    if (this._pendingPdf) {
+      body = `
+        <p style="margin:0 0 0.5rem;font-size:0.85rem;">Selected: <strong>${Utils.escapeHtml(this._pendingPdf.name)}</strong> <span style="color:var(--text-tertiary);">(${this._formatFileSize(this._pendingPdf.size)}) - uploaded when you save.</span></p>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          ${chooseBtn.replace('Choose PDF', 'Replace PDF')}
+          <button type="button" class="btn btn-ghost btn-sm" onclick="AdminBooksPage.clearStagedPdf()">Cancel</button>
+        </div>`;
+    } else if (this._pendingPdfRemove) {
+      body = `
+        <p style="margin:0 0 0.5rem;font-size:0.85rem;color:var(--danger);">Current PDF will be removed when you save.</p>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="AdminBooksPage.undoPdfRemove()">${Utils.getIcon('upload', 13)} Undo</button>`;
+    } else if (hasPdf) {
+      body = `
+        <p style="margin:0 0 0.5rem;font-size:0.85rem;">Current PDF: <strong id="bf-pdf-current-name">${Utils.escapeHtml(this._pdfDisplayName(book))}</strong></p>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          ${chooseBtn.replace('Choose PDF', 'Replace PDF')}
+          <button type="button" class="btn btn-ghost btn-sm" onclick="AdminBooksPage.stagePdfRemove()" style="color:var(--danger);">${Utils.getIcon('trash-2', 13)} Remove PDF</button>
+        </div>`;
+    } else {
+      body = `
+        <p style="margin:0 0 0.5rem;font-size:0.85rem;color:var(--text-tertiary);">No digital PDF uploaded.</p>
+        ${chooseBtn}`;
+    }
+
+    return `
+      <div class="form-group" id="bf-pdf-group">
+        <label class="form-label">Book PDF</label>
+        ${body}
+        <small style="display:block;margin-top:0.5rem;font-size:0.75rem;color:var(--text-tertiary);">PDF files only - max 20MB. Restricted to admins and librarians.</small>
+      </div>`;
+  },
+
+  _pdfDisplayName(book) {
+    if (book.pdfFilename) return book.pdfFilename;
+    const url = String(book.pdfUrl || '');
+    if (!url || url.startsWith('data:')) return `${book.title || 'book'}.pdf`;
+    try {
+      const last = decodeURIComponent(url.split('?')[0].split('#')[0].split('/').pop() || '');
+      if (/\.pdf$/i.test(last) && !/^\d+\.pdf$/i.test(last)) return last;
+    } catch (e) { /* fall through */ }
+    return `${book.title || 'book'}.pdf`;
+  },
+
+  _formatFileSize(bytes) {
+    if (!bytes) return '0 KB';
+    if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  },
+
+  _refreshPdfSection() {
+    const el = document.getElementById('bf-pdf-group');
+    if (el) el.outerHTML = this._pdfSection();
+  },
+
+  _resetPdfStaging() {
+    this._pendingPdf = null;
+    this._pendingPdfRemove = false;
+  },
+
+  onPdfFile(input) {
+    const file = input && input.files && input.files[0];
+    if (!file) return;
+    const isPdf = file.type === 'application/pdf' || file.type === 'application/x-pdf' || /\.pdf$/i.test(file.name);
+    if (!isPdf) { Toast.error('Please choose a PDF file (PDF files only)'); input.value = ''; return; }
+    if (file.size > 20 * 1024 * 1024) { Toast.error('PDF must be smaller than 20MB'); input.value = ''; return; }
+    this._pendingPdf = file;
+    this._pendingPdfRemove = false;
+    this._refreshPdfSection();
+    input.value = '';
+  },
+
+  clearStagedPdf() { this._pendingPdf = null; this._refreshPdfSection(); },
+  stagePdfRemove() { this._pendingPdfRemove = true; this._pendingPdf = null; this._refreshPdfSection(); },
+  undoPdfRemove() { this._pendingPdfRemove = false; this._refreshPdfSection(); },
+
+  // Applies the staged PDF action through the server endpoint. Returns a short
+  // status string, or null when nothing was staged; throws when the server
+  // refused (e.g. 403), so the caller can surface the backend message.
+  async _applyStagedPdf(book, isNew) {
+    try {
+      if (this._pendingPdf) {
+        const result = await Api.uploadBookPdf(book.id, this._pendingPdf);
+        book.pdfUrl = result.pdfUrl;
+        book.pdfFilename = result.pdfFilename;
+        return 'PDF uploaded';
+      }
+      if (this._pendingPdfRemove && !isNew && book.pdfUrl) {
+        await Api.removeBookPdf(book.id);
+        book.pdfUrl = '';
+        book.pdfFilename = '';
+        return 'PDF removed';
+      }
+      return null;
+    } finally {
+      this._resetPdfStaging();
+    }
   },
 
   _gatherBookData() {
@@ -268,6 +385,7 @@ const AdminBooksPage = {
   },
 
   addBook() {
+    this._resetPdfStaging();
     Modal.show({
       title: 'Add New Book',
       content: this._bookForm(null),
@@ -294,6 +412,19 @@ const AdminBooksPage = {
               const created = await Api.createBook(dbData);
               const mapped = Api.mapBook(created);
               AppState.books.push(mapped);
+              // PDF chosen in the form is uploaded now that the book has an id.
+              let pdfApplied = null;
+              try {
+                pdfApplied = await this._applyStagedPdf(mapped, true);
+              } catch (e) {
+                console.error('Book PDF upload failed:', e);
+                Toast.error('Book added, but the PDF upload failed: ' + (e.message || 'Unknown error'));
+              }
+              AppState.saveAll();
+              Toast.success(pdfApplied ? 'Book added successfully! (PDF uploaded)' : 'Book added successfully!');
+              Modal.hide();
+              this.refresh();
+              return;
             } catch (e) {
               console.error('Supabase addBook failed:', e);
               Toast.error('Failed to add book: ' + (e.message || 'Unknown error'));
@@ -302,6 +433,11 @@ const AdminBooksPage = {
           } else {
             data.id = Date.now();
             AppState.books.push(data);
+            try {
+              await this._applyStagedPdf(data, true);
+            } catch (e) {
+              Toast.error('Book added, but the PDF upload failed: ' + (e.message || 'Unknown error'));
+            }
           }
           AppState.saveAll();
           Toast.success('Book added successfully!');
@@ -317,6 +453,7 @@ const AdminBooksPage = {
   editBook(id) {
     const book = (AppState.books || []).find(b => b.id === id);
     if (!book) return;
+    this._resetPdfStaging();
     Modal.show({
       title: 'Edit Book',
       content: this._bookForm(book),
@@ -324,6 +461,11 @@ const AdminBooksPage = {
         { label: 'Save Changes', class: 'btn-primary', onClick: async () => {
           const data = this._gatherBookData();
           if (!data.title) { Toast.error('Title is required'); return; }
+          // Book details and the PDF are two independent writes: a rejected
+          // book update (RLS) must not silently swallow a PDF replace/remove
+          // that the backend did accept, so both are attempted and both
+          // results are reported.
+          const errors = [];
           if (AppState.isSupabaseConnected) {
             try {
               const dbData = {
@@ -336,19 +478,30 @@ const AdminBooksPage = {
                 status: data.availableCopies > 0 ? 'available' : 'unavailable'
               };
               const updated = await Api.updateBook(id, dbData);
-              const mapped = Api.mapBook(updated);
-              Object.assign(book, mapped);
+              if (updated) {
+                Object.assign(book, Api.mapBook(updated));
+              } else {
+                errors.push('Book details were not saved: the database rejected the write (your role may not be allowed to edit this book)');
+              }
             } catch (e) {
               console.error('Supabase updateBook failed:', e);
-              Toast.error('Failed to update book: ' + (e.message || 'Unknown error'));
-              return;
+              errors.push('Failed to update book: ' + (e.message || 'Unknown error'));
             }
           } else {
             Object.assign(book, data);
             book.status = book.availableCopies > 0 ? 'available' : 'unavailable';
           }
+          // Replace / remove the book PDF through the server endpoint.
+          let pdfApplied = null;
+          try {
+            pdfApplied = await this._applyStagedPdf(book, false);
+          } catch (e) {
+            console.error('Book PDF update failed:', e);
+            errors.push('The PDF change failed: ' + (e.message || 'Unknown error'));
+          }
+          if (errors.length) { Toast.error(errors.join('  ')); return; }
           AppState.saveAll();
-          Toast.success('Book updated successfully!');
+          Toast.success(pdfApplied ? `Book updated successfully! (${pdfApplied})` : 'Book updated successfully!');
           Modal.hide();
           this.refresh();
         }},

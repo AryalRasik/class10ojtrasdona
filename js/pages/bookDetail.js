@@ -30,6 +30,9 @@ const BookDetailPage = {
         const reservedCount = book.reservedCopies || 0;
         const hasDigital = book.hasDigital || book.digitalUrl || false;
         const hasPdf = book.pdfUrl || book.hasPdf || false;
+        // Where this user stands with the borrow -> reading pipeline. The
+        // server re-checks before serving any PDF; this is for the UI.
+        const digitalState = AppState.getDigitalAccessState(bookId);
 
         const bookStatus = !avail && borrowedCount === book.totalCopies
             ? 'Borrowed'
@@ -125,7 +128,7 @@ const BookDetailPage = {
                 <div class="book-detail-cover">
                     ${Utils.getBookCover(book)}
                     <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
-                        ${hasPdf ? `<a href="${book.pdfUrl || '#'}" class="btn btn-outline btn-sm" target="_blank" id="downloadPdfBtn">${Utils.getIcon('download', 16)} Download PDF</a>` : ''}
+                        ${hasPdf ? `<a href="#/read/${bookId}" class="btn ${digitalState.canRead ? 'btn-primary' : 'btn-outline'} btn-sm" data-nav id="readPdfBtn">${Utils.getIcon('book-open', 16)} ${digitalState.canRead ? 'Read Book' : 'View PDF'}</a>` : ''}
                         ${hasDigital ? `<a href="${book.digitalUrl || '#'}" class="btn btn-outline btn-sm" target="_blank" id="readOnlineBtn">${Utils.getIcon('monitor', 16)} Read Online</a>` : ''}
                     </div>
                 </div>
@@ -165,6 +168,8 @@ const BookDetailPage = {
                         ${borrowButtonHtml}
                         ${!borrowStatus && !avail ? `<button class="btn btn-secondary" id="reserveBtn">${Utils.getIcon('calendar', 18)} Reserve</button>` : ''}
                     </div>
+
+                    ${hasPdf ? `<div id="digitalAccessPanel">${BookDetailPage.renderDigitalPanel(digitalState, bookId)}</div>` : ''}
                 </div>
             </div>
 
@@ -465,7 +470,110 @@ const BookDetailPage = {
             });
         }
 
+        BookDetailPage.refreshDigitalAccess();
         Animations.initScrollReveal();
+    },
+
+    // Server-authoritative refresh of the digital access panel: the local
+    // state paints instantly, then /api/books/:id/access confirms it.
+    async refreshDigitalAccess() {
+        const panel = document.getElementById('digitalAccessPanel');
+        const bookId = parseInt(window.location.hash.split('/').pop(), 10);
+        if (!panel || !Number.isInteger(bookId)) return;
+
+        const access = await Api.getBookPdfAccess(bookId);
+        if (document.getElementById('digitalAccessPanel') !== panel) return;
+
+        panel.innerHTML = BookDetailPage.renderDigitalPanel(access, bookId);
+
+        // Keep the cover button in step with what the server allows.
+        const readBtn = document.getElementById('readPdfBtn');
+        if (readBtn) {
+            readBtn.classList.toggle('btn-primary', !!access.canRead);
+            readBtn.classList.toggle('btn-outline', !access.canRead);
+            const label = readBtn.childNodes[readBtn.childNodes.length - 1];
+            if (label && label.nodeType === 3) label.textContent = access.canRead ? ' Read Book' : ' View PDF';
+        }
+        BookDetailPage._bindDigitalPanel();
+    },
+
+    renderDigitalPanel(state, bookId) {
+        const labels = {
+            approved: state.canRead ? 'Digital reading unlocked' : 'Digital reading',
+            staff: 'Staff preview',
+            pending: 'Pending librarian approval',
+            no_request: 'Digital copy locked',
+            rejected: 'Request rejected',
+            expired: 'Borrow period expired',
+            returned: 'Book returned',
+            not_started: 'Borrow period not started',
+            no_pdf: 'No digital copy',
+            signed_out: 'Sign in to read',
+            error: 'Could not verify access',
+            offline: 'Offline'
+        };
+        const tone = state.canRead ? 'success'
+            : (state.status === 'pending' ? 'warning'
+            : (state.status === 'no_pdf' || state.status === 'signed_out' ? 'info' : 'danger'));
+        const colors = { success: '#10b981', warning: '#f59e0b', danger: '#ef4444', info: '#3b82f6' };
+        const icon = state.canRead ? 'book-open' : (state.status === 'pending' ? 'clock' : 'lock');
+        const badgeClass = tone === 'success' ? 'badge-success' : tone === 'warning' ? 'badge-warning' : tone === 'info' ? 'badge-info' : 'badge-danger';
+
+        const window_line = (state.startDate && state.dueDate && state.canRead)
+            ? `<div style="font-size:0.78rem;color:var(--text-secondary);margin-top:6px">${Utils.getIcon('calendar', 14)} Reading window: ${Utils.formatDate(state.startDate)} &rarr; ${Utils.formatDate(state.dueDate)}</div>`
+            : '';
+
+        const actions = state.canRead
+            ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+                 <a href="#/read/${bookId}" class="btn btn-primary btn-sm" data-nav>${Utils.getIcon('book-open', 14)} Read Book</a>
+                 <button class="btn btn-outline btn-sm" id="downloadPdfBtn">${Utils.getIcon('download', 14)} Download PDF</button>
+               </div>`
+            : '';
+
+        return `
+            <div style="display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:12px;margin-top:4px;background:${colors[tone]}14;border:1px solid ${colors[tone]}33">
+                <span style="color:${colors[tone]};flex-shrink:0">${Utils.getIcon(icon, 20)}</span>
+                <div style="flex:1;min-width:0">
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                        <strong style="font-size:0.88rem">${labels[state.status] || (state.canRead ? 'Digital reading unlocked' : 'Digital copy locked')}</strong>
+                        <span class="badge ${badgeClass}" style="font-size:0.65rem">${Utils.escapeHtml(String(state.status || '').replace('_', ' '))}</span>
+                    </div>
+                    <p style="margin:6px 0 0;font-size:0.83rem;line-height:1.5;color:var(--text-secondary)">${Utils.escapeHtml(state.message || '')}</p>
+                    ${window_line}
+                    ${actions}
+                </div>
+            </div>`;
+    },
+
+    _bindDigitalPanel() {
+        const btn = document.getElementById('downloadPdfBtn');
+        if (btn && !btn.dataset.bound) {
+            btn.dataset.bound = '1';
+            btn.addEventListener('click', () => BookDetailPage.downloadPdf());
+        }
+    },
+
+    // The file is fetched through the protected endpoint with the reader's
+    // token - never from a public Storage URL.
+    async downloadPdf() {
+        const bookId = parseInt(window.location.hash.split('/').pop(), 10);
+        const book = AppState.books.find(b => b.id === bookId);
+        try {
+            const blob = await Api.fetchBookPdfBlob(bookId);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${(book ? book.title : 'book').replace(/[^\w\s.-]+/g, '').trim() || 'book'}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 30000);
+            Toast.success('PDF downloaded.');
+        } catch (e) {
+            Toast.error(e.message || 'You do not have permission to download this book.');
+            const panel = document.getElementById('digitalAccessPanel');
+            if (panel) BookDetailPage.refreshDigitalAccess();
+        }
     },
 
     showBorrowModal(bookId) {

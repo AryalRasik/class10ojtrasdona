@@ -756,33 +756,43 @@ const AppState = {
         return request;
     },
 
-    approveBorrowRequest(requestId, approvedBy) {
+    approveBorrowRequest(requestId, approvedBy, opts) {
         const request = this.borrowRequests.find(r => r.id === requestId);
         if (!request || request.status !== 'pending') return false;
 
         const book = this.books.find(b => b.id === request.bookId);
         if (!book || book.availableCopies <= 0) return false;
 
+        // The librarian picks the loan window when approving: borrow start
+        // date and due date. Both are stored on the request and enforced
+        // server-side by canReadBook() before any PDF is served.
+        const dates = opts || {};
+        if (dates.borrowDate) request.borrowDate = dates.borrowDate;
+        if (dates.dueDate) request.expectedReturnDate = dates.dueDate;
+
         request.status = 'approved';
         request.approvedBy = approvedBy || 'Librarian';
         request.approvedAt = new Date().toISOString();
 
-        this._addAuditLog('borrow_approved', `Approved borrow request ${requestId} for "${request.bookTitle}"`);
+        this._addAuditLog('borrow_approved', `Approved borrow request ${requestId} for "${request.bookTitle}" (reading until ${request.expectedReturnDate})`);
 
         if (this.isSupabaseConnected) {
             Api.updateBorrowRequest(requestId, {
                 status: 'approved',
                 approved_by: request.approvedBy,
-                approved_at: request.approvedAt
+                approved_at: request.approvedAt,
+                borrow_date: request.borrowDate,
+                expected_return_date: request.expectedReturnDate
             }).catch(e => console.warn('Supabase update failed:', e));
         }
 
         this.addNotification({
             type: 'borrow_approved',
             title: 'Borrow Request Approved',
-            message: `Your request to borrow "${request.bookTitle}" has been approved! Please pick it up from the library.`,
+            message: `Your request to borrow "${request.bookTitle}" was approved by ${request.approvedBy}. You can read the digital copy from ${Utils.formatDate(request.borrowDate)} until ${Utils.formatDate(request.expectedReturnDate)}.`,
             icon: 'check-circle',
-            borrowRequestId: requestId
+            borrowRequestId: requestId,
+            userId: request.studentId
         });
 
         this.saveAll();
@@ -810,7 +820,8 @@ const AppState = {
             title: 'Borrow Request Rejected',
             message: `Your request to borrow "${request.bookTitle}" was not approved. ${reason || ''}`,
             icon: 'x-circle',
-            borrowRequestId: requestId
+            borrowRequestId: requestId,
+            userId: request.studentId
         });
 
         this.saveAll();
@@ -1048,7 +1059,9 @@ const AppState = {
         notif.read = false;
         notif.time = 'Just now';
         notif.timestamp = new Date().toISOString();
-        notif.userId = this.currentUser ? this.currentUser.id : null;
+        // `userId` may name the recipient (e.g. a librarian notifying the
+        // student who requested a book); it defaults to the signed-in user.
+        notif.userId = notif.userId || (this.currentUser ? this.currentUser.id : null);
         this.notifications.unshift(notif);
 
         if (this.isSupabaseConnected && notif.userId) {
@@ -1073,6 +1086,7 @@ const AppState = {
 
     checkDueReminders() {
         if (!Array.isArray(this.borrowRequests)) return;
+        this._syncExpiredBorrows();
         const now = new Date();
         const active = this.borrowRequests.filter(r => r.status === 'borrowed');
         active.forEach(r => {
@@ -1113,6 +1127,39 @@ const AppState = {
             }
         });
         this.saveAll();
+    },
+
+    // An approved request whose due date has passed is EXPIRED: the digital
+    // copy locks and the status is persisted so every screen shows the same
+    // thing. Physical loans that were picked up are handled by the overdue
+    // logic in checkDueReminders().
+    _syncExpiredBorrows() {
+        const pad = n => String(n).padStart(2, '0');
+        const now = new Date();
+        const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+        let changed = false;
+
+        this.borrowRequests.forEach(r => {
+            if (r.status !== 'approved' || !r.expectedReturnDate) return;
+            if (today <= r.expectedReturnDate) return;
+
+            r.status = 'expired';
+            changed = true;
+            this._addAuditLog('borrow_expired', `Borrow request ${r.id} expired for "${r.bookTitle}"`);
+            if (this.isSupabaseConnected) {
+                Api.updateBorrowRequest(r.id, { status: 'expired' }).catch(e => console.warn('Supabase update failed:', e));
+            }
+            this.addNotification({
+                type: 'borrow_expired',
+                title: 'Borrow Period Expired',
+                message: `Your approved borrow of "${r.bookTitle}" expired on ${Utils.formatDate(r.expectedReturnDate)}. Request the book again to continue reading.`,
+                icon: 'alert-triangle',
+                borrowRequestId: r.id,
+                userId: r.studentId
+            });
+        });
+
+        if (changed) this.saveAll();
     },
 
     getMyBorrowRequests() {
@@ -1221,6 +1268,61 @@ const AppState = {
             (r.status === 'pending' || r.status === 'approved' || r.status === 'borrowed' || r.status === 'overdue' || r.status === 'return_requested')
         );
         return req || null;
+    },
+
+    // Local mirror of the server's canReadBook(): used to paint the book
+    // details page instantly. The server re-checks everything before it hands
+    // over a single PDF byte, so this is display-only and never trusted.
+    getDigitalAccessState(bookId) {
+        const book = this.books.find(b => b.id === bookId);
+        if (!book) return { canRead: false, status: 'not_found', message: 'Book not found.', hasPdf: false };
+
+        const hasPdf = !!(book.pdfUrl || book.hasPdf);
+        const base = { hasPdf, startDate: null, dueDate: null, requestId: null };
+
+        if (!this.currentUser) return { ...base, canRead: false, status: 'signed_out', message: 'Sign in to request or read this book.' };
+        if (this.isStaff) {
+            return hasPdf
+                ? { ...base, canRead: true, status: 'staff', message: '' }
+                : { ...base, canRead: false, status: 'no_pdf', message: 'This book does not have a digital PDF copy yet.' };
+        }
+        if (!hasPdf) return { ...base, canRead: false, status: 'no_pdf', message: 'This book does not have a digital PDF copy yet.' };
+
+        const pad = n => String(n).padStart(2, '0');
+        const now = new Date();
+        const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+
+        const mine = this.borrowRequests.filter(r => r.bookId === bookId && r.studentId === this.currentUser.id);
+        const request = mine.find(r => ['pending', 'approved', 'borrowed', 'overdue', 'return_requested'].includes(r.status)) || mine[0] || null;
+        const ctx = { ...base, requestId: request ? request.id : null, startDate: request ? request.borrowDate : null, dueDate: request ? request.expectedReturnDate : null };
+
+        if (!request) {
+            return { ...ctx, canRead: false, status: 'no_request', message: 'You do not have permission to read this book yet. Request to borrow it - a librarian must approve your request before the digital copy unlocks.' };
+        }
+
+        switch (request.status) {
+            case 'pending':
+                return { ...ctx, canRead: false, status: 'pending', message: 'Your borrow request is waiting for librarian approval. The PDF unlocks as soon as it is approved.' };
+            case 'rejected':
+                return { ...ctx, canRead: false, status: 'rejected', message: `Your borrow request was rejected${request.rejectionReason && request.rejectionReason !== 'Not specified' ? ': ' + request.rejectionReason : '.'}` };
+            case 'returned':
+                return { ...ctx, canRead: false, status: 'returned', message: 'This book has been returned. Request to borrow it again to keep reading.' };
+            case 'expired':
+                return { ...ctx, canRead: false, status: 'expired', message: `Your borrow period expired on ${request.expectedReturnDate || 'the due date'}. Ask the librarian to renew it, or request the book again.` };
+            case 'overdue':
+                return { ...ctx, canRead: false, status: 'expired', message: `Your borrow period expired on ${request.expectedReturnDate || 'the due date'}. Return the book to the library to clear the fine.` };
+            case 'approved':
+            case 'borrowed':
+            case 'return_requested': {
+                const start = request.borrowDate || null;
+                const due = request.expectedReturnDate || null;
+                if (start && today < start) return { ...ctx, canRead: false, status: 'not_started', message: `Your borrow period starts on ${start}. The PDF unlocks then.` };
+                if (due && today > due) return { ...ctx, canRead: false, status: 'expired', message: `Your borrow period expired on ${due}. Ask the librarian to renew it, or request the book again.` };
+                return { ...ctx, canRead: true, status: 'approved', message: `Digital reading is open until ${due || 'the due date'}.` };
+            }
+            default:
+                return { ...ctx, canRead: false, status: request.status, message: 'This borrow is not active, so the digital copy stays locked.' };
+        }
     },
 
     toggleFavorite(bookId) {

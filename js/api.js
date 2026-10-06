@@ -290,6 +290,91 @@ async updateBook(bookId, updates) {
     if (error) throw error;
   },
 
+  // ── Book PDF (server-enforced: admin/librarian only) ──
+  // The upload goes through Express, not straight to Supabase, so the role
+  // check happens on the backend where it cannot be bypassed. The Supabase
+  // access token is forwarded as the bearer token so the server can verify who
+  // is calling and read that user's role from `profiles`.
+  async _accessToken() {
+    try {
+      const { data } = await this.client.auth.getSession();
+      return data && data.session ? data.session.access_token : null;
+    } catch (e) {
+      return null;
+    }
+  },
+
+  async uploadBookPdf(bookId, file) {
+    const token = await this._accessToken();
+    if (!token) throw new Error('You must be signed in to upload a PDF.');
+    const res = await fetch(
+      `/api/books/${encodeURIComponent(bookId)}/pdf?filename=${encodeURIComponent(file.name || 'book.pdf')}`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/pdf'
+        },
+        body: file
+      }
+    );
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || `PDF upload failed (HTTP ${res.status})`);
+    return body;
+  },
+
+  async removeBookPdf(bookId) {
+    const token = await this._accessToken();
+    if (!token) throw new Error('You must be signed in to remove a PDF.');
+    const res = await fetch(`/api/books/${encodeURIComponent(bookId)}/pdf`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || `PDF delete failed (HTTP ${res.status})`);
+    return body;
+  },
+
+  // ── Digital reading (server-authorized) ───────────────
+  // Asks the server whether the signed-in user may open this book's PDF.
+  // The answer comes from `borrow_requests` + dates in the database; the
+  // browser only mirrors it for display.
+  async getBookPdfAccess(bookId) {
+    const token = await this._accessToken();
+    if (!token) return { canRead: false, status: 'signed_out', message: 'Please sign in to continue.' };
+    try {
+      const res = await fetch(`/api/books/${encodeURIComponent(bookId)}/access`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        return { canRead: false, status: body.status || 'error', message: body.error || 'Could not check reading access.' };
+      }
+      return body;
+    } catch (e) {
+      return { canRead: false, status: 'offline', message: 'Could not reach the library server. Check your connection.' };
+    }
+  },
+
+  // Downloads the PDF through the protected endpoint. Throws with the
+  // server's denial message when reading is not allowed.
+  async fetchBookPdfBlob(bookId) {
+    const token = await this._accessToken();
+    if (!token) throw new Error('Please sign in to read this book.');
+    const res = await fetch(`/api/books/${encodeURIComponent(bookId)}/pdf`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      const err = new Error(body.error || 'You do not have permission to read this book.');
+      err.status = res.status;
+      err.code = body.status;
+      err.externalUrl = body.externalUrl || null;
+      throw err;
+    }
+    return res.blob();
+  },
+
   // ── Categories ────────────────────────────────────────
   async getAllCategories() {
     const { data, error } = await this.client
@@ -858,6 +943,7 @@ async updateBook(bookId, updates) {
       year: raw.year,
       description: raw.description,
       pdfUrl: raw.pdf_url,
+      pdfFilename: raw.pdf_filename || '',
       cover: raw.cover,
       isbn: raw.isbn,
       category: raw.category,

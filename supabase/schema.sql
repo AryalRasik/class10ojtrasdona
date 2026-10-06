@@ -215,6 +215,7 @@ create table if not exists books (
   year int default 2024,
   description text default '',
   pdf_url text default '',
+  pdf_filename text default '',
   cover text default '',
   isbn text default '',
   category text default '',
@@ -235,12 +236,15 @@ create table if not exists books (
 -- Legacy sync: `create table if not exists` does not add columns to a `books`
 -- table that already exists, and the live one predates these five. Needed for
 -- idx_books_barcode above and for the book-detail views that read `edition`.
+-- `pdf_filename` is the display name of the uploaded book PDF (see the
+-- /api/books/:id/pdf endpoints in server.js).
 alter table public.books
   add column if not exists edition text default '',
   add column if not exists barcode text default '',
   add column if not exists digital_url text default '',
   add column if not exists thumbnail_url text default '',
-  add column if not exists reservation_queue int default 0;
+  add column if not exists reservation_queue int default 0,
+  add column if not exists pdf_filename text default '';
 
 -- ============================================================
 -- 4. BORROW_REQUESTS

@@ -96,6 +96,10 @@ alter table public.profiles
   add column if not exists membership_status text default 'active',
   add column if not exists membership_expiry timestamptz;
 
+-- Display name of the uploaded book PDF (server.js /api/books/:id/pdf).
+alter table public.books
+  add column if not exists pdf_filename text default '';
+
 do $$
 begin
   if exists (select 1 from information_schema.columns

@@ -424,20 +424,111 @@ const DashboardPage = {
     },
 
     approveRequest(requestId) {
-        Modal.confirm('Approve Request', 'Approve this borrow request? The student will be notified.', () => {
-            if (AppState.approveBorrowRequest(requestId, AppState.currentUser?.name || 'Librarian')) {
-                Toast.success('Request approved!');
-                setTimeout(() => Router.resolve(), 300);
-            }
+        const request = AppState.borrowRequests.find(x => x.id === requestId);
+        if (!request) return;
+
+        const pad = n => String(n).padStart(2, '0');
+        const fmt = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        const loanDays = (AppState.getLoanPeriod && AppState.getLoanPeriod()) || 14;
+        const startDefault = fmt(new Date());
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + loanDays);
+        const dueDefault = fmt(dueDate);
+
+        const content = `
+            <p style="color:var(--text-secondary);margin:0 0 14px">
+                Approve the request for <strong>${Utils.escapeHtml(request.bookTitle)}</strong> from
+                <strong>${Utils.escapeHtml(request.studentName)}</strong>. Set the loan window &mdash;
+                the digital copy of the book unlocks for the student between these dates.
+            </p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+                <div>
+                    <label style="display:block;font-size:0.78rem;font-weight:600;color:var(--text-secondary);margin-bottom:4px">Borrow start date</label>
+                    <input type="date" class="form-input" id="approveStartDate" value="${startDefault}">
+                </div>
+                <div>
+                    <label style="display:block;font-size:0.78rem;font-weight:600;color:var(--text-secondary);margin-bottom:4px">Due date</label>
+                    <input type="date" class="form-input" id="approveDueDate" value="${dueDefault}">
+                </div>
+            </div>
+            <div style="font-size:0.78rem;color:var(--text-secondary)">
+                ${Utils.getIcon('info', 14)} The student is notified with these dates, and reading
+                access is refused automatically outside them.
+            </div>`;
+
+        Modal.show({
+            title: 'Approve Borrow Request',
+            content,
+            size: 'sm',
+            buttons: [
+                { label: 'Cancel', class: 'btn-secondary' },
+                {
+                    label: 'Approve',
+                    class: 'btn-primary',
+                    onClick: () => {
+                        const start = (document.getElementById('approveStartDate') || {}).value;
+                        const due = (document.getElementById('approveDueDate') || {}).value;
+                        const reopen = () => setTimeout(() => DashboardPage.approveRequest(requestId), 450);
+
+                        if (!start || !due) {
+                            Toast.error('Please choose both a start date and a due date.');
+                            reopen();
+                            return;
+                        }
+                        if (due < start) {
+                            Toast.error('The due date must be on or after the start date.');
+                            reopen();
+                            return;
+                        }
+                        const ok = AppState.approveBorrowRequest(requestId, AppState.currentUser?.name || 'Librarian', {
+                            borrowDate: start,
+                            dueDate: due
+                        });
+                        if (ok) {
+                            Toast.success(`Request approved. Loan: ${start} to ${due}`);
+                            setTimeout(() => Router.resolve(), 300);
+                        } else {
+                            Toast.error('Could not approve this request.');
+                            reopen();
+                        }
+                    }
+                }
+            ]
         });
     },
 
     rejectRequest(requestId) {
-        Modal.confirm('Reject Request', 'Reject this borrow request?', () => {
-            if (AppState.rejectBorrowRequest(requestId)) {
-                Toast.warning('Request rejected.');
-                setTimeout(() => Router.resolve(), 300);
-            }
+        const request = AppState.borrowRequests.find(x => x.id === requestId);
+        if (!request) return;
+
+        const content = `
+            <p style="color:var(--text-secondary);margin:0 0 14px">
+                Reject the request for <strong>${Utils.escapeHtml(request.bookTitle)}</strong> from
+                <strong>${Utils.escapeHtml(request.studentName)}</strong>. The student is notified with your reason.
+            </p>
+            <label style="display:block;font-size:0.78rem;font-weight:600;color:var(--text-secondary);margin-bottom:4px">Reason (optional)</label>
+            <textarea class="form-input" id="rejectReason" rows="3" placeholder="e.g. All copies are reserved for another student"></textarea>`;
+
+        Modal.show({
+            title: 'Reject Borrow Request',
+            content,
+            size: 'sm',
+            buttons: [
+                { label: 'Cancel', class: 'btn-secondary' },
+                {
+                    label: 'Reject',
+                    class: 'btn-danger',
+                    onClick: () => {
+                        const reason = ((document.getElementById('rejectReason') || {}).value || '').trim();
+                        if (AppState.rejectBorrowRequest(requestId, reason)) {
+                            Toast.warning('Request rejected. The student has been notified.');
+                            setTimeout(() => Router.resolve(), 300);
+                        } else {
+                            Toast.error('Could not reject this request.');
+                        }
+                    }
+                }
+            ]
         });
     },
 
