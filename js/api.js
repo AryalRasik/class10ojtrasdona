@@ -14,12 +14,25 @@ window.Api = {
     this.client = SupabaseClient.get();
   },
 
+  // `AppState` is declared with `const` in js/state.js, so it is a global
+  // lexical binding and NEVER becomes a property of `window`. Reading
+  // `window.AppState` therefore always yielded undefined, which made both role
+  // gates below fail closed: every approve / reject / delete / add-staff call
+  // threw "Only staff can approve accounts" even for a signed-in admin.
+  _state() {
+    if (typeof AppState !== 'undefined' && AppState) return AppState;
+    if (typeof window !== 'undefined' && window.AppState) return window.AppState;
+    return null;
+  },
+
   _callerIsAdmin() {
-    return !!(window.AppState && AppState.isAdmin);
+    const state = this._state();
+    return !!(state && state.isAdmin);
   },
 
   _callerIsStaff() {
-    return !!(window.AppState && (AppState.isAdmin || AppState.isLibrarian));
+    const state = this._state();
+    return !!(state && (state.isAdmin || state.isLibrarian));
   },
 
   // ── Auth ──────────────────────────────────────────────
@@ -147,6 +160,12 @@ window.Api = {
       .select()
       .maybeSingle();
     if (error) throw error;
+    // PostgREST reports a row filtered out by RLS as "0 rows", not as an
+    // error, so a stale schema used to show a success toast while nothing
+    // was saved. Surface it instead of pretending it worked.
+    if (!data) {
+      throw new Error('The database refused the approval (row-level security updated 0 rows). The Supabase schema is out of date - run supabase/schema.sql in the Supabase SQL editor, then try again.');
+    }
     return data;
   },
 

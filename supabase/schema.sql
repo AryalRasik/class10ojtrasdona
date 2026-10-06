@@ -31,6 +31,58 @@ create table if not exists profiles (
   created_at timestamptz default now()
 );
 
+-- ============================================================
+-- 1b. LEGACY SYNC
+--     `create table if not exists` above will NOT add columns to a profiles
+--     table that already exists, and an older live database may still use the
+--     lowercase `classname` name. Without this block, guard_profile_update()
+--     and handle_new_user() would fail on those databases with "column does
+--     not exist" on the very first profile write (including approvals).
+-- ============================================================
+alter table public.profiles
+  add column if not exists department text default '',
+  add column if not exists phone text default '',
+  add column if not exists address text default '',
+  add column if not exists student_id text default '',
+  add column if not exists teacher_id text default '',
+  add column if not exists membership_status text default 'active',
+  add column if not exists membership_expiry timestamptz;
+
+do $$
+begin
+  if exists (select 1 from information_schema.columns
+             where table_schema = 'public' and table_name = 'profiles'
+               and column_name = 'classname')
+     and not exists (select 1 from information_schema.columns
+             where table_schema = 'public' and table_name = 'profiles'
+               and column_name = 'className') then
+    alter table public.profiles rename column classname to "className";
+  end if;
+end $$;
+
+-- An earlier, broken version of is_staff() (COALESCE type error) may exist, and
+-- `create or replace` cannot change a function's return type. Clear the helpers
+-- ONLY when their signature does not already match what is created below:
+-- dropping them unconditionally would sever the RLS policies that depend on
+-- them and abort any second run of this file.
+do $$
+declare
+  fn record;
+begin
+  for fn in
+    select p.oid::regprocedure::text as signature,
+           p.prorettype::regtype::text as return_type
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.proname in ('is_admin', 'is_staff')
+  loop
+    if fn.return_type <> 'boolean' then
+      execute format('drop function %s cascade', fn.signature);
+    end if;
+  end loop;
+end $$;
+
 -- SECURITY: Role helpers. SECURITY DEFINER so that RLS policies can call them
 -- without recursing into the `profiles` policies themselves.
 create or replace function public.is_admin()
@@ -179,6 +231,16 @@ create table if not exists books (
   thumbnail_url text default '',
   reservation_queue int default 0
 );
+
+-- Legacy sync: `create table if not exists` does not add columns to a `books`
+-- table that already exists, and the live one predates these five. Needed for
+-- idx_books_barcode above and for the book-detail views that read `edition`.
+alter table public.books
+  add column if not exists edition text default '',
+  add column if not exists barcode text default '',
+  add column if not exists digital_url text default '',
+  add column if not exists thumbnail_url text default '',
+  add column if not exists reservation_queue int default 0;
 
 -- ============================================================
 -- 4. BORROW_REQUESTS
@@ -475,40 +537,113 @@ create table if not exists sessions (
 -- ============================================================
 -- INDEXES
 -- ============================================================
-create index if not exists idx_books_category on books(category);
-create index if not exists idx_books_status on books(status);
-create index if not exists idx_books_title on books(title);
-create index if not exists idx_books_isbn on books(isbn);
-create index if not exists idx_books_barcode on books(barcode);
-create index if not exists idx_borrow_requests_student on borrow_requests(student_id);
-create index if not exists idx_borrow_requests_status on borrow_requests(status);
-create index if not exists idx_borrow_requests_book on borrow_requests(book_id);
-create index if not exists idx_notifications_user on notifications(user_id);
-create index if not exists idx_notifications_read on notifications(read);
-create index if not exists idx_favorites_user on favorites(user_id);
-create index if not exists idx_recently_viewed_user on recently_viewed(user_id);
-create index if not exists idx_reservations_student on reservations(student_id);
-create index if not exists idx_reviews_book on reviews(book_id);
-create index if not exists idx_achievements_user on achievements(user_id);
-create index if not exists idx_login_history_user on login_history(user_id);
-create index if not exists idx_login_history_timestamp on login_history(timestamp);
-create index if not exists idx_activity_logs_user on activity_logs(user_id);
-create index if not exists idx_activity_logs_timestamp on activity_logs(timestamp);
-create index if not exists idx_audit_logs_user on audit_logs(user_id);
-create index if not exists idx_audit_logs_severity on audit_logs(severity);
-create index if not exists idx_audit_logs_timestamp on audit_logs(timestamp);
-create index if not exists idx_fine_payments_student on fine_payments(student_id);
-create index if not exists idx_fine_payments_borrow on fine_payments(borrow_request_id);
-create index if not exists idx_book_imports_book on book_imports(book_id);
-create index if not exists idx_book_imports_status on book_imports(status);
-create index if not exists idx_feedback_user on feedback(user_id);
-create index if not exists idx_calendar_events_date on calendar_events(date);
-create index if not exists idx_faqs_category on faqs(category);
-create index if not exists idx_contact_messages_read on contact_messages(read);
-create index if not exists idx_sessions_user on sessions(user_id);
-create index if not exists idx_sessions_token on sessions(token);
-create index if not exists idx_sessions_expires on sessions(expires_at);
-create index if not exists idx_profiles_membership on profiles(membership_status);
+-- Legacy sync: an integer/bigint primary key with no default and no identity
+-- makes EVERY id-less INSERT fail with a not-null violation. The app inserts
+-- without an id into notifications (including the "Registration Approved"
+-- notice sent after an approval), favorites, recently_viewed, reviews,
+-- reservations, achievements, books, categories, announcements, events and
+-- digital_books - and those calls are wrapped in .catch(() => {}), so the
+-- failure is silent. Only columns that are genuinely plain are changed;
+-- `is_identity = 'NO'` protects a column that already is an identity, and
+-- `column_default is null` protects a serial. Existing rows are accounted for
+-- by restarting the sequence above max(id).
+do $$
+declare
+  t record;
+  c record;
+  next_id bigint;
+begin
+  for t in
+    select * from (values
+      ('achievements'), ('announcements'), ('books'), ('categories'),
+      ('digital_books'), ('events'), ('favorites'), ('notifications'),
+      ('recently_viewed'), ('reservations'), ('reviews')
+    ) as x(table_name)
+  loop
+    for c in
+      select column_name, data_type, column_default, is_identity, is_nullable
+      from information_schema.columns
+      where table_schema = 'public'
+        and table_name = t.table_name
+        and column_name = 'id'
+        and data_type in ('integer', 'bigint')
+        and is_nullable = 'NO'
+    loop
+      if c.column_default is null and c.is_identity = 'NO' then
+        execute format('alter table public.%I alter column %I add generated by default as identity',
+                       t.table_name, c.column_name);
+        execute format('select coalesce(max(%I), 0) + 1 from public.%I',
+                       c.column_name, t.table_name) into next_id;
+        execute format('alter table public.%I alter column %I restart with %s',
+                       t.table_name, c.column_name, next_id);
+      end if;
+    end loop;
+  end loop;
+end $$;
+
+-- ============================================================
+-- INDEXES
+-- ============================================================
+-- Created through a guarded loop rather than 34 bare statements: a legacy
+-- database may predate some of the indexed columns (this project's live
+-- `books` has no `barcode`, and its `activity_logs` has `created_at` instead
+-- of `timestamp`). This whole file runs as ONE transaction, so a single
+-- `create index` on a missing column would roll back everything - including
+-- the approve/reject fixes. An index is simply skipped when its table or
+-- column does not exist.
+do $$
+declare
+  ix record;
+begin
+  for ix in
+    select * from (values
+      ('idx_books_category',             'books',             'category'),
+      ('idx_books_status',               'books',             'status'),
+      ('idx_books_title',                'books',             'title'),
+      ('idx_books_isbn',                 'books',             'isbn'),
+      ('idx_books_barcode',              'books',             'barcode'),
+      ('idx_borrow_requests_student',    'borrow_requests',   'student_id'),
+      ('idx_borrow_requests_status',     'borrow_requests',   'status'),
+      ('idx_borrow_requests_book',       'borrow_requests',   'book_id'),
+      ('idx_notifications_user',         'notifications',     'user_id'),
+      ('idx_notifications_read',         'notifications',     'read'),
+      ('idx_favorites_user',             'favorites',         'user_id'),
+      ('idx_recently_viewed_user',       'recently_viewed',   'user_id'),
+      ('idx_reservations_student',       'reservations',      'student_id'),
+      ('idx_reviews_book',               'reviews',           'book_id'),
+      ('idx_achievements_user',          'achievements',      'user_id'),
+      ('idx_login_history_user',         'login_history',     'user_id'),
+      ('idx_login_history_timestamp',    'login_history',     'timestamp'),
+      ('idx_activity_logs_user',         'activity_logs',     'user_id'),
+      ('idx_activity_logs_timestamp',    'activity_logs',     'timestamp'),
+      ('idx_audit_logs_user',            'audit_logs',        'user_id'),
+      ('idx_audit_logs_severity',        'audit_logs',        'severity'),
+      ('idx_audit_logs_timestamp',       'audit_logs',        'timestamp'),
+      ('idx_fine_payments_student',      'fine_payments',     'student_id'),
+      ('idx_fine_payments_borrow',       'fine_payments',     'borrow_request_id'),
+      ('idx_book_imports_book',          'book_imports',      'book_id'),
+      ('idx_book_imports_status',        'book_imports',      'status'),
+      ('idx_feedback_user',              'feedback',          'user_id'),
+      ('idx_calendar_events_date',       'calendar_events',   'date'),
+      ('idx_faqs_category',              'faqs',              'category'),
+      ('idx_contact_messages_read',      'contact_messages',  'read'),
+      ('idx_sessions_user',              'sessions',          'user_id'),
+      ('idx_sessions_token',             'sessions',          'token'),
+      ('idx_sessions_expires',           'sessions',          'expires_at'),
+      ('idx_profiles_membership',        'profiles',          'membership_status')
+    ) as t(idx_name, tbl_name, col_name)
+  loop
+    if exists (
+      select 1 from information_schema.columns c
+      where c.table_schema = 'public'
+        and c.table_name = ix.tbl_name
+        and c.column_name = ix.col_name
+    ) then
+      execute format('create index if not exists %I on public.%I (%I)',
+                     ix.idx_name, ix.tbl_name, ix.col_name);
+    end if;
+  end loop;
+end $$;
 
 -- ============================================================
 -- Row Level Security
@@ -524,6 +659,26 @@ create index if not exists idx_profiles_membership on profiles(membership_status
 --   * guard_profile_update (above) stops anyone from self-promoting their own
 --     role/approved fields, which RLS alone cannot express.
 --   * Log tables are service-role-write only.
+
+-- Recreate the privileged RPCs at their current signatures. A live database
+-- created from an older schema may still hold a previous version of any of
+-- these with a different argument list or return type, and `create or replace`
+-- can change NEITHER - it would abort the whole script. Drop them by name,
+-- regardless of signature, first.
+do $$
+declare r record;
+begin
+  for r in
+    select p.oid::regprocedure::text as sig
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.proname in ('add_staff_account', 'delete_account', 'delete_my_account',
+                        'reject_registration', 'notify_staff_of_registration')
+  loop
+    execute format('drop function if exists %s', r.sig);
+  end loop;
+end $$;
 
 -- Admin helper: create a staff account (auth user + profile), approved automatically
 create or replace function public.add_staff_account(
@@ -614,6 +769,11 @@ begin
   end if;
 
   delete from auth.users where id = p_user_id;
+  -- Profiles created outside this script may have no FK back to auth.users,
+  -- in which case ON DELETE CASCADE never fires and the roster would still
+  -- show the deleted account. Removing it explicitly is a no-op when the
+  -- cascade already took it.
+  delete from public.profiles where id = p_user_id;
 end;
 $$;
 
@@ -629,6 +789,7 @@ begin
     raise exception 'Authentication required' using errcode = '42501';
   end if;
   delete from auth.users where id = auth.uid();
+  delete from public.profiles where id = auth.uid();
 end;
 $$;
 
@@ -663,6 +824,7 @@ begin
   end if;
 
   delete from auth.users where id = p_user_id;
+  delete from public.profiles where id = p_user_id;
 end;
 $$;
 
@@ -718,6 +880,55 @@ $$;
 revoke all on function public.notify_staff_of_registration(uuid, text, text) from public, anon;
 grant execute on function public.notify_staff_of_registration(uuid, text, text)
   to authenticated, service_role;
+
+-- ---------------------------------------------------------------------------
+-- Clean slate: drop EVERY policy on the tables this file manages before
+-- recreating them. Two policies here (borrow_insert_staff and
+-- reservations_insert_staff) had no matching `drop policy if exists`, which
+-- made any re-run of the file fail with "policy ... already exists" - and this
+-- file runs as one transaction, so that would roll back everything else too.
+-- Tables outside this list (borrow_records, fines, students, teachers, ...) are
+-- not touched. On a first run there is nothing to drop.
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  p record;
+begin
+  for p in
+    select policyname, tablename from pg_policies
+    where schemaname = 'public'
+      and tablename in (
+        'achievements',
+        'activity_logs',
+        'announcements',
+        'audit_logs',
+        'book_imports',
+        'books',
+        'borrow_requests',
+        'calendar_events',
+        'categories',
+        'contact_messages',
+        'digital_books',
+        'events',
+        'faqs',
+        'favorites',
+        'feedback',
+        'fine_payments',
+        'login_history',
+        'notifications',
+        'profiles',
+        'recently_viewed',
+        'reservations',
+        'reviews',
+        'sessions',
+        'settings',
+        'study_materials',
+        'user_preferences'
+      )
+  loop
+    execute format('drop policy if exists %I on public.%I', p.policyname, p.tablename);
+  end loop;
+end $$;
 
 -- Profiles: owner + staff only. No anonymous access, no self-insert, no
 -- self-promotion. Column protection lives in the guard_profile_update trigger.

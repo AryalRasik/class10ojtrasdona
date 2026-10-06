@@ -79,6 +79,60 @@ order by ordinal_position;
 
 
 -- ============================================================================
+-- SECTION 0.5 — LEGACY COLUMN SYNC (needed on databases created before this
+--              migration). `guard_profile_update` below references columns a
+--              profiles table created by an older schema does not have, and
+--              that would break EVERY profile write - including approvals -
+--              with "column ... does not exist". Safe on a fresh database:
+--              every statement is IF NOT EXISTS / guarded by a catalog check.
+-- ============================================================================
+
+alter table public.profiles
+  add column if not exists department text default '',
+  add column if not exists phone text default '',
+  add column if not exists address text default '',
+  add column if not exists student_id text default '',
+  add column if not exists teacher_id text default '',
+  add column if not exists membership_status text default 'active',
+  add column if not exists membership_expiry timestamptz;
+
+do $$
+begin
+  if exists (select 1 from information_schema.columns
+             where table_schema = 'public' and table_name = 'profiles'
+               and column_name = 'classname')
+     and not exists (select 1 from information_schema.columns
+             where table_schema = 'public' and table_name = 'profiles'
+               and column_name = 'className') then
+    alter table public.profiles rename column classname to "className";
+  end if;
+end $$;
+
+-- An earlier, broken is_staff() (COALESCE type error) may still exist, and
+-- `create or replace` cannot change a function's return type. Clear the
+-- helpers ONLY when their signature does not already match Section 1: dropping
+-- them unconditionally would sever the RLS policies that depend on them and
+-- abort any second run of this migration.
+do $$
+declare
+  fn record;
+begin
+  for fn in
+    select p.oid::regprocedure::text as signature,
+           p.prorettype::regtype::text as return_type
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.proname in ('is_admin', 'is_staff')
+  loop
+    if fn.return_type <> 'boolean' then
+      execute format('drop function %s cascade', fn.signature);
+    end if;
+  end loop;
+end $$;
+
+
+-- ============================================================================
 -- SECTION 1 — ROLE HELPERS (SECURITY DEFINER so RLS on profiles cannot
 --              recurse into itself)
 -- ============================================================================
@@ -239,6 +293,55 @@ create trigger guard_profile_update
 -- SECTION 4 — `profiles` RULES (self + staff only; no anonymous access)
 -- ============================================================================
 
+-- ---------------------------------------------------------------------------
+-- Clean slate: drop EVERY policy on the tables this file manages before
+-- recreating them. Two policies here (borrow_insert_staff and
+-- reservations_insert_staff) had no matching `drop policy if exists`, which
+-- made any re-run of the file fail with "policy ... already exists" - and this
+-- file runs as one transaction, so that would roll back everything else too.
+-- Tables outside this list (borrow_records, fines, students, teachers, ...) are
+-- not touched. On a first run there is nothing to drop.
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  p record;
+begin
+  for p in
+    select policyname, tablename from pg_policies
+    where schemaname = 'public'
+      and tablename in (
+        'achievements',
+        'activity_logs',
+        'announcements',
+        'audit_logs',
+        'book_imports',
+        'books',
+        'borrow_requests',
+        'calendar_events',
+        'categories',
+        'contact_messages',
+        'digital_books',
+        'events',
+        'faqs',
+        'favorites',
+        'feedback',
+        'fine_payments',
+        'login_history',
+        'notifications',
+        'profiles',
+        'recently_viewed',
+        'reservations',
+        'reviews',
+        'sessions',
+        'settings',
+        'study_materials',
+        'user_preferences'
+      )
+  loop
+    execute format('drop policy if exists %I on public.%I', p.policyname, p.tablename);
+  end loop;
+end $$;
+
 alter table public.profiles enable row level security;
 
 drop policy if exists profiles_select_all     on public.profiles;
@@ -298,6 +401,26 @@ comment on view public.public_profiles is
 --   Replaces the client-side fan-out in js/pages/login.js, which let any
 --   signed-up user insert a notification row for ANY user_id.
 -- ============================================================================
+
+-- Recreate the privileged RPCs at their current signatures. A live database
+-- created from an older schema may still hold a previous version of any of
+-- these with a different argument list or return type, and `create or replace`
+-- can change NEITHER - it would abort the whole migration. Drop them by name,
+-- regardless of signature, first.
+do $$
+declare r record;
+begin
+  for r in
+    select p.oid::regprocedure::text as sig
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.proname in ('add_staff_account', 'delete_account', 'delete_my_account',
+                        'reject_registration', 'notify_staff_of_registration')
+  loop
+    execute format('drop function if exists %s', r.sig);
+  end loop;
+end $$;
 
 create or replace function public.notify_staff_of_registration(
   p_user_id uuid,
@@ -773,6 +896,11 @@ begin
   end if;
 
   delete from auth.users where id = p_user_id;
+  -- Profiles created outside this script may have no FK back to auth.users,
+  -- in which case ON DELETE CASCADE never fires and the roster would still
+  -- show the deleted account. Removing it explicitly is a no-op when the
+  -- cascade already took it.
+  delete from public.profiles where id = p_user_id;
 end;
 $$;
 
@@ -788,6 +916,7 @@ begin
     raise exception 'Authentication required' using errcode = '42501';
   end if;
   delete from auth.users where id = auth.uid();
+  delete from public.profiles where id = auth.uid();
 end;
 $$;
 
@@ -823,6 +952,7 @@ begin
   end if;
 
   delete from auth.users where id = p_user_id;
+  delete from public.profiles where id = p_user_id;
 end;
 $$;
 
