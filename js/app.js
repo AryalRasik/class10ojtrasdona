@@ -550,8 +550,12 @@ setupDeveloperTrigger() {
                 <a href="#/announcements" class="sidebar-nav-item" data-page="announcements" data-nav>${Utils.getIcon('info', 20)} <span class="sidebar-nav-item-text">Announcements</span></a>
                 <a href="#/events" class="sidebar-nav-item" data-page="events" data-nav>${Utils.getIcon('calendar', 20)} <span class="sidebar-nav-item-text">Events</span></a>
                 <a href="#/rules" class="sidebar-nav-item" data-page="rules" data-nav>${Utils.getIcon('shield', 20)} <span class="sidebar-nav-item-text">Library Rules</span></a>
-                <a href="#/support" class="sidebar-nav-item" data-page="support" data-nav>${Utils.getIcon('phone', 20)} <span class="sidebar-nav-item-text">Support</span></a>
                 <a href="#/feedback" class="sidebar-nav-item" data-page="feedback" data-nav>${Utils.getIcon('message-square', 20)} <span class="sidebar-nav-item-text">Feedback</span></a>
+                <div class="sidebar-nav-divider"></div>
+                <div class="sidebar-nav-label">Help</div>
+                <a href="#/faq" class="sidebar-nav-item" data-page="faq" data-nav>${Utils.getIcon('help-circle', 20)} <span class="sidebar-nav-item-text">FAQs</span></a>
+                <a href="#/help" class="sidebar-nav-item" data-page="help" data-nav>${Utils.getIcon('headphones', 20)} <span class="sidebar-nav-item-text">Help Center</span></a>
+                <a href="#/support" class="sidebar-nav-item" data-page="support" data-nav>${Utils.getIcon('phone', 20)} <span class="sidebar-nav-item-text">Support</span></a>
                 <div class="sidebar-nav-divider"></div>
                 <a href="#/login" class="sidebar-nav-item" data-page="login" data-nav style="color:var(--primary);font-weight:600;">${Utils.getIcon('log-in', 20)} <span class="sidebar-nav-item-text">Sign In</span></a>
             `;
@@ -565,6 +569,7 @@ setupDeveloperTrigger() {
                 ? Notifications.getUnreadCount() : 0;
         } catch (e) { }
 
+        // Sections render in array order with a divider between them.
         const sections = [
             { label: 'Main', items: [
                 { page: 'home', icon: 'book-open', label: 'Home', href: '#/' },
@@ -574,53 +579,70 @@ setupDeveloperTrigger() {
                 { page: 'study-materials', icon: 'file-text', label: 'Study Materials', href: '#/study-materials' },
             ]},
             { label: 'Personal', items: [
+                { page: 'my-books', icon: 'book-marked', label: 'My Books', href: '#/my-books' },
+                { page: 'notifications', icon: 'bell', label: 'Notifications', href: '#/notifications', badge: notifCount || '' },
                 { page: 'new-arrivals', icon: 'zap', label: 'New Arrivals', href: '#/new-arrivals' },
                 { page: 'top-rated', icon: 'award', label: 'Top Rated', href: '#/top-rated' },
             ]},
             { label: 'Community', items: [
-                { page: 'announcements', icon: 'info', label: 'Announcements', href: '#/announcements', badge: notifCount || '' },
+                { page: 'announcements', icon: 'info', label: 'Announcements', href: '#/announcements' },
                 { page: 'events', icon: 'calendar', label: 'Events', href: '#/events' },
+                { page: 'feedback', icon: 'message-square', label: 'Feedback', href: '#/feedback' },
                 { page: 'rules', icon: 'shield', label: 'Library Rules', href: '#/rules' },
+            ]},
+            { label: 'Help', items: [
+                { page: 'faq', icon: 'help-circle', label: 'FAQs', href: '#/faq' },
+                { page: 'help', icon: 'headphones', label: 'Help Center', href: '#/help' },
                 { page: 'support', icon: 'phone', label: 'Support', href: '#/support' },
+            ]},
+            { label: 'Account', items: [
+                { page: 'profile', icon: 'users', label: 'Profile', href: '#/profile' },
+                { page: 'settings', icon: 'settings', label: 'Settings', href: '#/settings' },
             ]}
         ];
 
+        // Role-specific groups sit right after Main so staff tools are not
+        // buried at the bottom of the list.
+        const staffSections = [];
+
         if (role === 'teacher') {
-            sections[1].items.splice(0, 0,
-                { page: 'dashboard', icon: 'bar-chart', label: 'Teacher Dashboard', href: '#/dashboard' }
-            );
+            staffSections.push({ label: 'Dashboard', items: [
+                { page: 'dashboard', icon: 'bar-chart', label: 'Teacher Dashboard', href: '#/dashboard' },
+            ]});
         }
 
         if (role === 'librarian' || role === 'admin') {
-            sections.push({ label: 'Management', items: [
+            staffSections.push({ label: 'Management', items: [
                 { page: 'dashboard', icon: 'bar-chart', label: 'Dashboard', href: '#/dashboard' },
                 { page: 'admin-offline-issue', icon: 'book-open', label: 'Offline Book Issue', href: '#/admin/offline-issue' },
                 { page: 'admin-books', icon: 'book-open', label: 'Manage Books', href: '#/admin/books' },
-                { page: 'admin-study-materials', icon: 'file-text', label: 'Study Materials', href: '#/admin/study-materials' },
+                { page: 'admin-study-materials', icon: 'file-text', label: 'Manage Study Materials', href: '#/admin/study-materials' },
                 { page: 'admin-users', icon: 'users', label: 'Manage Users', href: '#/admin/users' },
                 { page: 'admin-reports', icon: 'file-text', label: 'Reports', href: '#/admin/reports' },
             ]});
         }
 
         if (role === 'admin') {
-            sections.push({ label: 'Security', items: [
+            staffSections.push({ label: 'Security', items: [
                 { page: 'admin-settings', icon: 'settings', label: 'System Settings', href: '#/admin/settings' },
                 { page: 'admin-audit-logs', icon: 'file-text', label: 'Audit Logs', href: '#/admin/audit-logs' },
                 { page: 'admin-import', icon: 'upload', label: 'Import Data', href: '#/admin/import' },
             ]});
         }
 
+        sections.splice(1, 0, ...staffSections);
+
         let html = '';
+        let rendered = 0;
         sections.forEach(s => {
+            if (!s.items.length) return;
+            if (rendered > 0) html += '<div class="sidebar-nav-divider"></div>';
             html += `<div class="sidebar-nav-label">${s.label}</div>`;
             s.items.forEach(item => {
                 html += `<a href="${item.href}" class="sidebar-nav-item" data-page="${item.page}" data-nav>${Utils.getIcon(item.icon, 20)} <span class="sidebar-nav-item-text">${item.label}</span>${item.badge ? `<span class="sidebar-badge">${item.badge}</span>` : ''}</a>`;
             });
-            html += '<div class="sidebar-nav-divider"></div>';
+            rendered++;
         });
-
-        html += `<a href="#/profile" class="sidebar-nav-item" data-page="profile" data-nav>${Utils.getIcon('users', 20)} <span class="sidebar-nav-item-text">Profile</span></a>`;
-        html += `<a href="#/settings" class="sidebar-nav-item" data-page="settings" data-nav>${Utils.getIcon('settings', 20)} <span class="sidebar-nav-item-text">Settings</span></a>`;
 
         nav.innerHTML = html;
         nav.querySelectorAll('.sidebar-nav-item').forEach(el => el.addEventListener('click', () => this.closeSidebar()));
