@@ -1,6 +1,7 @@
 const Charts = {
     bar(canvas, data) {
         if (!canvas) return;
+        if (!data || data.length === 0) return;
         const ctx = canvas.getContext('2d');
         const dpr = window.devicePixelRatio || 1;
         const rect = canvas.getBoundingClientRect();
@@ -11,7 +12,8 @@ const Charts = {
         const padding = { top: 20, right: 20, bottom: 40, left: 50 };
         const chartW = w - padding.left - padding.right;
         const chartH = h - padding.top - padding.bottom;
-        const maxVal = Math.max(...data.map(d => d.value)) * 1.15;
+        const rawMax = Math.max(...data.map(d => d.value || 0));
+        const maxVal = (rawMax > 0 ? rawMax : 1) * 1.15;
         const barW = (chartW / data.length) * 0.6;
         const gap = (chartW / data.length) * 0.4;
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -69,6 +71,7 @@ const Charts = {
 
     line(canvas, data) {
         if (!canvas) return;
+        if (!data || data.length === 0) return;
         const ctx = canvas.getContext('2d');
         const dpr = window.devicePixelRatio || 1;
         const rect = canvas.getBoundingClientRect();
@@ -79,7 +82,8 @@ const Charts = {
         const padding = { top: 20, right: 20, bottom: 40, left: 50 };
         const chartW = w - padding.left - padding.right;
         const chartH = h - padding.top - padding.bottom;
-        const maxVal = Math.max(...data.map(d => d.value)) * 1.15;
+        const rawMax = Math.max(...data.map(d => d.value || 0));
+        const maxVal = (rawMax > 0 ? rawMax : 1) * 1.15;
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         const textColor = isDark ? '#a8a8c8' : '#4a4a6a';
         const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
@@ -173,7 +177,8 @@ const Charts = {
         const cx = w / 2, cy = h / 2;
         const outerR = Math.min(w, h) / 2 - 10;
         const innerR = outerR * 0.65;
-        const total = data.reduce((s, d) => s + d.value, 0);
+        const realTotal = (data || []).reduce((s, d) => s + (d.value || 0), 0);
+        const total = realTotal || 1;
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         const textColor = isDark ? '#e8e8f0' : '#1a1a2e';
 
@@ -199,7 +204,7 @@ const Charts = {
                 ctx.font = 'bold 22px Inter, sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(centerText || total.toLocaleString(), cx, cy - 6);
+                ctx.fillText(centerText || realTotal.toLocaleString(), cx, cy - 6);
                 ctx.font = '12px Inter, sans-serif';
                 ctx.fillStyle = isDark ? '#a8a8c8' : '#4a4a6a';
                 ctx.fillText('Total', cx, cy + 16);

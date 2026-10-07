@@ -11,62 +11,51 @@ const DashboardPage = {
     },
 
     renderAdminDashboard() {
-        const stats = LIBRARY_DATA.stats || {};
-        const pending = AppState.getAllPendingRequests();
-        const active = AppState.getAllActiveBorrows();
-        const allReturned = (AppState.borrowRequests || []).filter(r => r.status === 'returned');
-        const allOverdue = (AppState.borrowRequests || []).filter(r => r.status === 'overdue');
-        const totalFines = (AppState.borrowRequests || []).reduce((s, r) => s + (r.fine || 0), 0);
-        const recentBorrows = [...(AppState.borrowRequests || [])].slice(-10).reverse();
-        const reservations = (AppState.reservations || []).filter(r => r.status === 'waiting');
-        const studentCount = (LIBRARY_DATA.students || []).length;
-        const teacherCount = (LIBRARY_DATA.teachers || []).length;
-        const totalBooks = (AppState.books || []).length;
-        const mostBorrowed = [...(AppState.books || [])].sort((a, b) => (b.borrowCount || 0) - (a.borrowCount || 0)).slice(0, 5);
-        const categories = LIBRARY_DATA.categories || [];
+        const s = this._adminStats();
 
         return `
       <div class="page-header">
         <div class="container">
           <h1 class="page-title">${Utils.getGreeting()}, ${Utils.escapeHtml((AppState.currentUser && AppState.currentUser.name) || 'Admin')}</h1>
-          <p class="page-description">Library Management Dashboard</p>
+          <p class="page-description">Library Management Dashboard <span id="dashLiveBadge">${this._liveBadge()}</span></p>
         </div>
       </div>
       <div class="container" style="padding:0 1rem 2rem;">
         <div class="grid-3" style="margin-bottom:1.5rem;">
-          <div class="stat-card"><div class="stat-icon blue">${Utils.getIcon('book-open', 24)}</div><div class="stat-info"><span class="stat-value">${totalBooks}</span><span class="stat-label">Total Books</span></div></div>
-          <div class="stat-card"><div class="stat-icon indigo">${Utils.getIcon('book-open', 24)}</div><div class="stat-info"><span class="stat-value">${active.length}</span><span class="stat-label">Currently Borrowed</span></div></div>
-          <div class="stat-card"><div class="stat-icon orange">${Utils.getIcon('clock', 24)}</div><div class="stat-info"><span class="stat-value">${pending.length}</span><span class="stat-label">Pending Requests</span></div></div>
+          <div class="stat-card"><div class="stat-icon blue">${Utils.getIcon('book-open', 24)}</div><div class="stat-info"><span class="stat-value">${s.totalBooks}</span><span class="stat-label">Total Books</span></div></div>
+          <div class="stat-card"><div class="stat-icon green">${Utils.getIcon('check-circle', 24)}</div><div class="stat-info"><span class="stat-value">${s.availableBooks}</span><span class="stat-label">Available Books</span></div></div>
+          <div class="stat-card"><div class="stat-icon indigo">${Utils.getIcon('book-open', 24)}</div><div class="stat-info"><span class="stat-value">${s.currentBorrowed}</span><span class="stat-label">Currently Borrowed</span></div></div>
         </div>
         <div class="grid-3" style="margin-bottom:1.5rem;">
-          <div class="stat-card"><div class="stat-icon green">${Utils.getIcon('check-circle', 24)}</div><div class="stat-info"><span class="stat-value">${allReturned.length}</span><span class="stat-label">Books Returned</span></div></div>
-          <div class="stat-card"><div class="stat-icon red">${Utils.getIcon('alert-triangle', 24)}</div><div class="stat-info"><span class="stat-value">${allOverdue.length}</span><span class="stat-label">Overdue</span></div></div>
-          <div class="stat-card"><div class="stat-icon pink">${Utils.getIcon('users', 24)}</div><div class="stat-info"><span class="stat-value">${studentCount}</span><span class="stat-label">Students</span></div></div>
+          <div class="stat-card"><div class="stat-icon orange">${Utils.getIcon('clock', 24)}</div><div class="stat-info"><span class="stat-value">${s.pendingRequests}</span><span class="stat-label">Pending Requests</span></div></div>
+          <div class="stat-card"><div class="stat-icon teal">${Utils.getIcon('check-circle', 24)}</div><div class="stat-info"><span class="stat-value">${s.approvedRequests}</span><span class="stat-label">Approved Requests</span></div></div>
+          <div class="stat-card"><div class="stat-icon red">${Utils.getIcon('x-circle', 24)}</div><div class="stat-info"><span class="stat-value">${s.rejectedRequests}</span><span class="stat-label">Rejected Requests</span></div></div>
         </div>
         <div class="grid-3" style="margin-bottom:2rem;">
-          <div class="stat-card"><div class="stat-icon teal">${Utils.getIcon('briefcase', 24)}</div><div class="stat-info"><span class="stat-value">${teacherCount}</span><span class="stat-label">Teachers</span></div></div>
-          <div class="stat-card"><div class="stat-icon yellow">${Utils.getIcon('bookmark', 24)}</div><div class="stat-info"><span class="stat-value">${reservations.length}</span><span class="stat-label">Reservations</span></div></div>
-          <div class="stat-card"><div class="stat-icon red">${Utils.getIcon('alert-circle', 24)}</div><div class="stat-info"><span class="stat-value">${totalFines > 0 ? 'Rs. ' + totalFines : 'None'}</span><span class="stat-label">Total Fines</span></div></div>
+          <div class="stat-card"><div class="stat-icon green">${Utils.getIcon('corner-down-left', 24)}</div><div class="stat-info"><span class="stat-value">${s.returnedBooks}</span><span class="stat-label">Returned Books</span></div></div>
+          <div class="stat-card"><div class="stat-icon red">${Utils.getIcon('alert-triangle', 24)}</div><div class="stat-info"><span class="stat-value">${s.overdueBooks}</span><span class="stat-label">Overdue Books</span></div></div>
+          <div class="stat-card"><div class="stat-icon pink">${Utils.getIcon('users', 24)}</div><div class="stat-info"><span class="stat-value">${s.members}</span><span class="stat-label">Total Members</span>${s.pendingMembers > 0 ? `<small style="display:block;color:var(--warning);font-size:0.7rem;margin-top:2px;">${s.pendingMembers} awaiting approval</small>` : ''}</div></div>
         </div>
 
         <div class="card" style="margin-bottom:2rem;">
           <div class="card-header-flex">
             <h3 style="margin:0;">Pending Borrow Requests</h3>
-            <span class="badge badge-warning">${pending.length} pending</span>
+            <span class="badge badge-warning">${s.pendingRequests} pending</span>
           </div>
-          ${pending.length ? `
-          <div class="table-wrap"><table class="data-table"><thead><tr><th>Student</th><th>Book</th><th>Borrow ID</th><th>Time</th><th>Actions</th></tr></thead><tbody>${pending.map(r => {
-            const student = LIBRARY_DATA.students.find(s => s.id === r.studentId);
+          ${s.pending.length ? `
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>Student</th><th>Book</th><th>Borrow ID</th><th>Time</th><th>Actions</th></tr></thead><tbody>${s.pending.map(r => {
+            const student = AppState.allProfiles.find(p => p && p.id === r.studentId);
+            const avatar = (student && student.avatar) ? student.avatar : this._nameInitials(r.studentName || '?');
             return `<tr>
               <td>
                 <div style="display:flex;align-items:center;gap:8px;">
-                  <div class="avatar-sm" style="width:32px;height:32px;font-size:0.65rem;">${student ? student.avatar : '??'}</div>
+                  <div class="avatar-sm" style="width:32px;height:32px;font-size:0.65rem;">${Utils.escapeHtml(avatar)}</div>
                   <span>${Utils.escapeHtml(r.studentName)}</span>
                 </div>
               </td>
               <td><strong>${Utils.escapeHtml(r.bookTitle)}</strong></td>
-              <td class="mono" style="font-size:0.8rem;">${r.id}</td>
-              <td>${Utils.formatDate(r.borrowDate)}</td>
+              <td class="mono" style="font-size:0.8rem;">${Utils.escapeHtml(r.id)}</td>
+              <td>${Utils.formatDate(r.borrowDate || r.requestTime)}</td>
               <td>
                 <div style="display:flex;gap:4px;">
                   <button class="btn btn-success btn-sm" onclick="DashboardPage.approveRequest('${r.id}')">Approve</button>
@@ -89,14 +78,21 @@ const DashboardPage = {
               <h3 style="margin:0;">Recent Activity</h3>
             </div>
             <div style="padding:1rem 1.5rem;">
-              ${recentBorrows.map(r => {
-                const statusColors = { pending: 'var(--warning)', approved: 'var(--info)', borrowed: 'var(--primary)', overdue: 'var(--danger)', returned: 'var(--success)', rejected: 'var(--danger)' };
+              ${s.recentActivity.map(r => {
+                if (r.type === 'member') {
+                  return `<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-light);align-items:center;">
+                    <div style="width:32px;height:32px;border-radius:50%;background:var(--info)15;color:var(--info);display:flex;align-items:center;justify-content:center;flex-shrink:0;">${Utils.getIcon('user-plus', 14)}</div>
+                    <div style="flex:1;min-width:0;"><p style="margin:0;font-size:0.85rem;">${Utils.escapeHtml(r.studentName)} <small style="color:var(--text-secondary);">registered as ${Utils.escapeHtml(r.role || 'member')}</small></p><small style="color:var(--text-secondary);">${Utils.formatDate(r.time)}</small></div>
+                    <span class="badge badge-info" style="font-size:0.7rem;">new member</span>
+                  </div>`;
+                }
+                const statusColors = { pending: 'var(--warning)', approved: 'var(--info)', borrowed: 'var(--primary)', overdue: 'var(--danger)', returned: 'var(--success)', rejected: 'var(--danger)', expired: 'var(--text-tertiary)', return_requested: 'var(--primary)' };
                 const color = statusColors[r.status] || 'var(--text-tertiary)';
-                const icons = { pending: 'clock', approved: 'check-circle', borrowed: 'book-open', overdue: 'alert-triangle', returned: 'check-circle', rejected: 'x-circle' };
+                const icons = { pending: 'clock', approved: 'check-circle', borrowed: 'book-open', overdue: 'alert-triangle', returned: 'check-circle', rejected: 'x-circle', expired: 'x-circle', return_requested: 'repeat' };
                 return `<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-light);align-items:center;">
                   <div style="width:32px;height:32px;border-radius:50%;background:${color}15;color:${color};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${Utils.getIcon(icons[r.status] || 'bell', 14)}</div>
-                  <div style="flex:1;min-width:0;"><p style="margin:0;font-size:0.85rem;">${Utils.escapeHtml(r.studentName)} — ${Utils.escapeHtml(r.bookTitle)}</p><small style="color:var(--text-secondary);">${r.id} · ${Utils.formatDate(r.borrowDate)}</small></div>
-                  <span class="badge badge-${r.status === 'returned' ? 'success' : r.status === 'overdue' ? 'danger' : r.status === 'pending' ? 'warning' : r.status === 'rejected' ? 'danger' : 'primary'}" style="font-size:0.7rem;">${r.status}</span>
+                  <div style="flex:1;min-width:0;"><p style="margin:0;font-size:0.85rem;">${Utils.escapeHtml(r.studentName)} — ${Utils.escapeHtml(r.bookTitle)}</p><small style="color:var(--text-secondary);">${Utils.escapeHtml(r.id)} · ${Utils.formatDate(r.time)}</small></div>
+                  <span class="badge badge-${r.status === 'returned' ? 'success' : r.status === 'overdue' ? 'danger' : r.status === 'pending' ? 'warning' : r.status === 'rejected' ? 'danger' : r.status === 'expired' ? 'secondary' : r.status === 'approved' ? 'info' : 'primary'}" style="font-size:0.7rem;">${r.status}</span>
                   ${(r.status === 'borrowed' || r.status === 'overdue') ? `<button class="btn btn-success btn-sm" onclick="DashboardPage.markReturned('${r.id}')" title="Confirm returned">${Utils.getIcon('corner-down-left', 13)} Returned</button>` : ''}
                 </div>`;
               }).join('') || '<p style="color:var(--text-secondary);text-align:center;padding:1rem;">No recent activity</p>'}
@@ -120,11 +116,11 @@ const DashboardPage = {
             <div class="card">
               <div style="padding:1rem 1.5rem;border-bottom:1px solid var(--border);"><h3 style="margin:0;">Most Borrowed Books</h3></div>
               <div style="padding:0.5rem 1.5rem;">
-                ${mostBorrowed.map((b, i) => `
-                  <div style="display:flex;align-items:center;gap:12px;padding:10px 0;${i < mostBorrowed.length - 1 ? 'border-bottom:1px solid var(--border-light);' : ''}">
+                ${s.mostBorrowed.map((b, i) => `
+                  <div style="display:flex;align-items:center;gap:12px;padding:10px 0;${i < s.mostBorrowed.length - 1 ? 'border-bottom:1px solid var(--border-light);' : ''}">
                     <span style="width:24px;height:24px;border-radius:50%;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;flex-shrink:0;">${i + 1}</span>
                     <div style="flex:1;min-width:0;"><p style="margin:0;font-size:0.85rem;font-weight:500;">${Utils.escapeHtml(b.title)}</p><small style="color:var(--text-secondary);">${Utils.escapeHtml(b.author)}</small></div>
-                    <span class="badge badge-info" style="font-size:0.7rem;">${b.borrowCount || 0} borrows</span>
+                    <span class="badge badge-info" style="font-size:0.7rem;">${b._effective} borrows</span>
                   </div>
                 `).join('') || '<p style="color:var(--text-secondary);text-align:center;padding:1rem;">No data</p>'}
               </div>
@@ -136,6 +132,147 @@ const DashboardPage = {
           <div style="padding:1.5rem;"><h3 style="margin:0 0 1rem;">Popular Categories</h3><canvas id="dash-categories-chart" height="200"></canvas></div>
         </div>
       </div>`;
+    },
+
+    // All admin dashboard numbers are derived HERE from the real data loaded
+    // from the database (Supabase). No hardcoded values, no Math.random().
+    _adminStats() {
+        const connected = !!AppState.isSupabaseConnected && !!AppState.currentUser;
+        // Database-accurate book counts (no local filler books) when connected.
+        const dbBooks = (AppState.dbBooks && AppState.dbBooks.length) ? AppState.dbBooks : null;
+        const bookSet = (connected && dbBooks) ? dbBooks : (AppState.books || []);
+        const allBooks = AppState.books || [];
+        const reqs = AppState.borrowRequests || [];
+        const profiles = AppState.allProfiles || [];
+
+        let students = 0, teachers = 0, members = 0, pendingMembers = 0;
+        profiles.forEach(p => {
+            if (!p) return;
+            members++;
+            if (p.role === 'student') students++;
+            else if (p.role === 'teacher') teachers++;
+            if (p.approved === false) pendingMembers++;
+        });
+        if (!connected) {
+            // Offline/demo fallback to the local roster.
+            const localStudents = (typeof LIBRARY_DATA !== 'undefined') ? (LIBRARY_DATA.students || []) : [];
+            const localTeachers = (typeof LIBRARY_DATA !== 'undefined') ? (LIBRARY_DATA.teachers || []) : [];
+            students = localStudents.length;
+            teachers = localTeachers.length;
+            members = students + teachers;
+        }
+
+        const pending = reqs.filter(r => r && r.status === 'pending');
+        const activeBorrows = reqs.filter(r => r && (r.status === 'borrowed' || r.status === 'overdue'));
+        const returned = reqs.filter(r => r && r.status === 'returned');
+        const overdue = reqs.filter(r => r && r.status === 'overdue');
+        const approved = reqs.filter(r => r && r.status === 'approved');
+        const rejected = reqs.filter(r => r && r.status === 'rejected');
+
+        const totalBooks = bookSet.length;
+        const availableBooks = bookSet.filter(b => b && b.availableCopies > 0).length;
+        const totalCopies = bookSet.reduce((sum, b) => sum + (b.totalCopies || 0), 0);
+
+        // Borrow counts come from real borrow request records; book.borrowCount
+        // is honoured too so titles never under-report.
+        const borrowCountByBook = {};
+        reqs.forEach(r => { if (r && r.bookId != null) borrowCountByBook[r.bookId] = (borrowCountByBook[r.bookId] || 0) + 1; });
+        const mostBorrowed = [...allBooks]
+            .map(b => ({ ...b, _effective: Math.max(b.borrowCount || 0, borrowCountByBook[b.id] || 0) }))
+            .sort((a, b) => b._effective - a._effective)
+            .slice(0, 5);
+
+        // Recent activity = borrow lifecycle events + new member registrations.
+        const recentActivity = [];
+        reqs.forEach(r => {
+            if (!r) return;
+            recentActivity.push({
+                type: 'borrow',
+                id: r.id,
+                studentName: r.studentName || '',
+                bookTitle: r.bookTitle || '',
+                status: r.status,
+                role: null,
+                time: r.requestTime || r.approvedAt || r.borrowDate || ''
+            });
+        });
+        const cutoff = Date.now() - 90 * 24 * 60 * 60 * 1000;
+        profiles.forEach(p => {
+            if (!p || p.approved === false) return;
+            const created = p.createdAt ? new Date(p.createdAt).getTime() : NaN;
+            if (isNaN(created) || created < cutoff) return;
+            recentActivity.push({
+                type: 'member',
+                id: '',
+                studentName: p.name || '',
+                bookTitle: '',
+                status: 'new',
+                role: p.role || 'member',
+                time: p.createdAt
+            });
+        });
+        recentActivity.sort((a, b) => {
+            const t = (x) => { const d = new Date(x.time); return isNaN(d.getTime()) ? 0 : d.getTime(); };
+            return t(b) - t(a);
+        });
+
+        return {
+            totalBooks,
+            availableBooks,
+            totalCopies,
+            currentBorrowed: activeBorrows.length,
+            pendingRequests: pending.length,
+            pending,
+            approvedRequests: approved.length,
+            rejectedRequests: rejected.length,
+            returnedBooks: returned.length,
+            overdueBooks: overdue.length,
+            members,
+            students,
+            teachers,
+            pendingMembers,
+            totalFines: reqs.reduce((sum, r) => sum + (r.fine || 0), 0),
+            recentActivity: recentActivity.slice(0, 10),
+            mostBorrowed,
+            bookSet
+        };
+    },
+
+    _nameInitials(name) {
+        return String(name || '?').split(/\s+/).map(w => (w && w[0]) ? w[0].toUpperCase() : '').join('').substring(0, 2) || '??';
+    },
+
+    _monthlySeries(reqs) {
+        reqs = reqs || [];
+        const out = [];
+        const now = new Date();
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const label = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+            const count = reqs.filter(r => {
+                if (!r || !r.requestTime) return false;
+                const t = new Date(r.requestTime);
+                return !isNaN(t.getTime()) && t.getFullYear() === d.getFullYear() && t.getMonth() === d.getMonth();
+            }).length;
+            out.push({ label, borrowed: count });
+        }
+        return out;
+    },
+
+    _categoryData() {
+        const s = this._adminStats();
+        const colors = ['#ef4444', '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6', '#14b8a6', '#06b6d4', '#ec4899', '#0ea5e9', '#a855f7'];
+        const counts = {};
+        (s.bookSet || []).forEach(b => {
+            if (!b) return;
+            const name = String(b.category || '').trim() || 'Uncategorized';
+            counts[name] = (counts[name] || 0) + 1;
+        });
+        return Object.keys(counts)
+            .map(name => ({ label: name, value: counts[name] }))
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 10)
+            .map((c, i) => ({ ...c, color: colors[i % colors.length] }));
     },
 
     renderStudentDashboard() {
@@ -396,31 +533,189 @@ const DashboardPage = {
     },
 
     afterRender() {
-        const monthly = LIBRARY_DATA.monthlyStats || [];
+        const isAdmin = AppState.currentUser && AppState.currentUser.role === 'admin';
+        if (isAdmin) this._renderAdminCharts();
+        else this._renderMemberCharts();
+        this._startLiveRefresh();
+        if (Animations && Animations.initCounters) Animations.initCounters();
+    },
+
+    _renderMemberCharts() {
+        const monthly = this._monthlySeries(AppState.borrowRequests || []);
         const lineCanvas = document.getElementById('dash-line-chart');
         if (lineCanvas && Charts && Charts.line) {
-            Charts.line(lineCanvas, monthly.map(m => ({ label: m.month, value: m.borrowed || m.booksRead || 0 })));
+            Charts.line(lineCanvas, monthly.map(m => ({ label: m.label, value: m.borrowed })));
         }
+    },
+
+    _renderAdminCharts() {
+        const s = this._adminStats();
+
+        const lineCanvas = document.getElementById('dash-line-chart');
+        if (lineCanvas && Charts && Charts.line) {
+            const monthly = this._monthlySeries(AppState.borrowRequests || []);
+            Charts.line(lineCanvas, monthly.map(m => ({ label: m.label, value: m.borrowed })));
+        }
+
         const doughnutCanvas = document.getElementById('dash-doughnut-chart');
         if (doughnutCanvas && Charts && Charts.doughnut) {
-            const activeCount = AppState.getAllActiveBorrows().length;
-            const returnedCount = AppState.borrowRequests.filter(r => r.status === 'returned').length;
-            const overdueCount = AppState.borrowRequests.filter(r => r.status === 'overdue').length;
-            const pendingCount = AppState.getAllPendingRequests().length;
-            Charts.doughnut(doughnutCanvas, [
-                { value: activeCount || 1, color: '#4f46e5' },
-                { value: returnedCount || 1, color: '#22c55e' },
-                { value: overdueCount || 1, color: '#ef4444' },
-                { value: pendingCount || 1, color: '#f59e0b' }
-            ], `${AppState.borrowRequests.length}`);
+            const activeCount = s.currentBorrowed;
+            const returnedCount = s.returnedBooks;
+            const overdueCount = s.overdueBooks;
+            const pendingCount = s.pendingRequests;
+            const rejectedCount = s.rejectedRequests;
+            const hasAny = activeCount || returnedCount || overdueCount || pendingCount || rejectedCount;
+            if (hasAny) {
+                Charts.doughnut(doughnutCanvas, [
+                    { value: activeCount, color: '#4f46e5' },
+                    { value: returnedCount, color: '#22c55e' },
+                    { value: overdueCount, color: '#ef4444' },
+                    { value: pendingCount, color: '#f59e0b' },
+                    { value: rejectedCount, color: '#94a3b8' }
+                ], `${activeCount + returnedCount + overdueCount + pendingCount + rejectedCount}`);
+            }
         }
+
         const catCanvas = document.getElementById('dash-categories-chart');
         if (catCanvas && Charts && Charts.bar) {
-            const cats = LIBRARY_DATA.categories || [];
-            const colors = ['#ef4444', '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6', '#14b8a6', '#06b6d4', '#ec4899', '#0ea5e9', '#a855f7'];
-            Charts.bar(catCanvas, cats.map((c, i) => ({ label: c.name || c, value: c.count || c.borrowCount || Math.floor(Math.random() * 30) + 5, color: colors[i % colors.length] })));
+            const cats = this._categoryData();
+            Charts.bar(catCanvas, cats.map(c => ({ label: c.label, value: c.value, color: c.color })));
         }
-        if (Animations && Animations.initCounters) Animations.initCounters();
+    },
+
+    _modalOpen() {
+        const modal = document.getElementById('modalContainer');
+        return !!(modal && modal.classList.contains('active'));
+    },
+
+    // Live indicator shown next to the "Library Management Dashboard" title.
+    _liveBadge() {
+        if (!AppState.isSupabaseConnected) return '';
+        const live = window.Realtime && typeof Realtime.isLive === 'function' && Realtime.isLive();
+        if (live) {
+            return `<span class="live-badge live" title="Updating instantly from the database"><span class="live-dot"></span>Live</span><span class="live-meta" id="dashLiveTime">up-to-date</span>`;
+        }
+        return `<span class="live-badge polling" title="Refreshing automatically every few seconds"><span class="live-dot"></span>Auto-refresh</span>`;
+    },
+
+    // Is the Admin Dashboard the page currently on screen?
+    _onDashboard() {
+        const hash = window.location.hash || '#/';
+        return (hash.split('?')[0].split('#')[0]) === '#/dashboard';
+    },
+
+    _startLiveRefresh() {
+        this._stopLiveRefresh();
+
+        // Stop refreshing the moment the user leaves the dashboard, otherwise
+        // the loop would keep re-rendering whatever page they moved to.
+        if (!this._navHookBound) {
+            this._navHookBound = true;
+            if (window.Router && typeof Router.beforeNavigate === 'function') {
+                Router.beforeNavigate((path) => {
+                    if (path && path !== 'dashboard' && !path.startsWith('dashboard')) {
+                        DashboardPage._stopLiveRefresh();
+                    }
+                });
+            }
+        }
+
+        document.addEventListener('library:data-changed', this._onDataChanged = function () {
+            // Ignore change events fired while we are mid-refresh (e.g. the
+            // reminders/expirations that loadFromSupabase triggers), otherwise
+            // every refresh would schedule another one -> refresh loop.
+            if (DashboardPage._refreshing) return;
+            if (DashboardPage._modalOpen()) return;
+            DashboardPage._scheduleRefresh(800);
+        });
+        this._liveTimer = setInterval(() => {
+            if (!DashboardPage._onDashboard()) { DashboardPage._stopLiveRefresh(); return; }
+            if (DashboardPage._modalOpen()) return;
+            DashboardPage._scheduleRefresh(0);
+        }, 15000);
+        // Keep the "updated X ago" clock and the Live / Auto-refresh badge in
+        // sync without re-rendering the whole page.
+        this._clockTimer = setInterval(() => DashboardPage._tickLiveUI(), 1000);
+        this._tickLiveUI();
+    },
+
+    _tickLiveUI() {
+        const badge = document.getElementById('dashLiveBadge');
+        if (!badge) return;
+        const live = window.Realtime && typeof Realtime.isLive === 'function' && Realtime.isLive();
+        const wantLive = String(live) === badge.dataset.live;
+        if (!wantLive) {
+            badge.innerHTML = this._liveBadge();
+            badge.dataset.live = String(live);
+        }
+        const t = document.getElementById('dashLiveTime');
+        if (t) t.textContent = this._relativeTime(this.lastUpdatedAt);
+    },
+
+    _relativeTime(ts) {
+        if (!ts) return 'up-to-date';
+        const s = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+        if (s < 5) return 'updated just now';
+        if (s < 60) return `updated ${s}s ago`;
+        const m = Math.floor(s / 60);
+        return `updated ${m}m ago`;
+    },
+
+    _scheduleRefresh(ms) {
+        clearTimeout(this._refreshDebounce);
+        this._refreshDebounce = setTimeout(() => {
+            if (DashboardPage._modalOpen()) return;
+            if (!DashboardPage._onDashboard()) { DashboardPage._stopLiveRefresh(); return; }
+            DashboardPage.refreshLive();
+        }, ms);
+    },
+
+    _stopLiveRefresh() {
+        clearInterval(this._liveTimer);
+        clearInterval(this._clockTimer);
+        clearTimeout(this._refreshDebounce);
+        this._liveTimer = this._clockTimer = this._refreshDebounce = null;
+        if (this._onDataChanged) {
+            document.removeEventListener('library:data-changed', this._onDataChanged);
+            this._onDataChanged = null;
+        }
+    },
+
+    // Pull the latest data from the database and re-render without reloading the page.
+    async refreshLive() {
+        if (!AppState || !AppState.isSupabaseConnected || !AppState.currentUser) return;
+        if (!this._onDashboard()) { this._stopLiveRefresh(); return; }
+        const market = document.getElementById('modalContainer');
+        if (market && market.classList.contains('active')) return;
+        if (this._refreshing) return;
+        this._refreshing = true;
+        try {
+            await AppState.loadFromSupabase();
+            this.lastUpdatedAt = Date.now();
+            if (window.Realtime && typeof Realtime.markSynced === 'function') Realtime.markSynced();
+            this.renderNow();
+        } catch (e) {
+            // Keep the current view; a later refresh will retry.
+        } finally {
+            this._refreshing = false;
+        }
+    },
+
+    // Silent re-render of the current route (keeps URL, nav highlight, scroll).
+    renderNow() {
+        if (this._modalOpen()) return;
+        const hash = window.location.hash || '#/dashboard';
+        const content = document.getElementById('pageContent');
+        if (!content) return;
+        const page = Router.resolve(hash, { silent: true });
+        if (page && page.render) {
+            const html = page.render();
+            if (html === content.innerHTML) return;
+            content.innerHTML = html;
+            Router.bindLinks();
+            Router.highlightNav();
+            if (page.afterRender && this._modalOpen() === false) page.afterRender();
+        }
     },
 
     approveRequest(requestId) {

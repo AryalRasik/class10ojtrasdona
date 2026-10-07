@@ -651,3 +651,12 @@
 .badge-danger { background: rgba(239,68,68,0.1); color: var(--danger); }
 .badge-info { background: rgba(102,126,234,0.1); color: var(--primary); }
 .badge-neutral { background: var(--bg-secondary); color: var(--text-muted); }
+
+.live-badge { display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; padding: 3px 10px; border-radius: var(--radius-full); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; vertical-align: middle; }
+.live-badge .live-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.live-badge.live { background: rgba(16,185,129,0.12); color: var(--success); }
+.live-badge.live .live-dot { background: var(--success); animation: livePulse 1.6s ease-in-out infinite; }
+.live-badge.polling { background: rgba(251,191,36,0.12); color: var(--warning); }
+.live-badge.polling .live-dot { background: var(--warning); }
+.live-meta { margin-left: 6px; font-size: 0.72rem; color: var(--text-secondary); vertical-align: middle; }
+@keyframes livePulse { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.5); } 70% { box-shadow: 0 0 0 6px rgba(16,185,129,0); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }

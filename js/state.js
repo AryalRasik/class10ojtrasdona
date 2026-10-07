@@ -39,6 +39,9 @@ const AppState = {
     recentlyViewed: [],
     readingStreak: 7,
     books: [],
+    // Remote-only book list straight from the database (no local filler
+    // merged in). Used by the admin dashboard for database-accurate counts.
+    dbBooks: [],
     categories: [],
     announcements: [],
     events: [],
@@ -134,6 +137,7 @@ const AppState = {
                     }
                     await this.loadFromSupabase();
                     this._startSessionManagement();
+                    this._startRealtime();
                     return;
                 }
                 this.isSupabaseConnected = true;
@@ -141,6 +145,7 @@ const AppState = {
                 this._applyRoleFlags(null);
                 await this.loadFromSupabase();
                 this._startSessionManagement();
+                this._startRealtime();
                 return;
             } catch (e) {
                 // SECURITY: fail closed. Supabase IS configured, so a failure
@@ -175,6 +180,23 @@ const AppState = {
             localStorage.removeItem('library_currentUser');
             localStorage.removeItem('library_access_token');
         } catch (e) { /* storage unavailable */ }
+        this._stopRealtime();
+    },
+
+    // Real-time sync is only meaningful when the app is talking to Supabase;
+    // in demo mode there is no server to push events.
+    _startRealtime() {
+        try {
+            if (this.isSupabaseConnected && window.Realtime && typeof Realtime.start === 'function') {
+                Realtime.start();
+            }
+        } catch (e) { console.warn('Realtime start failed:', e); }
+    },
+
+    _stopRealtime() {
+        try {
+            if (window.Realtime && typeof Realtime.stop === 'function') Realtime.stop();
+        } catch (e) { /* realtime not loaded */ }
     },
 
     initDemoMode() {
@@ -240,6 +262,7 @@ const AppState = {
         const mergedBooks = [...remoteBooks];
         localBooks.forEach(lb => { if (!remoteIds.has(lb.id)) mergedBooks.push(lb); });
         this.books = mergedBooks;
+        this.dbBooks = remoteBooks;
 
         // Same merge logic for categories
         const localCats = (typeof LIBRARY_DATA !== 'undefined') ? (LIBRARY_DATA.categories || []) : [];
@@ -425,6 +448,16 @@ const AppState = {
         save('library_eventRegistrations', this.eventRegistrations);
         save('library_offlineUsers', this.offlineUsers);
         localStorage.setItem('library_lastBorrowSeq', (this.lastBorrowSeq == null ? 0 : this.lastBorrowSeq).toString());
+        // Let live views (e.g. the Admin Dashboard) know data changed so they
+        // can refresh against the database instead of showing stale numbers.
+        try {
+            window.dispatchEvent(new CustomEvent('library:data-changed'));
+        } catch (e) { /* storage/unload edge case */ }
+        // Broadcast the change to every other open tab / device so they update
+        // instantly, even before the Supabase realtime publication is enabled.
+        try {
+            if (window.Realtime && typeof Realtime.announce === 'function') Realtime.announce();
+        } catch (e) { /* realtime not loaded */ }
     },
 
     seedInitialData() {
@@ -508,6 +541,7 @@ const AppState = {
         }
         this._lastActivityTime = Date.now();
         this._addAuditLog('user_login', `User ${user ? user.name : 'logged out'}`);
+        this._startRealtime();
     },
 
     setTheme(theme) {
