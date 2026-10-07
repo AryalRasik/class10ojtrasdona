@@ -33,6 +33,8 @@ const AppState = {
 
     notifications: [],
     borrowRequests: [],
+    borrowHistory: [],
+    borrowedBooks: [],
     reservations: [],
     favorites: [],
     readingProgress: {},
@@ -52,6 +54,8 @@ const AppState = {
 
     activityLogs: [],
     auditLogs: [],
+    finePayments: [],
+    offlineUsers: [],
     feedback: [],
     calendarEvents: [],
     faqs: [],
@@ -316,6 +320,12 @@ const AppState = {
             const histIds = new Set(this.borrowHistory.map(r => r && r.id));
             localHistory.forEach(r => { if (r && r.id && !histIds.has(r.id)) { this.borrowHistory.push(r); histIds.add(r.id); } });
         }
+
+        // Fine payments are only persisted in localStorage (the fine_payments
+        // table is not read by the client yet), so hydrate them here too —
+        // canBorrow() and getMyFines() subtract them from the incurred fines.
+        const localFinePayments = this._loadLocal('library_finePayments');
+        this.finePayments = Array.isArray(localFinePayments) ? localFinePayments : [];
 
         try {
             this.offlineUsers = JSON.parse(localStorage.getItem('library_offlineUsers') || '[]');
