@@ -1,14 +1,28 @@
 const Charts = {
+    // Locks the CSS box of a chart canvas before the device-pixel-ratio
+    // backing store is written: the canvas fills its container and keeps the
+    // height declared in the markup. Without this the width/height attributes
+    // (intrinsic size) drive the layout, so charts render at the default 300px
+    // and grow on every re-render whenever dpr > 1.
+    _surface(canvas) {
+        if (!canvas.style.width) {
+            const intrinsicH = parseInt(canvas.getAttribute('height'), 10) || 200;
+            canvas.style.width = '100%';
+            canvas.style.height = intrinsicH + 'px';
+        }
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
+        const ctx = canvas.getContext('2d');
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        return { ctx, w: rect.width, h: rect.height };
+    },
+
     bar(canvas, data) {
         if (!canvas) return;
         if (!data || data.length === 0) return;
-        const ctx = canvas.getContext('2d');
-        const dpr = window.devicePixelRatio || 1;
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-        ctx.scale(dpr, dpr);
-        const w = rect.width, h = rect.height;
+        const { ctx, w, h } = this._surface(canvas);
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         const textColor = isDark ? '#a8a8c8' : '#4a4a6a';
         const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
@@ -19,13 +33,19 @@ const Charts = {
         const padding = rotateLabels
             ? { top: 20, right: 20, bottom: Math.min(110, Math.max(40, h * 0.45)), left: 50 }
             : { top: 20, right: 20, bottom: 40, left: 50 };
+        // A -45deg label sticks out labelWidth * SQRT1_2 to the LEFT of its
+        // bar, so it has to fit both the bottom padding (vertical room) and its
+        // own slot (horizontal room) or neighbouring names overlap each other.
         const maxLabelW = rotateLabels
-            ? Math.max(30, (padding.bottom - 6) * Math.SQRT2 - 11)
+            ? Math.max(16, Math.min(
+                (padding.bottom - 6) * Math.SQRT2 - 11,
+                (slotW - 10) * Math.SQRT2))
             : Infinity;
-        const fitLabel = (text) => {
-            if (ctx.measureText(text).width <= maxLabelW) return text;
+        const fitLabel = (text, cap) => {
+            const limit = Math.min(cap, maxLabelW);
+            if (ctx.measureText(text).width <= limit) return text;
             let t = text;
-            while (t.length > 1 && ctx.measureText(t + '…').width > maxLabelW) t = t.slice(0, -1);
+            while (t.length > 1 && ctx.measureText(t + '…').width > limit) t = t.slice(0, -1);
             return t + '…';
         };
         const chartW = w - padding.left - padding.right;
@@ -71,11 +91,12 @@ const Charts = {
                 ctx.fillStyle = textColor;
                 ctx.font = '11px Inter, sans-serif';
                 if (rotateLabels) {
-                    const label = fitLabel(d.label);
-                    const ext = ctx.measureText(label).width * Math.SQRT1_2;
-                    const ax = Math.max(cx, ext + 4);
+                    // Cap by the room left of the bar as well, so the first
+                    // labels never run off the canvas edge (and are never
+                    // shifted into the next label's space).
+                    const label = fitLabel(d.label, (cx - 6) * Math.SQRT2);
                     ctx.save();
-                    ctx.translate(ax, padding.top + chartH + 4);
+                    ctx.translate(cx, padding.top + chartH + 4);
                     ctx.rotate(-Math.PI / 4);
                     ctx.textAlign = 'right';
                     ctx.textBaseline = 'top';
@@ -103,13 +124,7 @@ const Charts = {
     line(canvas, data) {
         if (!canvas) return;
         if (!data || data.length === 0) return;
-        const ctx = canvas.getContext('2d');
-        const dpr = window.devicePixelRatio || 1;
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-        ctx.scale(dpr, dpr);
-        const w = rect.width, h = rect.height;
+        const { ctx, w, h } = this._surface(canvas);
         const padding = { top: 20, right: 20, bottom: 40, left: 50 };
         const chartW = w - padding.left - padding.right;
         const chartH = h - padding.top - padding.bottom;
@@ -198,13 +213,7 @@ const Charts = {
 
     doughnut(canvas, data, centerText = '') {
         if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        const dpr = window.devicePixelRatio || 1;
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-        ctx.scale(dpr, dpr);
-        const w = rect.width, h = rect.height;
+        const { ctx, w, h } = this._surface(canvas);
         const cx = w / 2, cy = h / 2;
         const outerR = Math.min(w, h) / 2 - 10;
         const innerR = outerR * 0.65;
@@ -248,13 +257,7 @@ const Charts = {
 
     progress(canvas, percentage, color = '#667eea') {
         if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        const dpr = window.devicePixelRatio || 1;
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-        ctx.scale(dpr, dpr);
-        const w = rect.width, h = rect.height;
+        const { ctx, w, h } = this._surface(canvas);
         const cx = w / 2, cy = h / 2;
         const radius = Math.min(w, h) / 2 - 6;
         const lineWidth = 6;
