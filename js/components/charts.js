@@ -9,16 +9,31 @@ const Charts = {
         canvas.height = rect.height * dpr;
         ctx.scale(dpr, dpr);
         const w = rect.width, h = rect.height;
-        const padding = { top: 20, right: 20, bottom: 40, left: 50 };
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const textColor = isDark ? '#a8a8c8' : '#4a4a6a';
+        const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+
+        ctx.font = '11px Inter, sans-serif';
+        const slotW = (w - 70) / data.length;
+        const rotateLabels = data.some(d => ctx.measureText(d.label).width > slotW - 8);
+        const padding = rotateLabels
+            ? { top: 20, right: 20, bottom: Math.min(110, Math.max(40, h * 0.45)), left: 50 }
+            : { top: 20, right: 20, bottom: 40, left: 50 };
+        const maxLabelW = rotateLabels
+            ? Math.max(30, (padding.bottom - 6) * Math.SQRT2 - 11)
+            : Infinity;
+        const fitLabel = (text) => {
+            if (ctx.measureText(text).width <= maxLabelW) return text;
+            let t = text;
+            while (t.length > 1 && ctx.measureText(t + '…').width > maxLabelW) t = t.slice(0, -1);
+            return t + '…';
+        };
         const chartW = w - padding.left - padding.right;
         const chartH = h - padding.top - padding.bottom;
         const rawMax = Math.max(...data.map(d => d.value || 0));
         const maxVal = (rawMax > 0 ? rawMax : 1) * 1.15;
         const barW = (chartW / data.length) * 0.6;
         const gap = (chartW / data.length) * 0.4;
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        const textColor = isDark ? '#a8a8c8' : '#4a4a6a';
-        const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
 
         let progress = 0;
         const animate = () => {
@@ -52,15 +67,31 @@ const Charts = {
                 ctx.roundRect(x, y, barW, barH, [4, 4, 0, 0]);
                 ctx.fill();
 
+                const cx = x + barW / 2;
                 ctx.fillStyle = textColor;
                 ctx.font = '11px Inter, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText(d.label, x + barW / 2, padding.top + chartH + 20);
+                if (rotateLabels) {
+                    const label = fitLabel(d.label);
+                    const ext = ctx.measureText(label).width * Math.SQRT1_2;
+                    const ax = Math.max(cx, ext + 4);
+                    ctx.save();
+                    ctx.translate(ax, padding.top + chartH + 4);
+                    ctx.rotate(-Math.PI / 4);
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(label, 0, 0);
+                    ctx.restore();
+                    ctx.textBaseline = 'alphabetic';
+                } else {
+                    ctx.textAlign = 'center';
+                    ctx.fillText(d.label, cx, padding.top + chartH + 20);
+                }
 
                 if (progress > 0.8) {
                     ctx.fillStyle = isDark ? '#e8e8f0' : '#1a1a2e';
                     ctx.font = 'bold 11px Inter, sans-serif';
-                    ctx.fillText(d.value, x + barW / 2, y - 6);
+                    ctx.textAlign = 'center';
+                    ctx.fillText(d.value, cx, y - 6);
                 }
             });
 
