@@ -164,11 +164,12 @@ async function seed() {
   console.log('\n8. Creating sample borrow requests...');
   const anitaId = userIds['anita.s@saraswatischool.edu.np'];
   const ramId = userIds['ram.b@saraswatischool.edu.np'];
+  const laxmiId = userIds['laxmi@saraswatischool.edu.np'];
   if (anitaId && ramId) {
     const sampleRequests = [
       { id: 'BR-20260714-0001', book_id: 160, book_title: 'English Class 10', student_id: ramId, student_name: 'Ram Bhandari', borrow_date: '2026-07-14', expected_return_date: '2026-07-28', status: 'pending' },
-      { id: 'BR-20260713-0002', book_id: 148, book_title: 'Science & Technology Class 8', student_id: anitaId, student_name: 'Anita Sharma', borrow_date: '2026-07-13', expected_return_date: '2026-07-27', status: 'borrowed', approved_by: 'Laxmi Devi', approved_at: '2026-07-13T10:00:00Z' },
-      { id: 'BR-20260710-0003', book_id: 156, book_title: 'Mathematics Class 9', student_id: anitaId, student_name: 'Anita Sharma', borrow_date: '2026-07-10', expected_return_date: '2026-07-24', status: 'overdue', approved_by: 'Laxmi Devi', approved_at: '2026-07-10T10:00:00Z' },
+      { id: 'BR-20260713-0002', book_id: 148, book_title: 'Science & Technology Class 8', student_id: anitaId, student_name: 'Anita Sharma', borrow_date: '2026-07-13', expected_return_date: '2026-07-27', status: 'borrowed', approved_by: laxmiId || null, approved_at: '2026-07-13T10:00:00Z' },
+      { id: 'BR-20260710-0003', book_id: 156, book_title: 'Mathematics Class 9', student_id: anitaId, student_name: 'Anita Sharma', borrow_date: '2026-07-10', expected_return_date: '2026-07-24', status: 'overdue', approved_by: laxmiId || null, approved_at: '2026-07-10T10:00:00Z' },
     ];
     const { error: brErr } = await supabase.from('borrow_requests').upsert(sampleRequests, { onConflict: 'id' });
     if (brErr) console.log(`  Error: ${brErr.message}`);

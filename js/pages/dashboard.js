@@ -760,7 +760,7 @@ const DashboardPage = {
                 {
                     label: 'Approve',
                     class: 'btn-primary',
-                    onClick: () => {
+                    onClick: async () => {
                         const start = (document.getElementById('approveStartDate') || {}).value;
                         const due = (document.getElementById('approveDueDate') || {}).value;
                         const reopen = () => setTimeout(() => DashboardPage.approveRequest(requestId), 450);
@@ -775,15 +775,20 @@ const DashboardPage = {
                             reopen();
                             return;
                         }
-                        const ok = AppState.approveBorrowRequest(requestId, AppState.currentUser?.name || 'Librarian', {
-                            borrowDate: start,
-                            dueDate: due
-                        });
-                        if (ok) {
-                            Toast.success(`Request approved. Loan: ${start} to ${due}`);
-                            setTimeout(() => Router.resolve(), 300);
-                        } else {
-                            Toast.error('Could not approve this request.');
+                        try {
+                            const ok = await AppState.approveBorrowRequest(requestId, AppState.currentUser?.name || 'Librarian', {
+                                borrowDate: start,
+                                dueDate: due
+                            });
+                            if (ok) {
+                                Toast.success(`Request approved. Loan: ${start} to ${due}`);
+                                setTimeout(() => Router.resolve(), 300);
+                            } else {
+                                Toast.error('Could not approve this request.');
+                                reopen();
+                            }
+                        } catch (e) {
+                            Toast.error(e.message || 'Could not approve this request.');
                             reopen();
                         }
                     }
@@ -813,13 +818,17 @@ const DashboardPage = {
                 {
                     label: 'Reject',
                     class: 'btn-danger',
-                    onClick: () => {
+                    onClick: async () => {
                         const reason = ((document.getElementById('rejectReason') || {}).value || '').trim();
-                        if (AppState.rejectBorrowRequest(requestId, reason)) {
-                            Toast.warning('Request rejected. The student has been notified.');
-                            setTimeout(() => Router.resolve(), 300);
-                        } else {
-                            Toast.error('Could not reject this request.');
+                        try {
+                            if (await AppState.rejectBorrowRequest(requestId, reason)) {
+                                Toast.warning('Request rejected. The student has been notified.');
+                                setTimeout(() => Router.resolve(), 300);
+                            } else {
+                                Toast.error('Could not reject this request.');
+                            }
+                        } catch (e) {
+                            Toast.error(e.message || 'Could not reject this request.');
                         }
                     }
                 }

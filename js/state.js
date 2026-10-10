@@ -800,7 +800,7 @@ const AppState = {
         return request;
     },
 
-    approveBorrowRequest(requestId, approvedBy, opts) {
+    async approveBorrowRequest(requestId, approvedBy, opts) {
         const request = this.borrowRequests.find(r => r.id === requestId);
         if (!request || request.status !== 'pending') return false;
 
@@ -811,24 +811,40 @@ const AppState = {
         // date and due date. Both are stored on the request and enforced
         // server-side by canReadBook() before any PDF is served.
         const dates = opts || {};
-        if (dates.borrowDate) request.borrowDate = dates.borrowDate;
-        if (dates.dueDate) request.expectedReturnDate = dates.dueDate;
+        const borrowDate = dates.borrowDate || request.borrowDate;
+        const dueDate = dates.dueDate || request.expectedReturnDate;
+        const approvedAt = new Date().toISOString();
+        // approved_by is a uuid FK to profiles(id): persist the approver's id.
+        // Writing the display name into that column is exactly what used to
+        // make the approval fail silently. The readable name is kept locally
+        // for the UI and the student's notification (the schema has no column
+        // for it).
+        const approverId = (this.currentUser && this.currentUser.id) || null;
+        const approverName = approvedBy || (this.currentUser && this.currentUser.name) || 'Librarian';
 
+        // Write the database FIRST. If it fails, throw before touching local
+        // state so the UI can never show "approved" for a row still pending.
+        if (this.isSupabaseConnected) {
+            const saved = await Api.updateBorrowRequest(requestId, {
+                status: 'approved',
+                approved_by: approverId,
+                approved_at: approvedAt,
+                borrow_date: borrowDate,
+                expected_return_date: dueDate
+            }).catch(e => {
+                console.error('Supabase borrow approval failed:', e);
+                throw new Error(e.message || 'The database rejected the approval.');
+            });
+            if (!saved) throw new Error('The database did not record the approval.');
+        }
+
+        request.borrowDate = borrowDate;
+        request.expectedReturnDate = dueDate;
         request.status = 'approved';
-        request.approvedBy = approvedBy || 'Librarian';
-        request.approvedAt = new Date().toISOString();
+        request.approvedBy = approverName;
+        request.approvedAt = approvedAt;
 
         this._addAuditLog('borrow_approved', `Approved borrow request ${requestId} for "${request.bookTitle}" (reading until ${request.expectedReturnDate})`);
-
-        if (this.isSupabaseConnected) {
-            Api.updateBorrowRequest(requestId, {
-                status: 'approved',
-                approved_by: request.approvedBy,
-                approved_at: request.approvedAt,
-                borrow_date: request.borrowDate,
-                expected_return_date: request.expectedReturnDate
-            }).catch(e => console.warn('Supabase update failed:', e));
-        }
 
         this.addNotification({
             type: 'borrow_approved',
@@ -843,21 +859,29 @@ const AppState = {
         return true;
     },
 
-    rejectBorrowRequest(requestId, reason) {
+    async rejectBorrowRequest(requestId, reason) {
         const request = this.borrowRequests.find(r => r.id === requestId);
         if (!request || request.status !== 'pending') return false;
 
-        request.status = 'rejected';
-        request.rejectionReason = reason || 'Not specified';
+        const rejectionReason = reason || 'Not specified';
 
-        this._addAuditLog('borrow_rejected', `Rejected borrow request ${requestId}: ${reason || 'Not specified'}`);
-
+        // Write the database FIRST; only mark the local copy rejected once the
+        // row actually changed, so a failed write cannot fake a success.
         if (this.isSupabaseConnected) {
-            Api.updateBorrowRequest(requestId, {
+            const saved = await Api.updateBorrowRequest(requestId, {
                 status: 'rejected',
-                rejection_reason: reason || 'Not specified'
-            }).catch(e => console.warn('Supabase update failed:', e));
+                rejection_reason: rejectionReason
+            }).catch(e => {
+                console.error('Supabase borrow rejection failed:', e);
+                throw new Error(e.message || 'The database rejected the rejection.');
+            });
+            if (!saved) throw new Error('The database did not record the rejection.');
         }
+
+        request.status = 'rejected';
+        request.rejectionReason = rejectionReason;
+
+        this._addAuditLog('borrow_rejected', `Rejected borrow request ${requestId}: ${rejectionReason}`);
 
         this.addNotification({
             type: 'borrow_rejected',

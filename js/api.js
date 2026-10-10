@@ -464,7 +464,13 @@ async updateBook(bookId, updates) {
       if (error.code === 'PGRST116') return null;
       throw error;
     }
-    return data ? (data[0] || null) : null;
+    // PostgREST reports a row filtered out by RLS as "0 rows" rather than as an
+    // error, so a stale schema or a wrong role used to look like a successful
+    // save while nothing changed. Surface it instead of pretending it worked.
+    if (!data || data.length === 0) {
+      throw new Error('The database did not update this borrow request (row-level security matched 0 rows). Check your Supabase schema and permissions, then try again.');
+    }
+    return data[0];
   },
 
   // ── Notifications ─────────────────────────────────────
